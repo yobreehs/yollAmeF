@@ -31,15 +31,14 @@ val appCompatToolbarBackButtonFingerprint = fingerprint {
     classMatcher { descriptor = "Landroid/support/v7/widget/Toolbar;" }
 }
 
-val imageOnlyTabResourceId get() = resourceMappings["layout", "image_only_tab"]
-
 /**
  * Matches to the class found in [pivotBarConstructorFingerprint].
  */
 val initializeButtonsFingerprint = fingerprint {
+    classMatcher { className(pivotBarConstructorFingerprint(dexkit).className) }
     accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
     returns("V")
-    literal { imageOnlyTabResourceId }
+    strings("FEvideo_picker")
 }
 
 val getNavigationEnumMethod = findMethodDirect {
