@@ -1,13 +1,13 @@
 [versions]
-agp = "9.0.0"
+zagp = "9.0.1"
 dexkit = "2.0.7"
 xposed = "82"
 annotation = "1.9.1"
 gson = "2.13.2"
 kotlinxCoroutinesAndroid = "1.10.2"
 fuel = "3.0.0-alpha04"
-junit = "6.0.2"
-jadx = "1.5.3"
+junit = "6.0.3"
+jadx = "1.5.4"
 slf4j = "2.0.17"
 
 [libraries]
