@@ -4,6 +4,7 @@ import app.morphe.extension.youtube.patches.BackgroundPlaybackPatch
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.featureFlagCheck
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_29_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 
@@ -45,13 +46,14 @@ val BackgroundPlayback = patch(
         before { if (it.args[0] == PIP_INPUT_CONSUMER_FEATURE_FLAG) it.result = false }
     }
 
-    // Client flag that interferes with background playback of some video types.
-    // Exact purpose is not clear and it's used in ~ 100 locations.
-    // Starts with 20.29.xx
-    ::featureFlagCheck.hookMethod {
-        before {
-            if (it.args[0] == 45698813L)
-                it.result = false
+    if (is_20_29_or_greater) {
+        // Client flag that interferes with background playback of some video types.
+        // Exact purpose is not clear and it's used in ~ 100 locations.
+        ::featureFlagCheck.hookMethod {
+            before {
+                if (it.args[0] == 45698813L)
+                    it.result = false
+            }
         }
     }
 }

@@ -13,8 +13,11 @@ import org.luckypray.dexkit.result.MethodData
 import org.luckypray.dexkit.util.DexSignUtil.getTypeName
 
 fun getTypeNameCompat(it: String): String? {
-    return if (it.trimStart('[').startsWith('L') && !it.endsWith(';')) null
-    else getTypeName(it)
+    return when {
+        it == "this" -> null
+        it.trimStart('[').startsWith('L') && !it.endsWith(';') -> null
+        else -> getTypeName(it)
+    }
 }
 
 enum class AccessFlags(val modifier: Int) {

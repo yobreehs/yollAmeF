@@ -139,6 +139,7 @@ val NavigationBar = patch(
     //
 
 //    val toolbarPreferences = mutableSetOf(
+//        SwitchPreference("morphe_hide_toolbar_cast_button")
 //        SwitchPreference("morphe_hide_toolbar_create_button"),        // TODO hookToolBar
 //        SwitchPreference("morphe_hide_toolbar_microphone_button"),    // TODO hookToolBar
 //        SwitchPreference("morphe_hide_toolbar_notification_button"),  // TODO hookToolBar

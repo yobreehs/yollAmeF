@@ -3,13 +3,13 @@ package io.github.nexalloy.morphe.youtube.video.quality
 import app.morphe.extension.youtube.videoplayer.VideoQualityDialogButton
 import io.github.nexalloy.R
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
+import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.addPlayerOverlayPreferences
 import io.github.nexalloy.morphe.youtube.layout.player.buttons.addPlayerBottomButton
 import io.github.nexalloy.morphe.youtube.layout.player.buttons.playerOverlayButtonsHook
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.ControlInitializer
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.LegacyPlayerControls
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.addLegacyBottomControl
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.initializeLegacyBottomControl
-import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 
 val VideoQualityDialogButtonPatch = patch(
@@ -21,7 +21,7 @@ val VideoQualityDialogButtonPatch = patch(
         playerOverlayButtonsHook
     )
 
-    PreferenceScreen.PLAYER.addPreferences(
+    addPlayerOverlayPreferences(
         SwitchPreference("morphe_video_quality_dialog_button"),
     )
     addPlayerBottomButton(VideoQualityDialogButton::initializeButton)

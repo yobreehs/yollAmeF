@@ -61,6 +61,7 @@ class PlaybackController(
     obj: Any,
     private val seekTo: Method,
     private val seekToRelative: Method,
+    private val getVideoTime: Method,
     val seekSourceNone: Any
 ) : VideoInformation.PlaybackController {
     val obj = WeakReference(obj)
@@ -76,6 +77,10 @@ class PlaybackController(
     override fun patch_seekToRelative(videoTimeOffset: Long) {
         seekToRelative(obj.get(), videoTimeOffset, seekSourceNone)
     }
+
+    override fun patch_getVideoTime(): Long {
+        return getVideoTime(obj.get()) as Long
+    }
 }
 
 val VideoInformationPatch = patch(
@@ -87,16 +92,21 @@ val VideoInformationPatch = patch(
     )
 
     //region playerController
-    ::playerInitFingerprint.apply {
+    PlayerInitFingerprint.apply {
         val seekSourceType = ::seekSourceType.clazz
         val seekSourceNone = seekSourceType.getStaticObjectField("a")!!
         hookMethod {
-            val seekFingerprint = ::seekFingerprint.method
-            val seekRelativeFingerprint = ::seekRelativeFingerprint.method
+            val seekFingerprint = SeekFingerprint.method
+            val seekRelativeFingerprint = SeekRelativeFingerprint.method
+            val getVideoTime = ::getVideoTime.method
 
             after { param ->
                 val playerController = PlaybackController(
-                    param.thisObject, seekFingerprint, seekRelativeFingerprint, seekSourceNone
+                    param.thisObject,
+                    seekFingerprint,
+                    seekRelativeFingerprint,
+                    getVideoTime,
+                    seekSourceNone,
                 )
                 onCreateHook.forEach { it(playerController) }
             }
@@ -106,16 +116,21 @@ val VideoInformationPatch = patch(
     //endregion
 
     //region mdxPlayerDirector
-    ::mdxPlayerDirectorSetVideoStageFingerprint.apply {
+    MdxPlayerDirectorSetVideoStageFingerprint.apply {
         val seekSourceType = ::mdxSeekSourceType.clazz
         val seekSourceNone = seekSourceType.getStaticObjectField("a")!!
         hookMethod {
-            val mdxSeekFingerprint = ::mdxSeekFingerprint.method
-            val mdxSeekRelativeFingerprint = ::mdxSeekRelativeFingerprint.method
+            val mdxSeekFingerprint = MdxSeekFingerprint.method
+            val mdxSeekRelativeFingerprint = MdxSeekRelativeFingerprint.method
+            val getVideoTime = ::mdxGetVideoTime.method
 
             after { param ->
                 val playerController = PlaybackController(
-                    param.thisObject, mdxSeekFingerprint, mdxSeekRelativeFingerprint, seekSourceNone
+                    param.thisObject,
+                    mdxSeekFingerprint,
+                    mdxSeekRelativeFingerprint,
+                    getVideoTime,
+                    seekSourceNone
                 )
                 VideoInformation.initializeMDX(playerController)
             }
@@ -157,13 +172,6 @@ val VideoInformationPatch = patch(
             val videoTime = param.args[0] as Long
             videoTimeHooks.forEach { it(videoTime) }
         }
-    }
-
-    /*
-     * Hook the methods which set the time
-     */
-    videoTimeHooks.add { videoTime ->
-        VideoInformation.setVideoTime(videoTime)
     }
 
     /*
@@ -230,6 +238,7 @@ val VideoInformationPatch = patch(
         override fun toString(): String = quality.toString()
         override fun equals(other: Any?): Boolean =
             other is VideoQualityProxy && quality == other.quality
+
         override fun hashCode(): Int = quality.hashCode()
     }
 

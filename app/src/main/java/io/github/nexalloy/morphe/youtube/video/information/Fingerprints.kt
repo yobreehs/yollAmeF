@@ -1,14 +1,17 @@
 package io.github.nexalloy.morphe.youtube.video.information
 
-import io.github.nexalloy.SkipTest
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.fingerprint
+import io.github.nexalloy.morphe.literal
+import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
 import io.github.nexalloy.morphe.youtube.shared.videoQualityChangedFingerprint
@@ -17,14 +20,6 @@ import org.luckypray.dexkit.result.ClassData
 import org.luckypray.dexkit.result.FieldData
 import org.luckypray.dexkit.result.FieldUsingType
 import org.luckypray.dexkit.result.MethodData
-
-@SkipTest
-internal object CreateVideoPlayerSeekbarFingerprint : Fingerprint(
-    returnType = "V",
-    filters = listOf(
-        string("timed_markers_width"),
-    )
-)
 
 internal val OnPlaybackSpeedItemClickParentFingerprint = fingerprint {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.STATIC)
@@ -99,39 +94,48 @@ val timeMethod = findMethodDirect {
     playerControllerSetTimeReferenceFingerprint().invokes.single { it.name == "<init>" }
 }
 
-val playerInitFingerprint = fingerprint {
-    accessFlags(AccessFlags.CONSTRUCTOR)
-    classMatcher {
-        addEqString("playVideo called on player response with no videoStreamingData.")
-    }
-}
-
-/**
- * Matched using class found in [playerInitFingerprint].
- */
-val seekFingerprint = fingerprint {
-    classFingerprint(playerInitFingerprint)
-    strings("currentPositionMs.")
-}
-
-val seekSourceType = findClassDirect {
-    seekFingerprint().paramTypes[1]
-}
-
-internal object VideoLengthFingerprint : Fingerprint(
-    filters = OpcodesFilter.opcodesToFilters(
-        Opcode.MOVE_RESULT_WIDE,
-        Opcode.CMP_LONG,
-        Opcode.IF_LEZ,
-        Opcode.IGET_OBJECT,
-        Opcode.CHECK_CAST,
-    ) + OpcodesFilter.opcodesToFilters(
-        Opcode.MOVE_RESULT_WIDE,
-        Opcode.GOTO,
-        Opcode.INVOKE_VIRTUAL,
-        Opcode.MOVE_RESULT_WIDE
+internal object PlayerInitFingerprint : Fingerprint(
+    filters = listOf(
+        string("playVideo called on player response with no videoStreamingData."),
     )
 )
+
+internal object SeekFingerprint : Fingerprint(
+    classFingerprint = PlayerInitFingerprint,
+    filters = listOf(
+        string("currentPositionMs.")
+    )
+)
+
+val seekSourceType = findClassDirect {
+    SeekFingerprint().paramTypes[1]
+}
+
+private object CreateVideoPlayerSeekbarFingerprint : Fingerprint(
+    name = "onDraw",
+    returnType = "V",
+    filters = listOf(
+        string("timed_markers_width")
+    )
+)
+
+internal object VideoLengthFingerprint : Fingerprint(
+    classFingerprint = CreateVideoPlayerSeekbarFingerprint,
+    returnType = "V",
+    parameters = listOf(),
+    filters = listOf(
+        methodCall("Landroid/graphics/Rect;->set(Landroid/graphics/Rect;)V"),
+
+        methodCall(returnType = "J"),
+        methodCall(returnType = "J", location = MatchAfterWithin(5)),
+        methodCall(returnType = "J", location = MatchAfterWithin(10)),
+        methodCall(returnType = "J", location = MatchAfterWithin(10)),
+
+        methodCall(returnType = "Z", parameters = listOf()),
+        opcode(Opcode.CMP_LONG, location = MatchAfterWithin(8))
+    )
+)
+
 
 val videoLengthField = findFieldDirect {
     VideoLengthFingerprint().usingFields.single { it.usingType == FieldUsingType.Write && it.field.typeName == "long" }.field
@@ -142,60 +146,83 @@ val videoLengthHolderField = findFieldDirect {
     VideoLengthFingerprint().usingFields.single { it.usingType == FieldUsingType.Read && it.field.typeName == videoLengthField.declaredClassName }.field
 }
 
-/**
- * Matches using class found in [mdxPlayerDirectorSetVideoStageFingerprint].
- */
-val mdxSeekFingerprint = fingerprint {
-    classFingerprint(mdxPlayerDirectorSetVideoStageFingerprint)
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("Z")
-    parameters("J", "L")
-    opcodes(
+object MdxSeekFingerprint : Fingerprint(
+    classFingerprint = MdxPlayerDirectorSetVideoStageFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Z",
+    parameters = listOf("J", "L"),
+    filters = OpcodesFilter.opcodesToFilters(
         Opcode.INVOKE_VIRTUAL,
         Opcode.MOVE_RESULT,
         Opcode.RETURN,
-    ).apply {
-        // The instruction count is necessary here to avoid matching the relative version
-        // of the seek method we're after, which has the same function signature as the
-        // regular one, is in the same class, and even has the exact same 3 opcodes pattern.
-        matchType = OpCodeMatchType.Equals
+    ),
+    custom = {
+        opCodesMatcher!!.matchType = OpCodeMatchType.Equals
     }
-}
+)
+
 
 val mdxSeekSourceType = findClassDirect {
-    mdxSeekFingerprint().paramTypes[1]
+    MdxSeekFingerprint().paramTypes[1]
 }
 
-val mdxPlayerDirectorSetVideoStageFingerprint = fingerprint {
-    strings("MdxDirector setVideoStage ad should be null when videoStage is not an Ad state ")
-}
+internal object MdxPlayerDirectorSetVideoStageFingerprint : Fingerprint(
+    filters = listOf(
+        string("MdxDirector setVideoStage ad should be null when videoStage is not an Ad state "),
+    )
+)
 
-/**
- * Matches using class found in [mdxPlayerDirectorSetVideoStageFingerprint].
- */
-val mdxSeekRelativeFingerprint = fingerprint {
-    classFingerprint(mdxPlayerDirectorSetVideoStageFingerprint)
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
+internal object MdxSeekRelativeFingerprint : Fingerprint(
+    classFingerprint = MdxPlayerDirectorSetVideoStageFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     // Return type is boolean up to 19.39, and void with 19.39+.
-    parameters("J", "L")
-    opcodes(
+    parameters = listOf("J", "L"),
+    filters = OpcodesFilter.opcodesToFilters(
         Opcode.IGET_OBJECT,
         Opcode.INVOKE_INTERFACE,
     )
-}
+)
 
-/**
- * Matches using class found in [playerInitFingerprint].
- */
-val seekRelativeFingerprint = fingerprint {
-    classFingerprint(playerInitFingerprint)
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
+internal object SeekRelativeFingerprint : Fingerprint(
+    classFingerprint = PlayerInitFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     // Return type is boolean up to 19.39, and void with 19.39+.
-    parameters("J", "L")
-    opcodes(
+    parameters = listOf("J", "L"),
+    filters = OpcodesFilter.opcodesToFilters(
         Opcode.ADD_LONG_2ADDR,
         Opcode.INVOKE_VIRTUAL,
     )
+)
+
+internal object GetVideoTimeFingerprint : Fingerprint(
+    classFingerprint = PlayerInitFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(),
+    returnType = "V",
+    filters = listOf(
+        methodCall(
+            // getVideoTime()
+            definingClass = "this",
+            returnType = "J",
+            parameters = listOf(),
+        ),
+        literal(69, location = MatchAfterWithin(5))
+    )
+)
+
+val getVideoTime = findMethodDirect {
+    GetVideoTimeFingerprint.instructionMatches.first().instruction.methodRef!!
+}
+
+val mdxGetVideoTime = findMethodDirect {
+    findMethod {
+        matcher {
+            declaredClass(MdxPlayerDirectorSetVideoStageFingerprint().declaredClassName)
+            name(getVideoTime().name)
+            returnType("long")
+            paramTypes()
+        }
+    }.single()
 }
 
 /**

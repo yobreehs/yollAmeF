@@ -1,11 +1,10 @@
+import com.google.protobuf.gradle.proto
 import groovy.xml.MarkupBuilder
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.NodeChild
-import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
-import com.google.protobuf.gradle.proto
 
 plugins {
     alias(libs.plugins.android.application)
@@ -275,7 +274,7 @@ abstract class CopyResourcesTask @Inject constructor() : DefaultTask() {
             "sponsorblock/drawable" to null,
             "sponsorblock/layout" to listOf("morphe_sb_skip_sponsor_button.xml"),
             "swipecontrols/drawable" to null,
-            "copyvideourl/drawable" to null,
+            "copyvideourlbutton/drawable" to null,
             "downloads/drawable" to null,
             "speedbutton/drawable" to null,
             "navigationbuttons/drawable" to null,

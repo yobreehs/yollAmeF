@@ -135,10 +135,9 @@ val HideLayoutComponents = patch(
         SwitchPreference("morphe_hide_emergency_box"),
         SwitchPreference("morphe_hide_info_panels"),
         SwitchPreference("morphe_hide_join_membership_button"),
+        SwitchPreference("morphe_hide_live_chat_donators_bar"),
         SwitchPreference("morphe_hide_live_chat_replay_button"),
         SwitchPreference("morphe_hide_medical_panels"),
-        SwitchPreference("morphe_hide_quick_actions"),
-        SwitchPreference("morphe_hide_quick_actions_related_videos"),
         SwitchPreference("morphe_hide_subscribers_community_guidelines"),
         SwitchPreference("morphe_hide_timed_reactions"),
         SwitchPreference("morphe_hide_video_title"),
@@ -314,6 +313,9 @@ val HideLayoutComponents = patch(
     // hide crowdfunding box
     // layout.donation_companion
 
+    // hide live chat donators bar
+    // layout.live_chat_ticker_item
+
     // TODO hide floating microphone — ShowFloatingMicrophoneButtonFingerprint METHOD_MID
 
     // hide latest videos button
@@ -385,6 +387,7 @@ val HideLayoutComponents = patch(
 
     // layout hook
     DexMethod("Landroid/view/LayoutInflater;->inflate(ILandroid/view/ViewGroup;)Landroid/view/View;").hookMethod {
+        val live_chat_ticker_item = getLayoutIdentifier("live_chat_ticker_item")
         val donation_companion = getLayoutIdentifier("donation_companion")
         val album_card = getLayoutIdentifier("album_card")
         val content_pill = getLayoutIdentifier("content_pill")
@@ -393,6 +396,7 @@ val HideLayoutComponents = patch(
         after {
             val view = it.result as View
             when (it.args[0] as Int) {
+                live_chat_ticker_item -> LayoutComponentsFilter.hideLiveChatDonatorsBar(view)
                 donation_companion -> LayoutComponentsFilter.hideCrowdfundingBox(view)
                 album_card -> LayoutComponentsFilter.hideAlbumCard(view)
                 content_pill, bar -> LayoutComponentsFilter.hideLatestVideosButton(view)

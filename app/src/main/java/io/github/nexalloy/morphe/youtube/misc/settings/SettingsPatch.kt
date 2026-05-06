@@ -16,6 +16,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScree
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
 import io.github.nexalloy.morphe.shared.settings.preferences
+import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.PlayerOverlayButtonsSettings
 import io.github.nexalloy.patch
 
 @Suppress("UNREACHABLE_CODE")
@@ -23,6 +24,8 @@ val SettingsHook = patch(
     name = "<SettingsHook>",
     description = "Adds settings for ReVanced to YouTube.",
 ) {
+    dependsOn(PlayerOverlayButtonsSettings)
+
     ::PreferenceFragmentCompat_addPreferencesFromResource.hookMethod {
         val settings_fragment = ResourceUtils.getXmlIdentifier("settings_fragment")
         val settings_fragment_cairo = ResourceUtils.getXmlIdentifier("settings_fragment_cairo")

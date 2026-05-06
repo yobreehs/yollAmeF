@@ -7,6 +7,7 @@ import app.morphe.extension.shared.settings.preference.NoTitlePreferenceCategory
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import io.github.nexalloy.PatchExecutor
+import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
@@ -14,21 +15,23 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreferenc
 
 fun PatchExecutor.SanitizeSharingLinks(
     preferenceScreen: BasePreferenceScreen.Screen,
-    replaceMusicLinksWithYouTube: Boolean = false
+    replaceMusicLinksWithYouTube: Boolean = false,
+    replaceLinksWithShortener: Boolean = false
 ) {
 
     val sanitizePreference = SwitchPreference("morphe_sanitize_sharing_links")
 
     preferenceScreen.addPreferences(
-        if (replaceMusicLinksWithYouTube) {
+        if (replaceMusicLinksWithYouTube || replaceLinksWithShortener) {
+            val preferences = mutableSetOf<BasePreference>(sanitizePreference)
+            if (replaceMusicLinksWithYouTube) preferences += SwitchPreference("morphe_replace_music_with_youtube")
+            if (replaceLinksWithShortener) preferences += SwitchPreference("morphe_replace_links_with_shortener")
+
             PreferenceCategory(
                 titleKey = null,
                 sorting = Sorting.UNSORTED,
                 tag = NoTitlePreferenceCategory::class.java,
-                preferences = setOf(
-                    sanitizePreference,
-                    SwitchPreference("morphe_replace_music_with_youtube")
-                )
+                preferences = preferences
             )
         } else {
             sanitizePreference

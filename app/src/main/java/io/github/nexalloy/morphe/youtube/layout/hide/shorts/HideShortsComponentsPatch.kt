@@ -30,6 +30,7 @@ val HideShortsComponents = patch(
         SwitchPreference("morphe_hide_shorts_subscriptions"),
         SwitchPreference("morphe_hide_shorts_video_description"),
         SwitchPreference("morphe_hide_shorts_history"),
+        SwitchPreference("morphe_disable_shorts_double_tap_to_like"),
 
         PreferenceScreenPreference(
             key = "morphe_shorts_player_screen",
@@ -112,4 +113,13 @@ val HideShortsComponents = patch(
     // is disabled then the app crashes when the Shorts player is opened.
     RenderNextUIFeatureFlagFingerprint.hookMethod(XC_MethodReplacement.returnConstant(false))
     // endregion
+
+    DoubleTapToLikeLogicFingerprint.hookMethod {
+        val doubleTapField = ::isDoubleTapField.field
+        before {
+            val originalValue = doubleTapField.get(it.thisObject) as Boolean
+            val newValue = ShortsFilter.allowDoubleTapToLike(originalValue)
+            doubleTapField.set(it.thisObject, newValue)
+        }
+    }
 }
