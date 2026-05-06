@@ -132,7 +132,7 @@ dependencies {
 //    implementation(libs.dexkit)
 
     // DexKit fork with instruction operand introspection
-    // https://github.com/NexAlloy/DexKit/commit/71e3765ac3e337206606c1de0236a09a9d30c633
+    // https://github.com/NexAlloy/DexKit/commit/3aa79f2bca6c7968f66684535dac816f0a4f085b
     implementation(":dexkit-android@aar")
     implementation("com.google.flatbuffers:flatbuffers-java:23.5.26") // dexkit dependency
     implementation(libs.annotation)
