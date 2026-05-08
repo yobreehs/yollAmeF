@@ -95,9 +95,12 @@ val timeMethod = findMethodDirect {
 }
 
 internal object PlayerInitFingerprint : Fingerprint(
-    filters = listOf(
-        string("playVideo called on player response with no videoStreamingData."),
-    )
+    accessFlags = listOf(AccessFlags.CONSTRUCTOR),
+    custom = {
+        declaredClass {
+            addEqString("playVideo called on player response with no videoStreamingData.")
+        }
+    }
 )
 
 internal object SeekFingerprint : Fingerprint(
