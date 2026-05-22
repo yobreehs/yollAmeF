@@ -4,7 +4,9 @@ import app.morphe.extension.youtube.patches.BackgroundPlaybackPatch
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.featureFlagCheck
+import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_29_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_04_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 
@@ -12,6 +14,8 @@ val BackgroundPlayback = patch(
     name = "Remove background playback restrictions",
     description = "Removes restrictions on background playback, including playing kids videos in the background.",
 ) {
+
+    dependsOn(VersionCheck)
 
     PreferenceScreen.SHORTS.addPreferences(
         SwitchPreference("morphe_shorts_disable_background_playback", summaryKey = null),
@@ -52,6 +56,17 @@ val BackgroundPlayback = patch(
         ::featureFlagCheck.hookMethod {
             before {
                 if (it.args[0] == 45698813L)
+                    it.result = false
+            }
+        }
+    }
+
+    if (is_21_04_or_greater) {
+        // If NewPlayerTypeEnumFeatureFlagFingerprint is present and forced off then this flag
+        // must also be disabled, otherwise the player is a black screen with no buttons and no playback.
+        ::featureFlagCheck.hookMethod {
+            before {
+                if (it.args[0] == 45752335L)
                     it.result = false
             }
         }
