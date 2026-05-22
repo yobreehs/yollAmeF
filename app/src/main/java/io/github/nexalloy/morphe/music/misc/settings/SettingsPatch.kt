@@ -11,7 +11,6 @@ import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreferen
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedBridge
 import io.github.nexalloy.R
-import io.github.nexalloy.patch
 import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
@@ -21,6 +20,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreferenc
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
 import io.github.nexalloy.morphe.shared.settings.preferences
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceFragmentCompat_addPreferencesFromResource
+import io.github.nexalloy.patch
 
 val SettingsHook = patch(
     description = "Adds settings for Morphe to YouTube Music.",
@@ -48,7 +48,7 @@ val SettingsHook = patch(
     )
 
     PreferenceScreen.GENERAL.addPreferences(
-        SwitchPreference("morphe_settings_search_history")
+        SwitchPreference("morphe_settings_search_history", summaryKey = null)
     )
 
     PreferenceScreen.MISC.addPreferences(

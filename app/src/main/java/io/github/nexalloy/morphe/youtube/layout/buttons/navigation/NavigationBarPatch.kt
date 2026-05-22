@@ -24,20 +24,20 @@ val NavigationBar = patch(
     dependsOn(NavigationBarHook, VersionCheck)
 
     val navPreferences = mutableSetOf(
-        SwitchPreference("morphe_hide_home_button"),
-        SwitchPreference("morphe_hide_shorts_button"),
-        SwitchPreference("morphe_hide_create_button"),
-        SwitchPreference("morphe_hide_subscriptions_button"),
-        SwitchPreference("morphe_hide_notifications_button"),
-//        SwitchPreference("morphe_show_search_button"),         // TODO PivotBarRenderer proto
+        SwitchPreference("morphe_hide_home_button", summaryKey = null),
+        SwitchPreference("morphe_hide_shorts_button", summaryKey = null),
+        SwitchPreference("morphe_hide_create_button", summaryKey = null),
+        SwitchPreference("morphe_hide_subscriptions_button", summaryKey = null),
+        SwitchPreference("morphe_hide_notifications_button", summaryKey = null),
+//        SwitchPreference("morphe_show_search_button", summaryKey = null),         // TODO PivotBarRenderer proto
 //        ListPreference("morphe_show_search_button_index"),     // TODO PivotBarRenderer proto
-//        SwitchPreference("morphe_show_settings_button"),       // TODO PivotBarRenderer proto
+//        SwitchPreference("morphe_show_settings_button", summaryKey = null),       // TODO PivotBarRenderer proto
 //        ListPreference("morphe_show_settings_button_index"),   // TODO PivotBarRenderer proto
 //        SwitchPreference("morphe_show_settings_button_type"),  // TODO PivotBarRenderer proto
-        SwitchPreference("morphe_swap_create_with_notifications_button"),
-        SwitchPreference("morphe_hide_navigation_button_labels"),
+        SwitchPreference("morphe_swap_create_with_notifications_button", summaryKey = null),
+        SwitchPreference("morphe_hide_navigation_button_labels", summaryKey = null),
 //        SwitchPreference("morphe_narrow_navigation_buttons"),  // TODO PivotBarChanged/PivotBarStyle METHOD_MID
-//        SwitchPreference("morphe_hide_navigation_bar"),        // TODO addBottomBarContainerHook
+//        SwitchPreference("morphe_hide_navigation_bar", summaryKey = null),        // TODO addBottomBarContainerHook
     )
 
     navPreferences += SwitchPreference("morphe_disable_translucent_navigation_bar_light")

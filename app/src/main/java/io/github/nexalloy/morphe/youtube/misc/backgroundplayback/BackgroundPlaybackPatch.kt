@@ -14,7 +14,7 @@ val BackgroundPlayback = patch(
 ) {
 
     PreferenceScreen.SHORTS.addPreferences(
-        SwitchPreference("morphe_shorts_disable_background_playback"),
+        SwitchPreference("morphe_shorts_disable_background_playback", summaryKey = null),
     )
 
     BackgroundPlaybackManagerFingerprint.hookMethod {
