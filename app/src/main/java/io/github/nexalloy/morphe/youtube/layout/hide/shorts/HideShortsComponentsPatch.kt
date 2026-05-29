@@ -2,6 +2,7 @@ package io.github.nexalloy.morphe.youtube.layout.hide.shorts
 
 import app.morphe.extension.youtube.patches.components.ShortsFilter
 import de.robv.android.xposed.XC_MethodReplacement
+import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
@@ -24,14 +25,18 @@ val HideShortsComponents = patch(
     )
 
     PreferenceScreen.SHORTS.addPreferences(
-        SwitchPreference("morphe_hide_shorts_channel", summaryKey = null),
-        SwitchPreference("morphe_hide_shorts_home", summaryKey = null),
-        SwitchPreference("morphe_hide_shorts_search", summaryKey = null),
-        SwitchPreference("morphe_hide_shorts_subscriptions", summaryKey = null),
-        SwitchPreference("morphe_hide_shorts_video_description", summaryKey = null),
-        SwitchPreference("morphe_hide_shorts_history", summaryKey = null),
+        PreferenceCategory(
+            titleKey = "morphe_hide_shorts_category_title",
+            preferences = setOf(
+                SwitchPreference("morphe_hide_shorts_channel", summaryKey = null),
+                SwitchPreference("morphe_hide_shorts_home", summaryKey = null),
+                SwitchPreference("morphe_hide_shorts_search", summaryKey = null),
+                SwitchPreference("morphe_hide_shorts_subscriptions", summaryKey = null),
+                SwitchPreference("morphe_hide_shorts_video_description", summaryKey = null),
+                SwitchPreference("morphe_hide_shorts_history", summaryKey = null),
+            )
+        ),
         SwitchPreference("morphe_disable_shorts_double_tap_to_like", summaryKey = null),
-
         PreferenceScreenPreference(
             key = "morphe_shorts_player_screen",
             sorting = PreferenceScreenPreference.Sorting.UNSORTED,

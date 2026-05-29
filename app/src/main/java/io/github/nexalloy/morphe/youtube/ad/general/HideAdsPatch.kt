@@ -31,6 +31,7 @@ val HideAds = patch(
     )
 
     PreferenceScreen.ADS.addPreferences(
+        SwitchPreference("morphe_hide_creator_store_shelf", summaryKey = null),
 //        SwitchPreference("morphe_hide_end_screen_store_banner", summaryKey = null),
         SwitchPreference("morphe_hide_general_ads", summaryKey = null),
         SwitchPreference("morphe_hide_merchandise_banners", summaryKey = null),
@@ -61,8 +62,16 @@ val HideAds = patch(
     // Hide player overlay view. This can be hidden with a regular litho filter
     // but an empty space remains.
     PlayerOverlayTimelyShelfFingerprint.hookMethod {
+        val playerOverlayEventClass = ::PlayerOverlayEventType.clazz
+        val playerOverlayIdField = ::PlayerOverlayIdField.field
         before {
-            if (AdsFilter.hideAds()) it.result = null
+            val obj = it.args[0]
+            if (playerOverlayEventClass.isInstance(obj)) {
+                val id = playerOverlayIdField.get(obj) as String
+
+                if (!AdsFilter.allowAds(id == "player_overlay_timely_shelf"))
+                    it.result = null
+            }
         }
     }
 

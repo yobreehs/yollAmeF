@@ -2,9 +2,14 @@ package io.github.nexalloy.morphe.youtube.ad.general
 
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
 import io.github.nexalloy.morphe.ResourceType
+import io.github.nexalloy.morphe.fieldAccess
+import io.github.nexalloy.morphe.findClassDirect
+import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
@@ -54,9 +59,18 @@ internal object PlayerOverlayTimelyShelfFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf("Ljava/lang/Object;"),
     filters = listOf(
-        string("player_overlay_timely_shelf"),
-        string("innertube_cue_range"),
-        string("Null id"),
-        string("Null onExitActions")
+        opcode(Opcode.CHECK_CAST),
+        fieldAccess(opcode = Opcode.IGET_OBJECT, type = "Ljava/lang/String;", location = MatchAfterImmediately()),
+        string("player_overlay_timely_shelf", location = MatchAfterImmediately()),
+        methodCall(smali = "Ljava/lang/String;->equals(Ljava/lang/Object;)Z", location = MatchAfterWithin(5)),
+        opcode(Opcode.MOVE_RESULT, location = MatchAfterImmediately())
     )
 )
+
+val PlayerOverlayEventType = findClassDirect {
+    PlayerOverlayTimelyShelfFingerprint.instructionMatches[0].instruction.classRef!!
+}
+
+val PlayerOverlayIdField = findFieldDirect {
+    PlayerOverlayTimelyShelfFingerprint.instructionMatches[1].instruction.fieldRef!!
+}

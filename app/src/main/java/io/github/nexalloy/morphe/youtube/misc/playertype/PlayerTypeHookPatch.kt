@@ -15,10 +15,6 @@ val PlayerTypeHook = patch(
         }
     }
 
-    // TODO
-    //  TabsBarTextTabFingerprint onCreatorChannelCreate
-    //  required by OpenChannelOfLiveAvatarPatch
-
     ::reelWatchPagerFingerprint.hookMethod {
         val field = ::ReelPlayerViewField.field
         after { param ->

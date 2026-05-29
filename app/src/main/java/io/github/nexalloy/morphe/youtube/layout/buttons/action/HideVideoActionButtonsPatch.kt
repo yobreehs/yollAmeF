@@ -48,12 +48,16 @@ val HideVideoActionButtons = patch(
                         SwitchPreference("morphe_hide_share_button", summaryKey = null),
                         SwitchPreference("morphe_hide_shop_button", summaryKey = null),
                         SwitchPreference("morphe_hide_stop_ads_button", summaryKey = null),
-                        SwitchPreference("morphe_hide_thanks_button", summaryKey = null),
+                        SwitchPreference("morphe_hide_thanks_button", summaryKey = null)
                     )
                 ),
                 PreferenceCategory(
                     titleKey = "morphe_fullscreen_buttons",
                     preferences = setOf(
+//                        NonInteractivePreference(
+//                            key = "morphe_quick_actions_top_margin",
+//                            tag = "app.morphe.extension.shared.settings.preference.SeekBarPreference"
+//                        ),
                         SwitchPreference("morphe_hide_quick_actions", summaryKey = null),
                         SwitchPreference("morphe_hide_quick_actions_ask_button", summaryKey = null),
                         SwitchPreference("morphe_hide_quick_actions_comments_button", summaryKey = null),
@@ -65,7 +69,7 @@ val HideVideoActionButtons = patch(
                         SwitchPreference("morphe_hide_quick_actions_more_videos_button", summaryKey = null),
                         SwitchPreference("morphe_hide_quick_actions_playlist_button", summaryKey = null),
                         SwitchPreference("morphe_hide_quick_actions_save_button", summaryKey = null),
-                        SwitchPreference("morphe_hide_quick_actions_share_button", summaryKey = null),
+                        SwitchPreference("morphe_hide_quick_actions_share_button", summaryKey = null)
                     )
                 )
             )

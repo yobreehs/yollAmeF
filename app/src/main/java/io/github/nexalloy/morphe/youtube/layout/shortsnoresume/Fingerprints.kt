@@ -52,13 +52,6 @@ val userWasInShortsFingerprint = findMethodDirect {
     }
 }
 
-val userWasInShortsBuilderFingerprint = findMethodDirect {
-    val paramTypes = listOf("boolean", "int")
-    userWasInShortsFingerprint().invokes.single {
-        it.paramTypeNames.takeLast(2) == paramTypes
-    }
-}
-
 /**
  * 18.15.40+
  */

@@ -7,6 +7,7 @@ import io.github.nexalloy.morphe.youtube.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_29_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_04_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_21_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 
@@ -46,8 +47,10 @@ val BackgroundPlayback = patch(
     KidsBackgroundPlaybackPolicyControllerFingerprint.hookMethod(returnConstant(Unit))
 
     // Fix PiP buttons not working after locking/unlocking device screen.
-    ::featureFlagCheck.hookMethod {
-        before { if (it.args[0] == PIP_INPUT_CONSUMER_FEATURE_FLAG) it.result = false }
+    if (!is_21_21_or_greater) {
+        ::featureFlagCheck.hookMethod {
+            before { if (it.args[0] == PIP_INPUT_CONSUMER_FEATURE_FLAG) it.result = false }
+        }
     }
 
     if (is_20_29_or_greater) {
