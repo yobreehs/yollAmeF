@@ -61,9 +61,13 @@ class SettingsActivity : Activity() {
         val aliasName = ComponentName(this, SettingsActivity::class.java.name + "Alias")
         menu.findItem(R.id.menu_hide_icon).isChecked =
             packageManager.getComponentEnabledSetting(aliasName) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        menu.findItem(R.id.menu_disable_auto_check).isChecked =
-            getSharedPreferences("prefs", MODE_WORLD_READABLE)
-                .getBoolean("disable_auto_check_update", false)
+        try {
+            val prefs = getSharedPreferences("prefs", MODE_WORLD_READABLE)
+            menu.findItem(R.id.menu_disable_auto_check).isChecked =
+                prefs.getBoolean("disable_auto_check_update", false)
+        } catch (_: SecurityException) {
+            menu.findItem(R.id.menu_disable_auto_check).isVisible = false
+        }
         return true
     }
 
