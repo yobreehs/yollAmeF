@@ -48,7 +48,7 @@ internal object MotionEventFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf("Landroid/view/MotionEvent;"),
     filters = listOf(
-        methodCall(name = "setTranslationY")
+        methodCall(name = "getPaddingTop")
     )
 )
 
