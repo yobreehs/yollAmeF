@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.youtube.misc.litho.filter
 
+import io.github.nexalloy.morphe.shared.misc.litho.context.conversionContextPatch
 import io.github.nexalloy.morphe.shared.misc.litho.filter.sharedLithoFilterPatch
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_22_or_greater
@@ -15,5 +16,6 @@ val LithoFilter = sharedLithoFilterPatch(
     dependsOn(
         FixVerticalScroll,
         VersionCheck,
+        conversionContextPatch
     )
 }

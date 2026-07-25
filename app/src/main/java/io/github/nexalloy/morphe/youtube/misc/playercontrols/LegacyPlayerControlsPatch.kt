@@ -3,36 +3,22 @@ package io.github.nexalloy.morphe.youtube.misc.playercontrols
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewStub
-import android.widget.ImageView
 import android.widget.RelativeLayout
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch
 import io.github.nexalloy.HookDsl
 import io.github.nexalloy.IHookCallback
-import io.github.nexalloy.PatchExecutor
-import io.github.nexalloy.morphe.Fingerprint
-import io.github.nexalloy.morphe.LiteralFilter
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
-import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_28_or_greater
-import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_30_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_31_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
-import io.github.nexalloy.scopedHook
 import org.luckypray.dexkit.wrap.DexMethod
 
 class ControlInitializer(
     val id: Int,
     @JvmField val initializeButton: (controlsView: ViewGroup) -> Unit,
-    // visibilityCheckCalls
-    @JvmField val setVisibility: (Boolean, Boolean) -> Unit,
-    @JvmField val setVisibilityImmediate: (Boolean) -> Unit,
-    // Patch works without this hook, but it is needed to use the correct fade out animation
-    // duration when tapping the overlay to dismiss.
-    @JvmField val setVisibilityNegatedImmediate: () -> Unit
 )
 
 private data class TopControlLayout(
@@ -46,15 +32,6 @@ private val bottomControlLayouts = mutableListOf<Int>()
 private val topControls = mutableListOf<ControlInitializer>()
 private val bottomControls = mutableListOf<ControlInitializer>()
 
-@JvmField
-var visibilityImmediateCallbacksExistModified = false
-
-fun onFullscreenButtonVisibilityChanged(isVisible: Boolean) {
-    topControls.forEach { it.setVisibilityImmediate(isVisible) }
-    bottomControls.forEach { it.setVisibilityImmediate(isVisible) }
-//    Logger.printDebug { ("setVisibilityImmediate($isVisible)") }
-}
-
 fun addTopControl(layout: Int, startViewId: Int, endViewId: Int) {
     topControlLayouts.add(TopControlLayout(layout, startViewId, endViewId))
 }
@@ -65,18 +42,10 @@ fun addLegacyBottomControl(layout: Int) {
 
 fun initializeTopControl(control: ControlInitializer) {
     topControls.add(control)
-    injectVisibilityCheckCall()
 }
 
 fun initializeLegacyBottomControl(control: ControlInitializer) {
     bottomControls.add(control)
-    injectVisibilityCheckCall()
-}
-
-private fun injectVisibilityCheckCall() {
-    if (!visibilityImmediateCallbacksExistModified) {
-        visibilityImmediateCallbacksExistModified = true
-    }
 }
 
 private fun onTopContainerInflate(viewStub: ViewStub, root: ViewGroup) {
@@ -155,8 +124,6 @@ val LegacyPlayerControls = patch(
         }
     }
 
-    initInjectVisibilityCheckCall()
-
     val youtube_controls_bottom_ui_container =
         ResourceUtils.getIdIdentifier("youtube_controls_bottom_ui_container")
 
@@ -185,66 +152,4 @@ val LegacyPlayerControls = patch(
 
     DexMethod("Landroid/support/constraint/ConstraintLayout;->onLayout(ZIIII)V").hookMethod(onLayoutHook)
     DexMethod("Landroidx/constraintlayout/widget/ConstraintLayout;->onLayout(ZIIII)V").hookMethod(onLayoutHook)
-}
-
-private fun PatchExecutor.initInjectVisibilityCheckCall() {
-    ControlsOverlayVisibilityFingerprint.hookMethod {
-        before { param ->
-            bottomControls.forEach {
-                it.setVisibility(param.args[0] as Boolean, param.args[1] as Boolean)
-            }
-//            Logger.printDebug { "setVisibility(visible: ${param.args[0]}, animated: ${param.args[1]})" }
-        }
-    }
-
-    // Hook the fullscreen close button. Used to fix visibility
-    // when seeking and other situations.
-    OverlayViewInflateFingerprint.hookMethod(scopedHook(DexMethod("Landroid/view/View;->findViewById(I)Landroid/view/View;").toMember()) {
-        val fullscreenButtonId = fullscreen_button_id
-        after {
-            if (it.args[0] == fullscreenButtonId) {
-                LegacyPlayerControlsPatch.setFullscreenCloseButton(it.result as ImageView)
-            }
-        }
-    })
-
-    //
-    MotionEventFingerprint.hookMethod(scopedHook(DexMethod("Landroid/view/View;->setTranslationY(F)V").toMethod()) {
-        after {
-            // FIXME Animation lags behind
-            bottomControls.forEach { it.setVisibilityNegatedImmediate() }
-//            Logger.printDebug { "setVisibilityNegatedImmediate()" }
-        }
-    })
-
-    fun overrideExploderLayout(fingerprint: Fingerprint) {
-        val featureId = (fingerprint.filters!![0] as LiteralFilter).literal()
-        ::featureFlagCheck.hookMethod {
-            after {
-                if (it.args[0] == featureId)
-                    it.result =
-                        LegacyPlayerControlsPatch.usePlayerBottomControlsExploderLayout(it.result as Boolean)
-            }
-        }
-    }
-
-    // A/B test for a slightly different bottom overlay controls,
-    // that uses layout file youtube_video_exploder_controls_bottom_ui_container.xml
-    // The change to support this is simple and only requires adding buttons to both layout files,
-    // but for now force this different layout off since it's still an experimental test.
-
-    overrideExploderLayout(PlayerBottomControlsExploderFeatureFlagFingerprint)
-
-    // Turn off a/b tests of ugly player buttons that don't match the style of custom player buttons.
-    overrideExploderLayout(PlayerControlsFullscreenLargeButtonsFeatureFlagFingerprint)
-
-    if (is_20_28_or_greater) {
-        overrideExploderLayout(PlayerControlsLargeOverlayButtonsFeatureFlagFingerprint)
-    }
-
-    if (is_20_30_or_greater) {
-        overrideExploderLayout(PlayerControlsButtonStrokeFeatureFlagFingerprint)
-    }
-
-    // TODO Clear bottom gradient.
 }

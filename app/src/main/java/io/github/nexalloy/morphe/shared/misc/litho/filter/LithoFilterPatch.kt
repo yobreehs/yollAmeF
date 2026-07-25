@@ -1,11 +1,10 @@
 package io.github.nexalloy.morphe.shared.misc.litho.filter
 
-import app.morphe.extension.shared.patches.components.ContextInterface
 import app.morphe.extension.shared.patches.components.Filter
 import app.morphe.extension.shared.patches.components.LithoFilterPatch
 import io.github.nexalloy.Patch
 import io.github.nexalloy.PatchExecutor
-import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_15_or_greater
+import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
 import io.github.nexalloy.new
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
@@ -96,8 +95,6 @@ internal fun sharedLithoFilterPatch(
     })
 
     ComponentCreateFingerprint.hookMethod {
-        val identifierField = ::identifierFieldData.field
-        val pathBuilderField = ::pathBuilderFieldData.field
         val emptyComponentClazz = ::emptyComponentClass.clazz
         val protoBufferEncodeMethod = ProtobufBufferEncodeFingerprint.method
         val protoBufferEncodeClass = ProtobufBufferEncodeFingerprint.declaredClass
@@ -115,18 +112,8 @@ internal fun sharedLithoFilterPatch(
             val accessibilityId = buttonViewModel?.let { accessibilityIdMethod(it) as String? }
             val accessibilityText = buttonViewModel?.let { accessibilityTextMethod(it) as String? }
 
-            val contextWrapper = object : ContextInterface {
-                override fun patch_getPathBuilder() =
-                    pathBuilderField.get(conversion) as StringBuilder
-
-                override fun patch_getIdentifier() =
-                    identifierField.get(conversion) as? String ?: ""
-
-                override fun toString() = conversion.toString()
-            }
-
             if (LithoFilterPatch.isFiltered(
-                    contextWrapper,
+                    ConversionContext(conversion),
                     buffer,
                     accessibilityId,
                     accessibilityText

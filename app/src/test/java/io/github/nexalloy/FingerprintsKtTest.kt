@@ -233,7 +233,8 @@ class FingerprintsKtTest(val apkPath: Path) {
         }
 
         packageNames.distinct().forEach { packageName ->
-            val category = packageName.split(".").drop(5).joinToString(".")
+            var category = packageName.split(".").drop(5).joinToString(".")
+            if (category == "") category = "shared"
             yield(DynamicTest.dynamicTest(category) { testFingerprints(app, packageName) })
         }
     }.iterator()

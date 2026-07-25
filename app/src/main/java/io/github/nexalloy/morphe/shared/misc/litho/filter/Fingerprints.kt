@@ -8,14 +8,11 @@ import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
-import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
-import io.github.nexalloy.morphe.youtube.shared.conversionContextFingerprintToString
-import org.luckypray.dexkit.result.FieldUsingType
 
 //val componentContextParserFingerprint = fingerprint {
 //    strings("Number of bits must be positive")
@@ -120,24 +117,6 @@ val lithoThreadExecutorFingerprint = fingerprint {
     literal { 1L }
 }
 
-//region rvxp
-val conversionContextClass = findClassDirect {
-    conversionContextFingerprintToString(this).declaredClass!!
-}
-val identifierFieldData = findFieldDirect {
-    val stringFieldIndex =
-        if (findMethod { matcher { usingStrings(", pathInternal=") } }.any()) 2 else 1
-    conversionContextClass(this).methods.single {
-        it.isConstructor && it.paramCount != 0
-    }.usingFields.filter {
-        it.usingType == FieldUsingType.Write && it.field.typeName == String::class.java.name
-    }[stringFieldIndex].field
-}
-
-val pathBuilderFieldData = findFieldDirect {
-    conversionContextClass(this).fields.single { it.typeSign == "Ljava/lang/StringBuilder;" }
-}
-
 val emptyComponentClass = findClassDirect {
     emptyComponentFingerprint().declaredClass!!
 }
@@ -151,4 +130,4 @@ val featureFlagCheck = findMethodDirect {
         }
     }.single()
 }
-//endregion
+

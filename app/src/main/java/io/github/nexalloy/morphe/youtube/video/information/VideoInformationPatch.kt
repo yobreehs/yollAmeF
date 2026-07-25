@@ -7,18 +7,21 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import io.github.nexalloy.findFirstFieldByExactType
 import io.github.nexalloy.getStaticObjectField
+import io.github.nexalloy.hookMethod
+import io.github.nexalloy.morphe.shared.misc.litho.context.conversionContextPatch
+import io.github.nexalloy.morphe.shared.misc.textcomponent.hookSpannableString
+import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
+import io.github.nexalloy.morphe.youtube.shared.InitializePlaybackSpeedValuesFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
 import io.github.nexalloy.morphe.youtube.video.playerresponse.Hook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.PlayerResponseMethodHook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.addPlayerResponseMethodHook
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
-import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponsePlaylistId
 import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponseVideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import java.lang.ref.WeakReference
-import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
@@ -44,19 +47,9 @@ val videoSpeedChangedHook = mutableListOf<(Float) -> Unit>()
 val userSelectedPlaybackSpeedHook = mutableListOf<(Float) -> Unit>()
 
 lateinit var setPlaybackSpeedMethod: Method
-lateinit var setPlaybackSpeedClassField: Field
-lateinit var setPlaybackSpeedContainerClassField: Field
 
-private var playbackSpeedClass: Any? = null
-
-fun doOverridePlaybackSpeed(speedOverride: Float) {
-    val setPlaybackSpeedObj = playbackSpeedClass.let { setPlaybackSpeedContainerClassField.get(it) }
-    if (speedOverride <= 0.0f || setPlaybackSpeedObj == null)
-        return
-
-    setPlaybackSpeedObj
-        .let { setPlaybackSpeedClassField.get(it) }
-        .let { setPlaybackSpeedMethod(it, speedOverride) }
+fun onUserSelectedPlaybackSpeed(speed: Float) {
+    userSelectedPlaybackSpeedHook.forEach { it(speed) }
 }
 
 class PlaybackController(
@@ -85,12 +78,27 @@ class PlaybackController(
     }
 }
 
+val playerControllerFieldName = "playerController"
+
+class PlaybackSpeedMenu(
+    obj: Any
+) : VideoInformation.PlaybackSpeedMenuInterface {
+
+    val playerController = XposedHelpers.getAdditionalInstanceField(obj, playerControllerFieldName)
+
+    override fun patch_setSpeed(speed: Float) {
+        setPlaybackSpeedMethod(playerController, speed)
+    }
+}
+
 val VideoInformationPatch = patch(
     description = "Hooks YouTube to get information about the current playing video.",
 ) {
     dependsOn(
         VideoId,
         PlayerResponseMethodHook,
+        conversionContextPatch,
+        textComponentPatch,
     )
 
     //region playerController
@@ -182,8 +190,6 @@ val VideoInformationPatch = patch(
      * Hook the user playback speed selection.
      */
     setPlaybackSpeedMethod = ::setPlaybackSpeedMethodReference.method
-    setPlaybackSpeedClassField = ::setPlaybackSpeedClassFieldReference.field
-    setPlaybackSpeedContainerClassField = ::setPlaybackSpeedContainerClassFieldReference.field
 
     ::setPlaybackSpeedMethodReference.hookMethod {
         before { param ->
@@ -192,28 +198,45 @@ val VideoInformationPatch = patch(
         }
     }
 
-    ::onPlaybackSpeedItemClickFingerprint.hookMethod(scopedHook(::setPlaybackSpeedMethodReference.member) {
+    // legacySpeedSelection
+    PlaybackSpeedOnItemClickFingerprint.hookMethod(scopedHook(::setPlaybackSpeedMethodReference.member) {
         before { param ->
             // Hook the video speed selected by the user.
-            Logger.printDebug { "onPlaybackSpeedItemClickFingerprint: ${param.args[0]}" }
-            userSelectedPlaybackSpeedHook.forEach { it.invoke(param.args[0] as Float) }
-            videoSpeedChangedHook.forEach { it.invoke(param.args[0] as Float) }
+            val speed = param.args[0] as Float
+            Logger.printDebug { "onPlaybackSpeedItemClickFingerprint: ${speed}" }
+            onUserSelectedPlaybackSpeed(speed)
+            videoSpeedChangedHook.forEach { it(speed) }
         }
     })
 
-    ::playbackSpeedClassFingerprint.hookMethod {
-        // Set playback speed class.
-        after { playbackSpeedClass = it.result }
+    InitializePlaybackSpeedValuesFingerprint.declaredClass.constructors[0].hookMethod {
+        val playerControllerClass = ::PlayerControllerClass.clazz
+        after {
+            VideoInformation.setPlaybackSpeedMenu(PlaybackSpeedMenu(it.thisObject))
+            val c = it.args.first { it.javaClass == playerControllerClass }
+            XposedHelpers.setAdditionalInstanceField(
+                it.thisObject,
+                playerControllerFieldName,
+                c
+            )
+        }
     }
 
-    // Handle new playback speed menu.
+    // region Handle new playback speed menu.
     ::playbackSpeedMenuSpeedChangedFingerprint.hookMethod(scopedHook(::setPlaybackSpeedMethodReference.member) {
         before { param ->
-            Logger.printDebug { "Playback speed menu speed changed: ${param.args[0]}" }
-            userSelectedPlaybackSpeedHook.forEach { it.invoke(param.args[0] as Float) }
-            videoSpeedChangedHook.forEach { it.invoke(param.args[0] as Float) }
+            val speed = param.args[0] as Float
+            Logger.printDebug { "Playback speed menu speed changed: ${speed}" }
+            onUserSelectedPlaybackSpeed(speed)
+            videoSpeedChangedHook.forEach { it(speed) }
         }
     })
+
+    hookSpannableString(
+        VideoInformation::onNativePlaybackSpeedPanelLoaded
+    )
+
+    // endregion.
 
     // videoQuality
     val videoQualityClass = ::VideoQualityClass.clazz

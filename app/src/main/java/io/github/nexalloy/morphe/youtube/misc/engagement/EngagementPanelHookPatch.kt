@@ -34,8 +34,12 @@ val EngagementPanelHook = patch(
     }
 
     EngagementPanelUpdateFingerprint.hookMethod {
+        val panelIdField = ::panelIdField.field
         before {
-            EngagementPanel.close()
+            val p1 = it.args[0]
+            if (p1 != null) {
+                EngagementPanel.close(panelIdField.get(p1) as String?)
+            }
         }
     }
 }

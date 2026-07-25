@@ -30,10 +30,7 @@ val VideoQualityDialogButtonPatch = patch(
     initializeLegacyBottomControl(
         ControlInitializer(
             R.id.morphe_video_quality_dialog_button_container,
-            VideoQualityDialogButton::initializeLegacyButton,
-            VideoQualityDialogButton::setVisibility,
-            VideoQualityDialogButton::setVisibilityImmediate,
-            VideoQualityDialogButton::setVisibilityNegatedImmediate
+            VideoQualityDialogButton::initializeLegacyButton
         )
     )
 }

@@ -1,6 +1,5 @@
 package io.github.nexalloy.morphe.youtube.interaction.downloads
 
-import android.app.Activity
 import app.morphe.extension.shared.settings.preference.ExternalDownloaderPreference
 import app.morphe.extension.youtube.patches.DownloadsPatch
 import app.morphe.extension.youtube.videoplayer.ExternalDownloadButton
@@ -13,7 +12,6 @@ import io.github.nexalloy.morphe.youtube.misc.playercontrols.LegacyPlayerControl
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.addTopControl
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.initializeTopControl
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
-import io.github.nexalloy.morphe.youtube.shared.mainActivityOnCreateFingerprint
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.patch
 
@@ -51,10 +49,7 @@ val Downloads = patch(
     initializeTopControl(
         ControlInitializer(
             R.id.morphe_external_download_button,
-            ExternalDownloadButton::initializeLegacyButton,
-            ExternalDownloadButton::setVisibility,
-            ExternalDownloadButton::setVisibilityImmediate,
-            ExternalDownloadButton::setVisibilityNegatedImmediate,
+            ExternalDownloadButton::initializeLegacyButton
         )
     )
 

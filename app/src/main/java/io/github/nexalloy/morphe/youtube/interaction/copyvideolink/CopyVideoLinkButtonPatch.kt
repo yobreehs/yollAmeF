@@ -36,10 +36,7 @@ val CopyVideoLinkButtonPatch = patch(
     initializeLegacyBottomControl(
         ControlInitializer(
             R.id.morphe_copy_video_url_button,
-            CopyVideoLinkButton::initializeLegacyButton,
-            CopyVideoLinkButton::setVisibility,
-            CopyVideoLinkButton::setVisibilityImmediate,
-            CopyVideoLinkButton::setVisibilityNegatedImmediate
+            CopyVideoLinkButton::initializeLegacyButton
         )
     )
 }

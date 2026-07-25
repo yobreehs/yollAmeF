@@ -36,10 +36,7 @@ val PlaybackSpeedButton = patch(
     initializeLegacyBottomControl(
         ControlInitializer(
             R.id.morphe_playback_speed_dialog_button_container,
-            PlaybackSpeedDialogButton::initializeLegacyButton,
-            PlaybackSpeedDialogButton::setVisibility,
-            PlaybackSpeedDialogButton::setVisibilityImmediate,
-            PlaybackSpeedDialogButton::setVisibilityNegatedImmediate,
+            PlaybackSpeedDialogButton::initializeLegacyButton
         )
     )
 

@@ -19,6 +19,7 @@ val HideAds = patch(
 
     PreferenceScreen.ADS.addPreferences(
         SwitchPreference("morphe_music_hide_get_premium_label"),
+//        SwitchPreference("morphe_music_hide_music_premium_promotions"),
         SwitchPreference("morphe_music_hide_video_ads"),
     )
 
@@ -49,4 +50,6 @@ val HideAds = patch(
             param.args[0] = HideAdsPatch.hideVideoAds(param.args[0] as Boolean)
         }
     }
+
+    // TODO Hide Music Premium promotions
 }

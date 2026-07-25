@@ -1,7 +1,6 @@
 package io.github.nexalloy.morphe.youtube.layout.player.buttons
 
 import android.view.View
-import app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.fullscreen_button_id
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
@@ -22,7 +21,6 @@ val playerOverlayButtonsHook = patch {
             if (it.args[0] == fullscreenButtonId) {
                 val view = it.result as? View ?: return@after
                 initializeButtonList.forEach { func -> func(view) }
-                LegacyPlayerControlsPatch.setFullscreenCloseButton(view)
             }
         }
     })

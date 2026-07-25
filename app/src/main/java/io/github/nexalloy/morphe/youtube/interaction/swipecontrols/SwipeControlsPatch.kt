@@ -4,16 +4,17 @@ import app.morphe.extension.shared.settings.preference.ColorPickerWithOpacitySli
 import app.morphe.extension.shared.settings.preference.SeekBarPreference
 import app.morphe.extension.youtube.settings.preference.SwipeZonePreference
 import app.morphe.extension.youtube.swipecontrols.SwipeControlsHostActivity
+import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
-import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_34_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.shared.mainActivityClass
+import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.patch
 
 val SwipeControls = patch(
@@ -22,6 +23,7 @@ val SwipeControls = patch(
 ) {
     dependsOn(
         PlayerTypeHook,
+        VideoInformationPatch
     )
 
 //    if (!is_20_34_or_greater) {
@@ -67,6 +69,7 @@ val SwipeControls = patch(
             tag = SeekBarPreference::class.java,
             selectable = true,
         ),
+        ListPreference("morphe_swipe_speed_step"),
         SwitchPreference("morphe_swipe_press_to_engage", summary = true),
         SwitchPreference("morphe_swipe_haptic_feedback"),
         SwitchPreference("morphe_swipe_save_and_restore_brightness", summary = true),

@@ -217,19 +217,13 @@ val SponsorBlock = patch(
     initializeTopControl(
         ControlInitializer(
             R.id.morphe_sb_create_segment_button,
-            CreateSegmentButton::initializeLegacyButton,
-            CreateSegmentButton::setVisibility,
-            CreateSegmentButton::setVisibilityImmediate,
-            CreateSegmentButton::setVisibilityNegatedImmediate
+            CreateSegmentButton::initializeLegacyButton
         )
     )
     initializeTopControl(
         ControlInitializer(
             R.id.morphe_sb_voting_button,
-            VotingButton::initializeLegacyButton,
-            VotingButton::setVisibility,
-            VotingButton::setVisibilityImmediate,
-            VotingButton::setVisibilityNegatedImmediate
+            VotingButton::initializeLegacyButton
         )
     )
 

@@ -5,6 +5,7 @@ import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
+import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.youtube.shared.EngagementPanelControllerFingerprint
 
@@ -28,6 +29,10 @@ val panelInitFingerprint = findMethodDirect {
             paramTypes(String::class.java, null, null)
         }
     }.single()
+}
+
+val panelIdField = findFieldDirect {
+    panelClass().fields.single { it.typeName == "java.lang.String" }
 }
 
 val panelClass = findClassDirect {

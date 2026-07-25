@@ -43,15 +43,6 @@ private object YoutubeControlsOverlayFingerprint : Fingerprint(
     )
 )
 
-internal object MotionEventFingerprint : Fingerprint(
-    classFingerprint = YoutubeControlsOverlayFingerprint,
-    returnType = "V",
-    parameters = listOf("Landroid/view/MotionEvent;"),
-    filters = listOf(
-        methodCall(name = "getPaddingTop")
-    )
-)
-
 object PlayerTopControlsInflateFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",

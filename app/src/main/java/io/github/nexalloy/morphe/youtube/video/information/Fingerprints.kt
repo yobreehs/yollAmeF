@@ -5,6 +5,7 @@ import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
+import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
@@ -13,77 +14,37 @@ import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
+import io.github.nexalloy.morphe.youtube.shared.PlaybackSpeedOnItemClickParentFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
 import io.github.nexalloy.morphe.youtube.shared.videoQualityChangedFingerprint
 import org.luckypray.dexkit.query.enums.OpCodeMatchType
-import org.luckypray.dexkit.result.ClassData
-import org.luckypray.dexkit.result.FieldData
 import org.luckypray.dexkit.result.FieldUsingType
-import org.luckypray.dexkit.result.MethodData
 
-internal val OnPlaybackSpeedItemClickParentFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.STATIC)
-    returns("L")
-    parameters("L", "Ljava/lang/String;")
-    methodMatcher {
-        addInvoke {
-            name = "getSupportFragmentManager"
-        }
-    }
-    classMatcher { methodCount(8) }
-    opcodes(
-        Opcode.INVOKE_VIRTUAL,
-        Opcode.MOVE_RESULT_OBJECT,
-        Opcode.INVOKE_VIRTUAL,
-        Opcode.MOVE_RESULT_OBJECT,
-        Opcode.IF_EQZ,
-        Opcode.CHECK_CAST,
-    ).also { it.matchType(OpCodeMatchType.StartsWith) }
-}
-
-/**
- * Resolves using the method found in [OnPlaybackSpeedItemClickParentFingerprint].
- */
-val onPlaybackSpeedItemClickFingerprint = fingerprint {
-    classFingerprint(OnPlaybackSpeedItemClickParentFingerprint)
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("V")
-    parameters("L", "L", "I", "J")
-    methodMatcher {
-        name = "onItemClick"
-    }
-}
-
-private fun findFieldUsedByType(method: MethodData, fieldType: ClassData): FieldData {
-    val fields = method.usingFields.distinct()
-    fields.singleOrNull {
-        it.field.typeName == fieldType.name
-    }?.let { return it.field }
-
-    val interfaceNames = fieldType.interfaces.map { it.name }.toSet()
-    return fields.single {
-        it.field.typeName in interfaceNames
-    }.field
-}
+internal object PlaybackSpeedOnItemClickFingerprint : Fingerprint(
+    classFingerprint = PlaybackSpeedOnItemClickParentFingerprint,
+    name = "onItemClick",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("L", "L", "I", "J"),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET,
+            type = "F"
+        ),
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            parameters = listOf("F"),
+            returnType = "V"
+        )
+    )
+)
 
 val setPlaybackSpeedMethodReference = findMethodDirect {
-    onPlaybackSpeedItemClickFingerprint().invokes.findMethod { matcher { paramTypes("float") } }
+    PlaybackSpeedOnItemClickFingerprint().invokes.findMethod { matcher { paramTypes("float") } }
         .single()
 }
 
-val setPlaybackSpeedClass = findClassDirect { setPlaybackSpeedMethodReference().declaredClass!! }
-
-val setPlaybackSpeedClassFieldReference = findFieldDirect {
-    findFieldUsedByType(
-        onPlaybackSpeedItemClickFingerprint(), setPlaybackSpeedClass()
-    )
-}
-
-val setPlaybackSpeedContainerClassFieldReference = findFieldDirect {
-    findFieldUsedByType(
-        onPlaybackSpeedItemClickFingerprint(), setPlaybackSpeedClassFieldReference().declaredClass
-    )
-}
+val PlayerControllerClass = findClassDirect { setPlaybackSpeedMethodReference().declaredClass!! }
 
 val playerControllerSetTimeReferenceFingerprint = fingerprint {
     opcodes(Opcode.INVOKE_DIRECT_RANGE, Opcode.IGET_OBJECT)
@@ -242,16 +203,6 @@ val playbackSpeedMenuSpeedChangedFingerprint = fingerprint {
         Opcode.SGET_OBJECT,
         Opcode.RETURN_OBJECT,
     )
-}
-
-val playbackSpeedClassFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.STATIC)
-    returns("L")
-    parameters("L")
-    opcodes(
-        Opcode.RETURN_OBJECT
-    )
-    methodMatcher { addEqString("PLAYBACK_RATE_MENU_BOTTOM_SHEET_FRAGMENT") }
 }
 
 val videoQualitySetterFingerprint = fingerprint {

@@ -4,11 +4,10 @@ import app.morphe.extension.youtube.patches.playback.speed.RememberPlaybackSpeed
 import app.morphe.extension.youtube.settings.preference.CustomVideoSpeedListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
+import io.github.nexalloy.morphe.youtube.shared.InitializePlaybackSpeedValuesFingerprint
+import io.github.nexalloy.morphe.youtube.video.information.PlaybackSpeedMenu
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.morphe.youtube.video.information.onCreateHook
-import io.github.nexalloy.morphe.youtube.video.information.setPlaybackSpeedClassField
-import io.github.nexalloy.morphe.youtube.video.information.setPlaybackSpeedContainerClassField
-import io.github.nexalloy.morphe.youtube.video.information.setPlaybackSpeedMethod
 import io.github.nexalloy.morphe.youtube.video.information.userSelectedPlaybackSpeedHook
 import io.github.nexalloy.morphe.youtube.video.speed.custom.CustomPlaybackSpeed
 import io.github.nexalloy.morphe.youtube.video.speed.settingsMenuVideoSpeedGroup
@@ -47,16 +46,9 @@ val RememberPlaybackSpeed = patch {
     /*
      * Hook the code that is called when the playback speeds are initialized, and sets the playback speed
      */
-    ::initializePlaybackSpeedValuesFingerprint.hookMethod {
-        val onItemClickListenerClassField = ::onItemClickListenerClassFieldReference.field
+    InitializePlaybackSpeedValuesFingerprint.hookMethod {
         before {
-            val playbackSpeedOverride = RememberPlaybackSpeedPatch.getPlaybackSpeedOverride()
-            if (playbackSpeedOverride > 0.0f) {
-                onItemClickListenerClassField.get(it.thisObject)
-                    .let { setPlaybackSpeedContainerClassField.get(it) }
-                    .let { setPlaybackSpeedClassField.get(it) }
-                    .let { setPlaybackSpeedMethod(it, playbackSpeedOverride) }
-            }
+            RememberPlaybackSpeedPatch.setDefaultPlaybackSpeed(PlaybackSpeedMenu(it.thisObject))
         }
     }
 }

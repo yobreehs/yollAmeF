@@ -5,25 +5,17 @@ import app.morphe.extension.youtube.patches.playback.speed.CustomPlaybackSpeedPa
 import app.morphe.extension.youtube.patches.playback.speed.CustomPlaybackSpeedPatch.customPlaybackSpeeds
 import de.robv.android.xposed.XC_MethodReplacement
 import io.github.nexalloy.invokeOriginalMethod
+import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
-import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_34_or_greater
 import io.github.nexalloy.morphe.youtube.misc.recyclerviewtree.addRecyclerViewTreeHook
 import io.github.nexalloy.morphe.youtube.misc.recyclerviewtree.recyclerViewTreeHook
-import io.github.nexalloy.morphe.youtube.video.information.doOverridePlaybackSpeed
 import io.github.nexalloy.morphe.youtube.video.speed.settingsMenuVideoSpeedGroup
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
-import java.lang.reflect.Method
-
-private var INSTANCE: Any? = null
-private lateinit var showOldPlaybackSpeedMenuMethod: Method
-fun doShowOldPlaybackSpeedMenu() {
-    if (INSTANCE != null) showOldPlaybackSpeedMenuMethod(INSTANCE)
-}
 
 val CustomPlaybackSpeed = patch(
     description = "Adds custom playback speed options.",
@@ -35,7 +27,7 @@ val CustomPlaybackSpeed = patch(
     settingsMenuVideoSpeedGroup.addAll(
         listOf(
             SwitchPreference("morphe_custom_speed_menu"),
-            SwitchPreference("morphe_restore_old_speed_menu"),
+            // SwitchPreference("morphe_restore_old_speed_menu"),
             TextPreference(
                 "morphe_custom_playback_speeds",
                 inputType = InputType.TEXT_MULTI_LINE
@@ -84,14 +76,6 @@ val CustomPlaybackSpeed = patch(
         }
     }
 
-    GetOldPlaybackSpeedsFingerprint.hookMethod {
-        before {
-            INSTANCE = it.thisObject
-        }
-    }
-    showOldPlaybackSpeedMenuMethod = ::showOldPlaybackSpeedMenuFingerprint.method
-
-
     // Fix restore old playback speed menu.
     // TODO
 
@@ -103,27 +87,7 @@ val CustomPlaybackSpeed = patch(
     // Required to check if the playback speed menu is currently shown.
     addLithoFilter(PlaybackSpeedMenuFilter())
 
-    // region Custom tap and hold 2x speed.
-    val tapAndHoldPath = ThreadLocal<Boolean>()
-    ::onSpeedTapAndHoldFingerprint.hookMethod {
-        before { tapAndHoldPath.remove() }
-        after {
-            if (tapAndHoldPath.get() == true) {
-                doOverridePlaybackSpeed(CustomPlaybackSpeedPatch.getTapAndHoldSpeed())
-            }
-        }
-    }
-    ::onSpeedTapAndHoldFingerprint.hookMethod(
-        scopedHook(::getPlaybackSpeedMethodReference.member) {
-            before {
-                tapAndHoldPath.set(true)
-            }
-        })
+    // TODO Custom tap and hold 2x speed.
 
-    settingsMenuVideoSpeedGroup.add(
-        TextPreference("morphe_speed_tap_and_hold", inputType = InputType.NUMBER_DECIMAL),
-    )
-
-    // endregion
 }
 
