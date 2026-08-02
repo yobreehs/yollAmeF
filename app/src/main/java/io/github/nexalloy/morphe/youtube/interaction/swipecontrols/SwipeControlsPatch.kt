@@ -40,7 +40,7 @@ val SwipeControls = patch(
             key = "morphe_swipe_zone_width",
             tag = SeekBarPreference::class.java,
             // Upstream inflates this from XML where AttributeSet handles 'selectable'.
-            // NexAlloy instantiates via reflection, applying 'selectable' AFTER the constructor.
+            // FemAlloy instantiates via reflection, applying 'selectable' AFTER the constructor.
             // Aligning with SeekBar's init() default to avoid patching extension code.
             selectable = true,
         ),

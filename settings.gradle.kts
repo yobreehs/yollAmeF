@@ -33,6 +33,6 @@ android {
     minSdk = 27
 }
 
-rootProject.name = "NexAlloy"
+rootProject.name = "FemAlloy"
 include(":app")
 include(":stub")

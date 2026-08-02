@@ -130,7 +130,7 @@ private val resourceLoader by lazy @RequiresApi(Build.VERSION_CODES.R) {
 fun Context.addModuleAssets() {
     val modulePath = File(XposedInit.modulePath)
     if (!modulePath.exists()) {
-        Utils.showToastLong("NexAlloy has been updated")
+        Utils.showToastLong("FemAlloy has been updated")
         Utils.restartApp(this)
     }
 

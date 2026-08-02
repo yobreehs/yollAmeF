@@ -54,10 +54,43 @@ val userWasInShortsFingerprint = findMethodDirect {
 
 /**
  * 18.15.40+
+ *
+ * 21.30.209: the async refactor removed the zero-param config getter.
+ * The boolean "should resume Shorts" decision now lives in a PUBLIC FINAL
+ * `(Lsgd;)Z` method that reads feature flag literal 45358360L via `Lyba;.y(JZ)Z`
+ * plus the `UserWasInShorts` proto (`Lsgd;.c` = userWasInShorts). The
+ * literal + Z return uniquely identifies it among the three literal-45358360
+ * methods (the other two return void). Forcing this to false fixes the read
+ * path (AppStartupBehaviour proto + the `Lsgb` resume getter).
  */
 internal object UserWasInShortsConfigFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "Z",
+    filters = listOf(
+        literal(45358360L)
+    ),
+)
+
+/**
+ * 21.30.209 action layer.
+ *
+ * The async refactor split the old zero-param getter into a read path
+ * (see [UserWasInShortsConfigFingerprint]) and a write path. The write path is
+ * `Lnqv;.f:()V` (PUBLIC FINAL, zero params, void) — invoked by
+ * `DefaultStartupPaneResolver` to resolve the cached Shorts first command. It
+ * reads the same feature flag literal 45358360L **directly** via
+ * `Lyba;.y(JZ)Z` (bypassing the evaluate method) and, when true, flips the
+ * resume flags (`Lsgb;.f` / `Lsgb;.g` AtomicBoolean) and builds the startup
+ * behaviour. Skipping this method prevents Shorts from resuming on startup.
+ *
+ * Uniquely identified by definingClass + PUBLIC FINAL + zero params + void
+ * return + literal (the other literal-45358360 readers are `audt.o:(Lsgd;)Z`
+ * and the two-param `afls.a:(Lbcil;Lberw;)V`).
+ */
+internal object ShortsResumingOnStartupActionFingerprint : Fingerprint(
+    definingClass = "Lnqv;",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
     parameters = listOf(),
     filters = listOf(
         literal(45358360L)

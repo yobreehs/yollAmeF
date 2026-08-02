@@ -39,7 +39,7 @@ class SettingsActivity : Activity() {
             }
         }
         setContentView(R.layout.activity_settings)
-        actionBar?.setDisplayShowHomeEnabled(true)
+        actionBar?.setDisplayShowHomeEnabled(false)
 
         Utils.setContext(this)
         aboutPreference = MorpheAboutPreference(this).apply {
@@ -140,7 +140,7 @@ class SettingsActivity : Activity() {
                 setTitle(R.string.faq_title)
                 intent = Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/NexAlloy/NexAlloy/wiki/Frequently-Asked-Questions")
+                    Uri.parse("https://github.com/sheerboy/FemAlloy/wiki/Frequently-Asked-Questions")
                 )
                 rootScreen.addPreference(this)
             }

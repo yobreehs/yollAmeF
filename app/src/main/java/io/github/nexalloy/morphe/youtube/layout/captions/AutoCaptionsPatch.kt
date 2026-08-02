@@ -1,6 +1,8 @@
 package io.github.nexalloy.morphe.youtube.layout.captions
 
+import app.morphe.extension.shared.Logger
 import app.morphe.extension.youtube.patches.AutoCaptionsPatch
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.patch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
@@ -35,11 +37,16 @@ val AutoCaptions = patch(
     }
 
     // Disable mute auto captions feature flag.
+    // 21.30.209: this flag method no longer exists (async refactor removed the
+    // `()Z` getter). Resolve it opportunistically so a missing fingerprint only
+    // skips the mute-captions hook instead of failing the whole patch.
     if (is_20_26_or_greater) {
-        NoVolumeCaptionsFeatureFlagFingerprint.hookMethod {
-            before {
-                it.result = AutoCaptionsPatch.disableMuteAutoCaptions()
+        NoVolumeCaptionsFeatureFlagFingerprint.memberOrNull?.let { member ->
+            member.hookMethod {
+                before {
+                    it.result = AutoCaptionsPatch.disableMuteAutoCaptions()
+                }
             }
-        }
+        } ?: Logger.printInfo { "NoVolumeCaptionsFeatureFlagFingerprint not found; skipping mute captions hook" }
     }
 }

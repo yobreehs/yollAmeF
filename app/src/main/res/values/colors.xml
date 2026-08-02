@@ -4,4 +4,42 @@
     <!-- YouTube colors referenced by Morphe settings icons -->
     <color name="yt_white1">#FFFFFFFF</color>
     <color name="yt_black0">#FF000000</color>
+
+    <color name="md3_primary">#AE2863</color>
+    <color name="md3_onPrimary">#FFF7F7</color>
+    <color name="md3_primaryContainer">#F6619A</color>
+    <color name="md3_onPrimaryContainer">#360018</color>
+    <color name="md3_secondary">#8C4A61</color>
+    <color name="md3_onSecondary">#FFF7F7</color>
+    <color name="md3_secondaryContainer">#FFD9E2</color>
+    <color name="md3_onSecondaryContainer">#7D3D53</color>
+    <color name="md3_tertiary">#68529D</color>
+    <color name="md3_onTertiary">#FDF7FF</color>
+    <color name="md3_tertiaryContainer">#BEA6F8</color>
+    <color name="md3_onTertiaryContainer">#3A246D</color>
+    <color name="md3_error">#BB1B1B</color>
+    <color name="md3_onError">#FFF7F6</color>
+    <color name="md3_errorContainer">#FE4E44</color>
+    <color name="md3_onErrorContainer">#570003</color>
+    <color name="md3_background">#FFF8F8</color>
+    <color name="md3_onBackground">#422D33</color>
+    <color name="md3_surface">#FFF8F8</color>
+    <color name="md3_surfaceDim">#F3D2D9</color>
+    <color name="md3_surfaceBright">#FFF8F8</color>
+    <color name="md3_surfaceContainerLowest">#FFFFFF</color>
+    <color name="md3_surfaceContainerLow">#FFF0F2</color>
+    <color name="md3_surfaceContainer">#FFE8ED</color>
+    <color name="md3_surfaceContainerHigh">#FFE1E7</color>
+    <color name="md3_surfaceContainerHighest">#FCDAE2</color>
+    <color name="md3_onSurface">#422D33</color>
+    <color name="md3_surfaceVariant">#FCDAE2</color>
+    <color name="md3_onSurfaceVariant">#72585F</color>
+    <color name="md3_inverseSurface">#150B0E</color>
+    <color name="md3_inverseOnSurface">#AA989C</color>
+    <color name="md3_outline">#8F747B</color>
+    <color name="md3_outlineVariant">#C9AAB2</color>
+    <color name="md3_surfaceTint">#AE2863</color>
+    <color name="md3_inversePrimary">#F6619A</color>
+    <color name="md3_shadow">#000000</color>
+    <color name="md3_scrim">#000000</color>
 </resources>

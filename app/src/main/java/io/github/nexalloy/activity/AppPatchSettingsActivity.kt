@@ -4,7 +4,10 @@ package io.github.nexalloy.activity
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context.MODE_PRIVATE
+import android.content.Context.MODE_WORLD_READABLE
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.os.Vibrator
@@ -17,6 +20,7 @@ import android.view.View
 import android.widget.Button
 import io.github.nexalloy.appPatchConfigurations
 import io.github.nexalloy.R
+import java.io.File
 
 class AppPatchSettingsActivity : Activity() {
 
@@ -68,8 +72,20 @@ class AppPatchSettingsActivity : Activity() {
             val screen = preferenceManager.createPreferenceScreen(context)
             /** XSharedPreference
              * @see io.github.nexalloy.PatchExecutor.patchPreferences */
-            preferenceManager.sharedPreferencesMode = MODE_WORLD_READABLE
+            preferenceManager.sharedPreferencesMode = resolvePreferencesMode(appPatchInfo.packageName)
             preferenceManager.sharedPreferencesName = appPatchInfo.packageName
+            // Force-create the preference file (so target apps can read the default patch states
+            // even before the user touches anything) and make it readable by other UIDs.
+            runCatching {
+                preferenceManager.sharedPreferences.let { prefs ->
+                    val editor = prefs.edit()
+                    defaultPatchStates.forEach { (key, value) ->
+                        if (!prefs.contains(key)) editor.putBoolean(key, value)
+                    }
+                    editor.commit()
+                    makePrefsWorldReadable(prefs)
+                }
+            }
 
             object : Preference(context) {
                 @Deprecated("Deprecated in Java")
@@ -110,11 +126,19 @@ class AppPatchSettingsActivity : Activity() {
                     title = patchInfo.name
                     summary = patchInfo.description
                     setDefaultValue(patchInfo.use)
-                    setOnPreferenceChangeListener { _, _ ->
+                    setOnPreferenceChangeListener { preference, newValue ->
                         val vibrator =
                             context.getSystemService(VIBRATOR_SERVICE) as Vibrator?
                         if (vibrator?.hasVibrator() ?: false) {
                             vibrator.vibrate(50)
+                        }
+                        // Persist synchronously so the target app's XSharedPreferences observes the
+                        // change immediately, and keep the file accessible from other UIDs.
+                        runCatching {
+                            preference.preferenceManager.sharedPreferences.let { prefs ->
+                                prefs.edit().putBoolean(preference.key, newValue as Boolean).commit()
+                                makePrefsWorldReadable(prefs)
+                            }
                         }
                         true
                     }
@@ -123,6 +147,38 @@ class AppPatchSettingsActivity : Activity() {
             }
 
             preferenceScreen = screen
+        }
+
+        /**
+         * LSPosed (new XSharedPreferences, min API 93) redirects the module's preference files into
+         * `/data/misc/<uuid>/prefs/<modulePkg>/` and only publishes them world-readable when the
+         * `MODE_WORLD_READABLE` flag is used. Frameworks that do not hook `checkMode` throw a
+         * [SecurityException] on Android 14+ (targetSdk >= 34), in which case fall back to
+         * [MODE_PRIVATE] and rely on the explicit chmod in [makePrefsWorldReadable].
+         */
+        @SuppressLint("WorldReadableFiles")
+        private fun resolvePreferencesMode(prefsName: String): Int =
+            try {
+                context!!.getSharedPreferences(prefsName, MODE_WORLD_READABLE)
+                MODE_WORLD_READABLE
+            } catch (_: SecurityException) {
+                MODE_PRIVATE
+            }
+
+        /**
+         * Target apps run under a different UID, so the preference file (and its parent directory)
+         * must be readable/writable by everyone. On LSPosed this targets the world-readable redirect
+         * file under `/data/misc`. Best-effort: never crashes when the framework rejects the change.
+         */
+        @SuppressLint("WorldReadableFiles")
+        private fun makePrefsWorldReadable(prefs: SharedPreferences) {
+            runCatching {
+                val file = prefs.javaClass.getMethod("getFile").invoke(prefs) as File
+                file.parentFile?.setReadable(true, false)
+                file.parentFile?.setExecutable(true, false)
+                file.setReadable(true, false)
+                file.setWritable(true, false)
+            }
         }
 
         fun setAllPreferences(enable: Boolean) {
