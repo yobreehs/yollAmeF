@@ -149,9 +149,27 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
     /**
      * @see io.github.nexalloy.activity.AppPatchSettingsActivity.AppPatchSettingsFragment.onCreate
      * */
-    private val patchPreferences = XSharedPreferences(
-        BuildConfig.APPLICATION_ID, lpparam.packageName
-    ).takeIf { it.file.canRead() }
+    private val patchPreferences = getPatchPreferences()
+
+    /**
+     * Reads the module's patch preferences for this target app.
+     *
+     * Since LSPosed API 93 (new XSharedPreferences) the module's preference files are stored under
+     * `/data/misc/<uuid>/prefs/<modulePkg>/`. SELinux blocks direct `access()` on that path from the
+     * target app, so `file.exists()`/`file.canRead()` return false even though `XSharedPreferences`
+     * itself can read the file through the framework's file-access service. Gating on `file.canRead()`
+     * (as done previously) made the preferences appear empty and silently reverted every module
+     * settings toggle back to its default value.
+     *
+     * Use the `XSharedPreferences` instance directly: it reads through the file-access service on
+     * LSPosed, falls back to the module's own data directory on legacy frameworks, and returns the
+     * default value whenever the file is genuinely unavailable.
+     */
+    private fun getPatchPreferences(): XSharedPreferences {
+        val prefs = XSharedPreferences(BuildConfig.APPLICATION_ID, lpparam.packageName)
+        runCatching { prefs.makeWorldReadable() }
+        return prefs
+    }
 
     private lateinit var patches: Array<Patch>
     private val appliedPatches = mutableSetOf<Patch>()
@@ -198,7 +216,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
         if (!isCached) {
             cache.clearAll()
             cache.putString("id", id)
-            Utils.showToastLong("NexAlloy is initializing, please wait...")
+            Utils.showToastLong("FemAlloy is initializing, please wait...")
         }
     }
 

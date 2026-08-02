@@ -24,4 +24,12 @@ val DisableShortsResumingOnStartup = patch(
             }
         }
     }
+
+    ShortsResumingOnStartupActionFingerprint.hookMethod {
+        before {
+            if (DisableShortsResumingOnStartupPatch.disableShortsResumingOnStartup()) {
+                it.result = null
+            }
+        }
+    }
 }

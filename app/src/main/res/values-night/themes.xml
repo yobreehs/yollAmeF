@@ -5,13 +5,52 @@
     <style name="MainTheme" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="p">false</item>
-        <item name="android:colorAccent">#64b5f6</item>
+        <item name="android:colorPrimary">@color/md3_primary</item>
+        <item name="android:colorPrimaryDark">@color/md3_primaryContainer</item>
+        <item name="android:colorAccent">@color/md3_primary</item>
+        <item name="android:colorBackground">@color/md3_background</item>
+        <item name="android:windowBackground">@color/md3_background</item>
+        <item name="android:colorForeground">@color/md3_onSurface</item>
+        <item name="android:textColorPrimary">@color/md3_onSurface</item>
+        <item name="android:textColorSecondary">@color/md3_onSurfaceVariant</item>
+        <item name="android:textColorLink">@color/md3_primary</item>
+        <item name="android:colorControlActivated">@color/md3_primary</item>
+        <item name="android:colorControlNormal">@color/md3_outline</item>
+        <item name="android:colorControlHighlight">@color/md3_primaryContainer</item>
         <item name="android:fitsSystemWindows">true</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/md3_surfaceContainer</item>
+        <item name="android:statusBarColor">@color/md3_surfaceContainer</item>
+    </style>
 
-        <item name="android:textColorPrimary">@android:color/primary_text_dark_nodisable</item>
-        <item name="android:textColorSecondary">@android:color/secondary_text_dark_nodisable</item>
+    <style name="Md3ActionBar" parent="@android:style/Widget.DeviceDefault.ActionBar.Solid">
+        <item name="android:background">@color/md3_surfaceContainer</item>
+        <item name="android:titleTextColor">@color/md3_onSurface</item>
+        <item name="android:subtitleTextColor">@color/md3_onSurfaceVariant</item>
+    </style>
+
+    <style name="SettingsTheme" parent="android:Theme.DeviceDefault.Settings">
+        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:singleLineTitle">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="p">false</item>
+
+        <item name="android:colorPrimary">@color/md3_primary</item>
+        <item name="android:colorPrimaryDark">@color/md3_onPrimaryContainer</item>
+        <item name="android:colorAccent">@color/md3_primary</item>
+        <item name="android:colorBackground">@color/md3_background</item>
+        <item name="android:windowBackground">@color/md3_background</item>
+        <item name="android:colorForeground">@color/md3_onSurface</item>
+        <item name="android:textColorPrimary">@color/md3_onSurface</item>
+        <item name="android:textColorSecondary">@color/md3_onSurfaceVariant</item>
+        <item name="android:textColorLink">@color/md3_primary</item>
+        <item name="android:colorControlActivated">@color/md3_primary</item>
+        <item name="android:colorControlNormal">@color/md3_outline</item>
+        <item name="android:colorControlHighlight">@color/md3_primaryContainer</item>
+
+        <item name="android:listDivider">@null</item>
+        <item name="android:navigationBarColor">@color/md3_surfaceContainer</item>
+        <item name="android:statusBarColor">@color/md3_surfaceContainer</item>
+        <item name="android:actionBarStyle">@style/Md3ActionBar</item>
     </style>
 
 </resources>

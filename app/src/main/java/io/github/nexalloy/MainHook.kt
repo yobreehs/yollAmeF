@@ -36,7 +36,7 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         inContext(lpparam) { app ->
             this.app = app
             if (isReVancedPatched(lpparam)) {
-                Utils.showToastLong("NexAlloy module does not work with patched app")
+                Utils.showToastLong("FemAlloy module does not work with patched app")
                 return@inContext
             }
 
@@ -80,7 +80,7 @@ fun inContext(lpparam: LoadPackageParam, f: (Application) -> Unit) {
             f(app)
             if (XposedInit.modulePath.startsWith("/data/app/")) {
                 val prefs = XSharedPreferences(BuildConfig.APPLICATION_ID, "prefs")
-                if (!prefs.file.canRead() || !prefs.getBoolean("disable_auto_check_update", false)) {
+                if (!prefs.getBoolean("disable_auto_check_update", false)) {
                     UpdateChecker().hookNewActivity()
                 }
             }
