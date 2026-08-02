@@ -7,5 +7,6 @@ internal object isDCIMFolderBackupControlMethod : Fingerprint(
         "/dcim",
         "/mars_files/"
     ),
+    parameters = listOf("Ljava/lang/String;"),
     returnType = "Z"
 )
