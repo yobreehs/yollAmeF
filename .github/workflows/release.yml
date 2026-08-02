@@ -39,13 +39,18 @@ jobs:
     - name: Build Release
       run: ./gradlew assembleRelease
 
-    - run: |
-        cd app/build/outputs/apk/release/
-        mv app-release.apk FemAlloy-${{ github.ref_name }}.apk
-        if gh release view ${{ github.ref_name }} >/dev/null 2>&1; then
-          gh release upload ${{ github.ref_name }} FemAlloy-${{ github.ref_name }}.apk --clobber
-        else
-          gh release create ${{ github.ref_name }} FemAlloy-${{ github.ref_name }}.apk --generate-notes
-        fi
+    - name: Publish
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        if [ -z "$TAG" ] || [ "$TAG" = "$GITHUB_REF" ]; then
+          TAG=manual-$(git rev-parse --short HEAD)
+        fi
+        cd app/build/outputs/apk/release/
+        mv app-release.apk FemAlloy-${TAG}.apk
+        if gh release view ${TAG} >/dev/null 2>&1; then
+          gh release upload ${TAG} FemAlloy-${TAG}.apk --clobber
+        else
+          gh release create ${TAG} FemAlloy-${TAG}.apk --generate-notes
+        fi
