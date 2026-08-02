@@ -1,6 +1,7 @@
 package io.github.nexalloy.morphe.youtube.layout.shortsnoresume
 
 import app.morphe.extension.youtube.patches.DisableShortsResumingOnStartupPatch
+import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
@@ -17,10 +18,10 @@ val DisableShortsResumingOnStartup = patch(
     // TODO UserWasInShortsListenerFingerprint (20.03-21.02) — METHOD_MID
     // TODO UserWasInShortsLegacyFingerprint (<20.03) — METHOD_MID
 
-    UserWasInShortsConfigFingerprint.hookMethod {
+    ::featureFlagCheck.hookMethod {
         before {
-            if (DisableShortsResumingOnStartupPatch.disableShortsResumingOnStartup()) {
-                it.result = false
+            if (it.args[0] == 45358360L) {
+                it.result = DisableShortsResumingOnStartupPatch.disableShortsResumingOnStartup()
             }
         }
     }

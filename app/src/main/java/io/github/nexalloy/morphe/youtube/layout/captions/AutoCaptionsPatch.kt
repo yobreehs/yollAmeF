@@ -1,6 +1,7 @@
 package io.github.nexalloy.morphe.youtube.layout.captions
 
 import app.morphe.extension.youtube.patches.AutoCaptionsPatch
+import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.patch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
@@ -36,9 +37,11 @@ val AutoCaptions = patch(
 
     // Disable mute auto captions feature flag.
     if (is_20_26_or_greater) {
-        NoVolumeCaptionsFeatureFlagFingerprint.hookMethod {
+        ::featureFlagCheck.hookMethod {
             before {
-                it.result = AutoCaptionsPatch.disableMuteAutoCaptions()
+                if (it.args[0] == 45692436L) {
+                    it.result = AutoCaptionsPatch.disableMuteAutoCaptions()
+                }
             }
         }
     }
