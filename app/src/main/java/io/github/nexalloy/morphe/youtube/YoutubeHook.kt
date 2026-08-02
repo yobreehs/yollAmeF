@@ -7,6 +7,7 @@ import io.github.nexalloy.addModuleAssets
 import io.github.nexalloy.injectHostClassLoaderToSelf
 import io.github.nexalloy.injectSelfClassLoaderToHost
 import io.github.nexalloy.morphe.shared.misc.CheckRecycleBitmapMediaSession
+import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.morphe.youtube.ad.HideAds
 import io.github.nexalloy.morphe.youtube.interaction.copyvideolink.CopyVideoLinkButtonPatch
 import io.github.nexalloy.morphe.youtube.interaction.downloads.Downloads
@@ -46,6 +47,27 @@ val ExtensionHook = patch(name = "<ExtensionHook>") {
     ExtensionResourceHook.run(this)
 }
 
+private val overrides = mutableMapOf<Long, (Boolean) -> Boolean>()
+
+fun insertLiteralOverride(id: Long, override: Boolean = false) {
+    overrides[id] = { override }
+}
+
+fun insertLiteralOverride(id: Long, override: (Boolean) -> Boolean) {
+    overrides[id] = override
+}
+
+val FeatureOverride = patch {
+    ::featureFlagCheck.hookMethod {
+        after {
+            val id = it.args[0] as Long
+            val orig = it.result as Boolean
+            val match = overrides[id] ?: return@after
+            it.result = match(orig)
+        }
+    }
+}
+
 val YouTubePatches = arrayOf(
     ExtensionHook,
     BackgroundPlayback,
@@ -70,5 +92,6 @@ val YouTubePatches = arrayOf(
     BypassImageRegionRestrictionsPatch,
     CheckRecycleBitmapMediaSession,
     // make sure settingsHook at end to build preferences
-    SettingsHook
+    SettingsHook,
+    FeatureOverride
 )

@@ -4,12 +4,12 @@ import app.morphe.extension.shared.settings.preference.ColorPickerWithOpacitySli
 import app.morphe.extension.shared.settings.preference.SeekBarPreference
 import app.morphe.extension.youtube.settings.preference.SwipeZonePreference
 import app.morphe.extension.youtube.swipecontrols.SwipeControlsHostActivity
-import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_34_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
@@ -101,11 +101,6 @@ val SwipeControls = patch(
     SwipeControlsHostActivity.hookActivity(::mainActivityClass.clazz)
 
     if (!is_20_34_or_greater) {
-        ::featureFlagCheck.hookMethod {
-            after {
-                if (it.args[0] == 45631116L)
-                    it.result = SwipeControlsHostActivity.allowSwipeChangeVideo(it.result as Boolean)
-            }
-        }
+        insertLiteralOverride(45631116L, SwipeControlsHostActivity::allowSwipeChangeVideo)
     }
 }

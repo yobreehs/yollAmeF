@@ -5,6 +5,7 @@ import app.morphe.extension.shared.patches.components.LithoFilterPatch
 import io.github.nexalloy.Patch
 import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.new
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
@@ -143,11 +144,7 @@ internal fun sharedLithoFilterPatch(
     // If this is enabled, then the litho protobuffer hook will always show an empty buffer
     // since it's no longer handled by the hooked Java code.
     if (overrideUpbFeatureFlag()) {
-        ::featureFlagCheck.hookMethod {
-            before {
-                if (it.args[0] == 45419603L) it.result = false
-            }
-        }
+        insertLiteralOverride(45419603L)
     }
 
     // endregion

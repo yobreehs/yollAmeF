@@ -3,7 +3,7 @@ package io.github.nexalloy.morphe.youtube.misc.backgroundplayback
 import app.morphe.extension.youtube.patches.BackgroundPlaybackPatch
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.shared.misc.litho.filter.featureFlagCheck
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_29_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_04_or_greater
@@ -48,30 +48,18 @@ val BackgroundPlayback = patch(
 
     // Fix PiP buttons not working after locking/unlocking device screen.
     if (!is_21_21_or_greater) {
-        ::featureFlagCheck.hookMethod {
-            before { if (it.args[0] == PIP_INPUT_CONSUMER_FEATURE_FLAG) it.result = false }
-        }
+        insertLiteralOverride(PIP_INPUT_CONSUMER_FEATURE_FLAG)
     }
 
     if (is_20_29_or_greater) {
         // Client flag that interferes with background playback of some video types.
         // Exact purpose is not clear and it's used in ~ 100 locations.
-        ::featureFlagCheck.hookMethod {
-            before {
-                if (it.args[0] == 45698813L)
-                    it.result = false
-            }
-        }
+        insertLiteralOverride(45698813L)
     }
 
     if (is_21_04_or_greater) {
         // If NewPlayerTypeEnumFeatureFlagFingerprint is present and forced off then this flag
         // must also be disabled, otherwise the player is a black screen with no buttons and no playback.
-        ::featureFlagCheck.hookMethod {
-            before {
-                if (it.args[0] == 45752335L)
-                    it.result = false
-            }
-        }
+        insertLiteralOverride(45752335L)
     }
 }
