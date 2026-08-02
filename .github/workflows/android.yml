@@ -43,13 +43,13 @@ jobs:
     - name: Upload a Debug Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: nexalloy-ci-debug-apk
+        name: femalloy-ci-debug-apk
         path: app/build/outputs/apk/debug
 
     - name: Upload a Release Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: nexalloy-ci-release-apk
+        name: femalloy-ci-release-apk
         path: |
           app/build/outputs/apk/release
           app/build/outputs/mapping/release/mapping.txt
@@ -59,9 +59,9 @@ jobs:
         LATEST_REL=$(gh release view --json tagName -q .tagName)
         GIT_DESCRIBE=$(git rev-parse --short HEAD)
         cd app/build/outputs/apk/release/
-        mv app-release.apk NexAlloy-${GIT_DESCRIBE}.apk
+        mv app-release.apk FemAlloy-${GIT_DESCRIBE}.apk
         gh release delete autobuild --yes || true
-        gh release create autobuild NexAlloy-${GIT_DESCRIBE}.apk \
+        gh release create autobuild FemAlloy-${GIT_DESCRIBE}.apk \
           --prerelease \
           --title "Nightly Build ${GIT_DESCRIBE}" \
           --notes "Nightly build from commit ${GIT_DESCRIBE}. See changes: https://github.com/${{ github.repository }}/compare/${LATEST_REL}...main"
