@@ -552,7 +552,6 @@ val HideLayoutComponents = patch(
         val album_card = getLayoutIdentifier("album_card")
         val content_pill = getLayoutIdentifier("content_pill")
         val bar = getLayoutIdentifier("bar")
-        val related_chip_cloud_reduced_margins = getLayoutIdentifier("related_chip_cloud_reduced_margins")
         val sync_button = getLayoutIdentifier("sync_button")
         after {
             val view = it.result as View
@@ -561,7 +560,6 @@ val HideLayoutComponents = patch(
                 donation_companion -> LayoutComponentsFilter.hideCrowdfundingBox(view)
                 album_card -> LayoutComponentsFilter.hideAlbumCard(view)
                 content_pill, bar -> LayoutComponentsFilter.hideLatestVideosButton(view)
-                related_chip_cloud_reduced_margins -> LayoutComponentsFilter.hideInRelatedVideos(view as RecyclerView)
                 sync_button -> LayoutComponentsFilter.hideSyncButton(view)
             }
         }
