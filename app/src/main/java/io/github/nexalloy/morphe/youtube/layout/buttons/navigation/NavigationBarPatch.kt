@@ -146,9 +146,6 @@ val NavigationBar = patch(
 //        ListPreference("morphe_show_toolbar_settings_button_index"),  // TODO SettingIntentFingerprint
 //        SwitchPreference("morphe_show_toolbar_settings_button_type", summary = true)  // TODO SettingIntentFingerprint
 //    )
-//    if (!is_20_31_or_greater) {
-//        toolbarPreferences += SwitchPreference("morphe_wide_searchbar")  // TODO SetWordmarkHeader
-//    }
 //
 //    PreferenceScreen.GENERAL.addPreferences(
 //        PreferenceScreenPreference(
@@ -164,5 +161,4 @@ val NavigationBar = patch(
     // TODO SearchResultButtonVisibilityFingerprint — METHOD_MID
     // TODO SettingIntentFingerprint — interface injection (向类添加接口)
     // TODO TopBarRendererPrimaryFilter/SecondaryFilter — METHOD_MID (proto manipulation)
-    // TODO Wide searchbar (<20.31) — SetWordmarkHeader/WideSearchbarLayout METHOD_MID
 }

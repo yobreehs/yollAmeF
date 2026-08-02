@@ -1,14 +1,17 @@
 package io.github.nexalloy.morphe.music.misc.backgroundplayback
 
 import io.github.nexalloy.morphe.AccessFlags
+import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.Opcode
+import io.github.nexalloy.morphe.OpcodesFilter
 import io.github.nexalloy.morphe.fingerprint
+import io.github.nexalloy.morphe.literal
 
-internal val backgroundPlaybackDisableFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.STATIC)
-    returns("Z")
-    parameters("L")
-    opcodes(
+internal object BackgroundPlaybackDisableFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
+    returnType = "Z",
+    parameters = listOf("L"),
+    filters = OpcodesFilter.opcodesToFilters(
         Opcode.CONST_4,
         Opcode.IF_EQZ,
         Opcode.IGET,
@@ -19,23 +22,13 @@ internal val backgroundPlaybackDisableFingerprint = fingerprint {
         Opcode.SGET_OBJECT,
         Opcode.IGET,
     )
-}
+)
 
-internal val kidsBackgroundPlaybackPolicyControllerFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("V")
-    parameters("I", "L", "Z")
-    opcodes(
-        Opcode.IGET,
-        Opcode.INVOKE_STATIC,
-        Opcode.MOVE_RESULT,
-        Opcode.IF_NEZ,
-        Opcode.GOTO_16,
-        Opcode.CONST_4,
-        Opcode.IF_NE,
-        Opcode.CONST_4,
-        Opcode.IF_NE,
-        Opcode.CONST_4,
-        Opcode.NEW_ARRAY,
+internal object KidsBackgroundPlaybackPolicyControllerFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("I", "L", "Z"),
+    filters = listOf(
+        literal(45638079L)
     )
-}
+)

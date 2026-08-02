@@ -36,7 +36,6 @@ val AutoCaptions = patch(
 
     // Disable mute auto captions feature flag.
     if (is_20_26_or_greater) {
-        // NoVolumeCaptionsFeatureFlagFingerprint
         NoVolumeCaptionsFeatureFlagFingerprint.hookMethod {
             before {
                 it.result = AutoCaptionsPatch.disableMuteAutoCaptions()

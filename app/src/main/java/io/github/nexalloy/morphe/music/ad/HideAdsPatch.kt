@@ -24,7 +24,7 @@ val HideAds = patch(
     )
 
     // Hide 'Get Music Premium' label
-    ::hideGetPremiumFingerprint.hookMethod {
+    HideGetPremiumFingerprint.hookMethod {
         val id = ResourceUtils.getIdIdentifier("unlimited_panel")
         after { param ->
             val thiz = param.thisObject
@@ -39,7 +39,7 @@ val HideAds = patch(
         }
     }
 
-    ::membershipSettingsFingerprint.hookMethod {
+    MembershipSettingsFingerprint.hookMethod {
         before {
             if (HideAdsPatch.hideGetPremiumLabel()) it.result = null
         }

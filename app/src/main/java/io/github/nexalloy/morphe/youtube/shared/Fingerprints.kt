@@ -102,6 +102,35 @@ internal object PlaybackSpeedOnItemClickParentFingerprint : Fingerprint(
     }
 )
 
+internal object SpeedLimiterParentFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("L"),
+    filters = listOf(
+        string("Playback rate: %f"),
+        literal(0.25f),
+        literal(4.0f),
+    )
+)
+
+internal object SpeedLimiterFingerprint : Fingerprint(
+    classFingerprint = SpeedLimiterParentFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    filters = listOf(
+        literal(0.25f),
+        literal(4.0f),
+        methodCall(
+            opcode = Opcode.INVOKE_INTERFACE,
+            parameters = listOf("F"),
+            returnType = "V"
+        )
+    ),
+//    custom = { method, _ ->
+//        method.parameterTypes.firstOrNull() == "F"
+//    }
+)
+
 val videoQualityChangedFingerprint = fingerprint {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
     opcodes(

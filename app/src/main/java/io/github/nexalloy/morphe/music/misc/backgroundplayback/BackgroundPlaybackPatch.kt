@@ -7,6 +7,6 @@ val BackgroundPlayback = patch(
     name = "Remove background playback restrictions",
     description = "Removes restrictions on background playback, including playing kids videos in the background.",
 ) {
-    ::backgroundPlaybackDisableFingerprint.hookMethod(XC_MethodReplacement.returnConstant(true))
-    ::kidsBackgroundPlaybackPolicyControllerFingerprint.hookMethod(XC_MethodReplacement.DO_NOTHING)
+    BackgroundPlaybackDisableFingerprint.hookMethod(XC_MethodReplacement.returnConstant(true))
+    KidsBackgroundPlaybackPolicyControllerFingerprint.hookMethod(XC_MethodReplacement.DO_NOTHING)
 }

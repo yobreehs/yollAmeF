@@ -13,6 +13,8 @@ import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_34_or_greater
 import io.github.nexalloy.morphe.youtube.misc.recyclerviewtree.addRecyclerViewTreeHook
 import io.github.nexalloy.morphe.youtube.misc.recyclerviewtree.recyclerViewTreeHook
+import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterFingerprint
+import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterParentFingerprint
 import io.github.nexalloy.morphe.youtube.video.speed.settingsMenuVideoSpeedGroup
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
@@ -36,12 +38,19 @@ val CustomPlaybackSpeed = patch(
     )
 
     // Override the min/max speeds that can be used.
-    ::speedLimiterFingerprint.hookMethod(scopedHook(::clampFloatFingerprint.member) {
-        before {
-            it.args[1] = 0.0f
-            it.args[2] = 8.0f
-        }
-    })
+    setOf(
+        SpeedLimiterFingerprint,
+        SpeedLimiterParentFingerprint
+    ).forEach { fingerprint ->
+        fingerprint.hookMethod(scopedHook(::clampFloatFingerprint.member) {
+            before {
+                if (it.args[1] == 0.25f && it.args[2] == 4.0f){
+                    it.args[1] = 0.0f
+                    it.args[2] = 8.0f
+                }
+            }
+        })
+    }
 
     // Turn off client side flag that use server provided min/max speeds.
     if (is_20_34_or_greater) {

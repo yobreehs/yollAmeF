@@ -10,6 +10,7 @@ import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.parameters
 import io.github.nexalloy.morphe.returns
+import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterFingerprint
 
 internal val speedArrayGeneratorFingerprint = fingerprint {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.STATIC)
@@ -34,38 +35,8 @@ internal object ServerSideMaxSpeedFeatureFlagFingerprint : Fingerprint(
     )
 )
 
-internal val speedLimiterFingerprint = findMethodDirect {
-    runCatching {
-        fingerprint {
-            accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-            returns("V")
-            parameters("F")
-            opcodes(
-                Opcode.INVOKE_STATIC,
-                Opcode.MOVE_RESULT,
-                Opcode.IF_EQZ,
-                Opcode.CONST_HIGH16,
-                Opcode.GOTO,
-                Opcode.CONST_HIGH16,
-                Opcode.CONST_HIGH16,
-                Opcode.INVOKE_STATIC,
-            )
-        }
-    }.getOrElse {
-        fingerprint {
-            strings("setPlaybackRate")
-            methodMatcher {
-                addInvoke {
-                    parameters("F", "F", "F")
-                    returns("F")
-                }
-            }
-        }
-    }
-}
-
 val clampFloatFingerprint = findMethodDirect {
-    speedLimiterFingerprint().invokes.findMethod {
+    SpeedLimiterFingerprint().invokes.findMethod {
         matcher {
             parameters("F", "F", "F")
             returns("F")

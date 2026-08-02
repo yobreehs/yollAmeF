@@ -12,6 +12,7 @@ import io.github.nexalloy.morphe.shared.misc.litho.context.conversionContextPatc
 import io.github.nexalloy.morphe.shared.misc.textcomponent.hookSpannableString
 import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
 import io.github.nexalloy.morphe.youtube.shared.InitializePlaybackSpeedValuesFingerprint
+import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
 import io.github.nexalloy.morphe.youtube.video.playerresponse.Hook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.PlayerResponseMethodHook
@@ -186,9 +187,18 @@ val VideoInformationPatch = patch(
         }
     }
 
-    /*
-     * Hook the user playback speed selection.
-     */
+    // region Hook the user playback speed selection.
+
+    // SetPlaybackSpeedFormattedStringFingerprint
+    // formattedSpeedStringInsertMethodRef
+    // extension custom change
+
+    SpeedLimiterFingerprint.hookMethod {
+        before { param ->
+            videoSpeedChangedHook.forEach { it(param.args[0] as Float) }
+        }
+    }
+
     setPlaybackSpeedMethod = ::setPlaybackSpeedMethodReference.method
 
     ::setPlaybackSpeedMethodReference.hookMethod {
@@ -205,7 +215,6 @@ val VideoInformationPatch = patch(
             val speed = param.args[0] as Float
             Logger.printDebug { "onPlaybackSpeedItemClickFingerprint: ${speed}" }
             onUserSelectedPlaybackSpeed(speed)
-            videoSpeedChangedHook.forEach { it(speed) }
         }
     })
 
@@ -222,13 +231,14 @@ val VideoInformationPatch = patch(
         }
     }
 
+    // endregion.
+
     // region Handle new playback speed menu.
     ::playbackSpeedMenuSpeedChangedFingerprint.hookMethod(scopedHook(::setPlaybackSpeedMethodReference.member) {
         before { param ->
             val speed = param.args[0] as Float
             Logger.printDebug { "Playback speed menu speed changed: ${speed}" }
             onUserSelectedPlaybackSpeed(speed)
-            videoSpeedChangedHook.forEach { it(speed) }
         }
     })
 
