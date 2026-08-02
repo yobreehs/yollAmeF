@@ -40,7 +40,11 @@ jobs:
 
     - run: |
         cd app/build/outputs/apk/release/
-        mv app-release.apk NexAlloy-${{ github.ref_name }}.apk
-        gh release create --prerelease ${{ github.ref_name }} NexAlloy-${{ github.ref_name }}.apk
+        mv app-release.apk FemAlloy-${{ github.ref_name }}.apk
+        if gh release view ${{ github.ref_name }} >/dev/null 2>&1; then
+          gh release upload ${{ github.ref_name }} FemAlloy-${{ github.ref_name }}.apk --clobber
+        else
+          gh release create ${{ github.ref_name }} FemAlloy-${{ github.ref_name }}.apk --generate-notes
+        fi
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
