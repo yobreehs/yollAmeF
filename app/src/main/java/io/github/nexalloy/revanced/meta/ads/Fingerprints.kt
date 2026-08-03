@@ -6,10 +6,7 @@ import io.github.nexalloy.morphe.strings
 val adInjectorFingerprint = findMethodDirect {
     findMethod {
         matcher {
-            returnType = "void"
-            strings(
-                "SponsoredContentController.processValidatedContent",
-            )
+            strings("Is ad pod")
         }
     }.single()
 }
