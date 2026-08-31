@@ -4,21 +4,18 @@ import android.app.Application
 import app.morphe.extension.shared.ResourceType
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
-import de.robv.android.xposed.IXposedHookLoadPackage
-import de.robv.android.xposed.IXposedHookZygoteInit
-import de.robv.android.xposed.IXposedHookZygoteInit.StartupParam
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
+import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
 import io.github.nexalloy.common.UpdateChecker
 import io.github.nexalloy.morphe.ResourceFinder
 import io.github.nexalloy.morphe.resourceMappings
 
-class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
-    lateinit var startupParam: StartupParam
-    lateinit var lpparam: LoadPackageParam
+class MainHook : XposedModule() {
+    lateinit var param: PackageReadyParam
     lateinit var app: Application
     var targetPackageName: String? = null
 
@@ -28,14 +25,19 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         return targetPackageName == packageName
     }
 
-    override fun handleLoadPackage(lpparam: LoadPackageParam) {
-        if (!lpparam.isFirstApplication) return
-        if (!shouldHook(lpparam.packageName)) return
-        this.lpparam = lpparam
+    override fun onModuleLoaded(param: XposedModuleInterface.ModuleLoadedParam) {
+        modulePath = moduleApplicationInfo.sourceDir
+    }
 
-        inContext(lpparam) { app ->
+    override fun onPackageReady(param: PackageReadyParam) {
+        if (!param.isFirstPackage) return
+        if (!shouldHook(param.packageName)) return
+        this.param = param
+        XposedBridge.register(this)
+
+        inContext(param) { app ->
             this.app = app
-            if (isReVancedPatched(lpparam)) {
+            if (isReVancedPatched(param)) {
                 Utils.showToastLong("NexAlloy module does not work with patched app")
                 return@inContext
             }
@@ -48,42 +50,39 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
                 }
             }
 
-            val patches = patchesByPackage[lpparam.packageName] ?: return@inContext
-            PatchExecutor(app, lpparam).applyPatches(patches)
+            val patches = patchesByPackage[param.packageName] ?: return@inContext
+            PatchExecutor(app, param, this).applyPatches(patches)
         }
     }
 
-    private fun isReVancedPatched(lpparam: LoadPackageParam): Boolean {
+    private fun isReVancedPatched(param: PackageReadyParam): Boolean {
         return runCatching {
-            lpparam.classLoader.loadClass("app.morphe.extension.shared.Utils")
+            param.classLoader.loadClass("app.morphe.extension.shared.Utils")
         }.isSuccess || runCatching {
-            lpparam.classLoader.loadClass("app.morphe.extension.shared.utils.Utils")
+            param.classLoader.loadClass("app.morphe.extension.shared.utils.Utils")
         }.isSuccess || runCatching {
-            lpparam.classLoader.loadClass("app.revanced.integrations.shared.Utils")
+            param.classLoader.loadClass("app.revanced.integrations.shared.Utils")
         }.isSuccess || runCatching {
-            lpparam.classLoader.loadClass("app.revanced.integrations.shared.utils.Utils")
+            param.classLoader.loadClass("app.revanced.integrations.shared.utils.Utils")
         }.isSuccess
     }
 
-    override fun initZygote(startupParam: StartupParam) {
-        this.startupParam = startupParam
-        XposedInit = startupParam
-    }
 }
 
-fun inContext(lpparam: LoadPackageParam, f: (Application) -> Unit) {
-    val appClazz = XposedHelpers.findClass(lpparam.appInfo.className, lpparam.classLoader)
-    XposedBridge.hookMethod(appClazz.getMethod("onCreate"), object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-            val app = param.thisObject as Application
+context(xposed: XposedInterface)
+fun inContext(lpparam: PackageReadyParam, f: (Application) -> Unit) {
+    val appClazz = XposedHelpers.findClass(lpparam.applicationInfo.className, lpparam.classLoader)
+    appClazz.getMethod("onCreate").hookMethod {
+        before {
+            val app = it.thisObject as Application
             Utils.setContext(app)
             f(app)
-            if (XposedInit.modulePath.startsWith("/data/app/")) {
-                val prefs = XSharedPreferences(BuildConfig.APPLICATION_ID, "prefs")
-                if (!prefs.file.canRead() || !prefs.getBoolean("disable_auto_check_update", false)) {
+            if (modulePath.startsWith("/data/app/")) {
+                val prefs = xposed.getRemotePreferences("prefs")
+                if (!prefs.getBoolean("disable_auto_check_update", false)) {
                     UpdateChecker().hookNewActivity()
                 }
             }
         }
-    })
+    }
 }

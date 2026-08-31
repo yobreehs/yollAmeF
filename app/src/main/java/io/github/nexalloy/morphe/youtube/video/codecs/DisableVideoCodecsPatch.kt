@@ -2,7 +2,6 @@ package io.github.nexalloy.morphe.youtube.video.codecs
 
 import app.morphe.extension.youtube.patches.DisableVideoCodecsPatch
 import app.morphe.extension.youtube.settings.Settings
-import io.github.nexalloy.invokeOriginalMethod
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch

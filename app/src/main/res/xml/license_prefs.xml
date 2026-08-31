@@ -60,5 +60,13 @@
                 android:action="android.intent.action.VIEW"
                 android:data="https://github.com/kittinunf/fuel" />
         </Preference>
+        <Preference
+            android:layout_height="wrap_content"
+            android:summary="GNU General Public License v3.0, Copyright (C) 2021 LSPosed Contributors"
+            android:title="LSPosed">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://github.com/LSPosed/LSPosed" />
+        </Preference>
     </PreferenceScreen>
 </PreferenceScreen>

@@ -9,9 +9,7 @@ import app.morphe.extension.shared.Utils
 import app.morphe.extension.shared.settings.preference.ImportExportPreference
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
 import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
 import io.github.nexalloy.R
-import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
@@ -62,16 +60,18 @@ val SettingsHook = patch(
         )
     )
 
-    val superOnCreate =
+    val superOnCreateMethod =
         Activity::class.java.getDeclaredMethod("onCreate", Bundle::class.java)
-    superOnCreate.hookMethod { }
+
+    val superOnCreate = xposed.getInvoker(superOnCreateMethod)
+
     ::googleApiActivityFingerprint.hookMethod {
         before { param ->
             val activity = param.thisObject as Activity
             activity.setTheme(ResourceUtils.getStyleIdentifier("@style/Theme.YouTubeMusic"))
             MusicActivityHook.initialize(activity)
             activity.theme.applyStyle(R.style.ListDividerNull, true)
-            XposedBridge.invokeOriginalMethod(superOnCreate, param.thisObject, param.args)
+            superOnCreate.invokeSpecial(param.thisObject, *param.args)
             param.result = Unit
         }
     }

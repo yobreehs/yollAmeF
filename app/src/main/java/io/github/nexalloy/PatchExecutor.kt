@@ -12,11 +12,11 @@ import android.webkit.WebView
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedInterface.Hooker
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.nexalloy.BuildConfig.DEBUG
 import io.github.nexalloy.morphe.Fingerprint
 import org.luckypray.dexkit.DexKitBridge
@@ -55,11 +55,11 @@ class Patch(
     val run: PatchExecutor.() -> Unit
 )
 
-interface IHook {
-    val classLoader: ClassLoader
+abstract class IHook(val xposed: XposedInterface) : XposedInterface by xposed {
+    abstract val classLoader: ClassLoader
 
-    fun DexMethod.hookMethod(callback: XC_MethodHook) {
-        XposedBridge.hookMethod(toMember(), callback)
+    fun DexMethod.hookMethod(callback: Hooker) {
+        toMember().hookMethod(callback)
     }
 
     fun DexMethod.hookMethod(block: HookDsl<IHookCallback>.() -> Unit) {
@@ -94,6 +94,8 @@ interface IHook {
     }
 
     fun DexField.toField() = getFieldInstance(classLoader)
+
+    override fun getApiVersion(): Int = xposed.apiVersion
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -143,15 +145,17 @@ class DependedHookFailedException(
 ) : Exception("Depended hook $subHookName failed.", exception)
 
 @SuppressLint("CommitPrefEdits")
-class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) : IHook {
-    override val classLoader = lpparam.classLoader!!
+class PatchExecutor(
+    val appContext: Application,
+    val lpparam: XposedModuleInterface.PackageReadyParam,
+    xposed: XposedInterface
+) : IHook(xposed) {
+    override val classLoader = lpparam.classLoader
 
     /**
      * @see io.github.nexalloy.activity.AppPatchSettingsActivity.AppPatchSettingsFragment.onCreate
      * */
-    private val patchPreferences = XSharedPreferences(
-        BuildConfig.APPLICATION_ID, lpparam.packageName
-    ).takeIf { it.file.canRead() }
+    private val patchPreferences = xposed.getRemotePreferences(lpparam.packageName)
 
     private lateinit var patches: Array<Patch>
     private val appliedPatches = mutableSetOf<Patch>()
@@ -163,7 +167,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
     private var dexkit = run {
         System.loadLibrary("dexkit")
         DexKitCacheBridge.init(cache)
-        DexKitCacheBridge.create("", lpparam.appInfo.sourceDir)
+        DexKitCacheBridge.create("", lpparam.applicationInfo.sourceDir)
     }
 
     fun applyPatches(patches: Array<Patch>) {
@@ -223,7 +227,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
         cache.saveCache()
         val success = failedPatches.isEmpty()
         if (!success) {
-            XposedBridge.log("${lpparam.appInfo.packageName} version: ${getAppVersion()}")
+            XposedBridge.log("${lpparam.applicationInfo.packageName} version: ${getAppVersion()}")
             Utils.showToastLong("Error while apply following patches:\n${failedPatches.joinToString { it.name }}")
         }
     }
@@ -231,7 +235,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
     private fun logDebugInfo() {
         val success = failedPatches.isEmpty()
         if (DEBUG) {
-            XposedBridge.log("${lpparam.appInfo.packageName} version: ${getAppVersion()}")
+            XposedBridge.log("${lpparam.applicationInfo.packageName} version: ${getAppVersion()}")
             if (success) {
                 Utils.showToastLong("apply patches success")
             }
@@ -279,7 +283,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
         dexMethod.hookMethod(block)
     }
 
-    fun KProperty0<FindMethodFunc>.hookMethod(callback: XC_MethodHook) {
+    fun KProperty0<FindMethodFunc>.hookMethod(callback: Hooker) {
         dexMethod.hookMethod(callback)
     }
 
@@ -313,7 +317,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
         getDexMethod(cacheKey) { this@hookMethod.run() }.hookMethod(block)
     }
 
-    fun Fingerprint.hookMethod(callback: XC_MethodHook) {
+    fun Fingerprint.hookMethod(callback: Hooker) {
         getDexMethod(cacheKey) { this@hookMethod.run() }.hookMethod(callback)
     }
 

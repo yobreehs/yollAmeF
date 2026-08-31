@@ -13,11 +13,11 @@ import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.Utils
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import fuel.Fuel
 import fuel.get
 import io.github.nexalloy.BuildConfig
+import io.github.nexalloy.hookMethod
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,26 +68,29 @@ class UpdateChecker() : CoroutineScope {
     private lateinit var latestVersionInfo: VersionInfo
     private lateinit var latestRelease: ReleaseInfo
 
-    lateinit var unhook: XC_MethodHook.Unhook
+    var runOnce = false
 
     fun setActivity(activity: Activity) {
         currentActivity = WeakReference(activity)
     }
 
     fun hookNewActivity() {
-        unhook = XposedHelpers.findAndHookMethod(
+
+        XposedHelpers.findMethodExact(
             Instrumentation::class.java,
             "newActivity",
             ClassLoader::class.java,
             String::class.java,
-            Intent::class.java,
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    currentActivity = WeakReference(param.result as Activity)
+            Intent::class.java
+        ).hookMethod {
+            after {
+                if (!runOnce) {
+                    runOnce = true
+                    currentActivity = WeakReference(it.result as Activity)
                     autoCheckUpdate()
-                    unhook.unhook()
                 }
-            })
+            }
+        }
     }
 
     fun autoCheckUpdate() {

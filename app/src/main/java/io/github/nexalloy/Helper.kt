@@ -8,10 +8,10 @@ import android.os.ParcelFileDescriptor
 import androidx.annotation.RequiresApi
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.Utils
-import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
+import io.github.libxposed.api.XposedInterface.Hooker
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Member
@@ -32,7 +32,7 @@ class HookDsl<TCallback>(emptyCallback: TCallback) {
     }
 }
 
-fun Member.hookMethod(cb: XC_MethodHook) {
+fun Member.hookMethod(cb: Hooker) {
     XposedBridge.hookMethod(this, cb)
 }
 
@@ -84,25 +84,26 @@ class ScopedHook : XC_MethodHook() {
         crossinline before: IScopedHookCallback,
         crossinline after: IScopedHookCallback
     ) {
-        XposedBridge.hookMethod(hookMethod, object : XC_MethodHook() {
-            override fun beforeHookedMethod(param: MethodHookParam) {
-                val outerParam = outerParam.get() ?: return
+        hookMethod.hookMethod {
+            before {
+                val outerParam = outerParam.get() ?: return@before
                 val depth = innerDepth.get() ?: 0
                 innerDepth.set(depth + 1)
-                before(ScopedHookParam(outerParam, depth), param)
+                before(ScopedHookParam(outerParam, depth), it)
             }
 
-            override fun afterHookedMethod(param: MethodHookParam) {
-                val outerParam = outerParam.get() ?: return
+            after {
+                val outerParam = outerParam.get() ?: return@after
                 val depth = ((innerDepth.get() ?: 0) - 1).coerceAtLeast(0)
                 innerDepth.set(depth)
                 try {
-                    after(ScopedHookParam(outerParam, depth), param)
+                    after(ScopedHookParam(outerParam, depth), it)
                 } finally {
                     if (depth == 0) innerDepth.remove()
                 }
             }
-        })
+
+        }
     }
 
     val outerParam: ThreadLocal<MethodHookParam> = ThreadLocal<MethodHookParam>()
@@ -119,11 +120,11 @@ class ScopedHook : XC_MethodHook() {
     }
 }
 
-lateinit var XposedInit: IXposedHookZygoteInit.StartupParam
+lateinit var modulePath: String
 
 private val resourceLoader by lazy @RequiresApi(Build.VERSION_CODES.R) {
     val fileDescriptor = ParcelFileDescriptor.open(
-        File(XposedInit.modulePath), ParcelFileDescriptor.MODE_READ_ONLY
+        File(modulePath), ParcelFileDescriptor.MODE_READ_ONLY
     )
     val provider = ResourcesProvider.loadFromApk(fileDescriptor)
     val loader = ResourcesLoader()
@@ -132,7 +133,7 @@ private val resourceLoader by lazy @RequiresApi(Build.VERSION_CODES.R) {
 }
 
 fun Context.addModuleAssets() {
-    val modulePath = File(XposedInit.modulePath)
+    val modulePath = File(modulePath)
     if (!modulePath.exists()) {
         Utils.showToastLong("NexAlloy has been updated")
         Utils.restartApp(this)
@@ -143,7 +144,7 @@ fun Context.addModuleAssets() {
         return
     }
 
-    resources.assets.callMethod("addAssetPath", XposedInit.modulePath)
+    resources.assets.callMethod("addAssetPath", modulePath)
 }
 
 // Module layouts (e.g. morphe_sb_inline_sponsor_overlay.xml) reference module classes
