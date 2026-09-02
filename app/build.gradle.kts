@@ -77,7 +77,7 @@ android {
     packaging {
         resources {
             merges += "META-INF/xposed/*"
-            excludes += "**"
+//            excludes += "**"
         }
     }
 

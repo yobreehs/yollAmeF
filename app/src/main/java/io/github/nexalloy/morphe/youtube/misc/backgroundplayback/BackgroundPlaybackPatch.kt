@@ -6,6 +6,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreferenc
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_29_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_49_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_04_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_15_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_21_or_greater
@@ -45,6 +46,11 @@ val BackgroundPlayback = patch(
     // and the app was subsequently brought to the foreground.
     if (is_21_15_or_greater) {
         insertLiteralOverride(45770945L, BackgroundPlaybackPatch::isAutomaticForegroundPlaybackAllowed)
+    }
+
+    // Prevents playback from pausing when the overlay video settings is invoked.
+    if (is_20_49_or_greater) {
+        insertLiteralOverride(45741823L, BackgroundPlaybackPatch::isAutomaticPlaybackPauseInFlyout)
     }
 
     // Force allowing background play for Shorts.

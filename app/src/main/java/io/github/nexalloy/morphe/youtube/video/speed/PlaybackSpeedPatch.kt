@@ -2,8 +2,7 @@ package io.github.nexalloy.morphe.youtube.video.speed
 
 import app.morphe.extension.shared.settings.preference.NoTitlePreferenceCategory
 import app.morphe.extension.youtube.patches.VideoInformation
-import de.robv.android.xposed.XC_MethodReplacement
-import io.github.nexalloy.hookMethod
+import io.github.nexalloy.morphe.setExtensionIsPatchIncluded
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
@@ -29,8 +28,8 @@ val PlaybackSpeed = patch(
         RememberPlaybackSpeed,
         PlaybackSpeedButton,
     )
-    VideoInformation::class.java.getDeclaredMethod("isPatchIncluded").hookMethod(
-        XC_MethodReplacement.returnConstant(true))
+
+    setExtensionIsPatchIncluded(VideoInformation::class.java)
 
     PreferenceScreen.VIDEO.addPreferences(
         PreferenceCategory(

@@ -15,6 +15,7 @@ import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_28_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_30_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_31_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_05_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
@@ -181,6 +182,10 @@ val LegacyPlayerControls = patch(
     DexMethod("Landroidx/constraintlayout/widget/ConstraintLayout;->onLayout(ZIIII)V").hookMethod(
         onLayoutHook
     )
+
+    if (is_21_05_or_greater) {
+        insertLiteralOverride(45750838L, LegacyPlayerControlsPatch::useModernPlayerTopControls)
+    }
 
     // TODO Addon
 }

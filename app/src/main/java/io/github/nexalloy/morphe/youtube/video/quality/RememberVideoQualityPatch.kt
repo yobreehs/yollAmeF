@@ -4,6 +4,7 @@ import app.morphe.extension.youtube.patches.playback.quality.RememberVideoQualit
 import io.github.nexalloy.getIntField
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityReceiver
 import io.github.nexalloy.morphe.youtube.shared.videoQualityChangedFingerprint
@@ -76,4 +77,8 @@ val RememberVideoQuality = patch {
             RememberVideoQualityPatch.userChangedQuality(selectedQualityIndex)
         }
     })
+
+    // If this flag is enabled, Shorts restart whenever the quality changes.
+    insertLiteralOverride(45387052)
+    insertLiteralOverride(45399743)
 }

@@ -8,7 +8,6 @@ import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.fingerprint
-import io.github.nexalloy.morphe.parameters
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.resourceMappings
 import io.github.nexalloy.morphe.returns
@@ -90,16 +89,12 @@ val pivotBarButtonsCreateDrawableViewFingerprint = findMethodDirect {
     }
 }
 
-object PivotBarButtonsCreateResourceViewFingerprint : Fingerprint(
+object PivotBarButtonsCreateResourceStyledViewFingerprint : Fingerprint(
     definingClass = "Lcom/google/android/libraries/youtube/rendering/ui/pivotbar/PivotBar;",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "Landroid/view/View;",
     parameters = listOf("L", "Z", "I", "L")
 )
-
-// fun indexOfSetViewSelectedInstruction(method: Method) = method.indexOfFirstInstruction {
-//    opcode == Opcode.INVOKE_VIRTUAL && getReference<MethodReference>()?.name == "setSelected"
-//}
 
 val pivotBarButtonsViewSetSelectedFingerprint = fingerprint {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)

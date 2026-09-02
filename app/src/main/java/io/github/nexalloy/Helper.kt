@@ -13,11 +13,41 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import io.github.libxposed.api.XposedInterface.Hooker
 import java.io.File
+import java.lang.ref.WeakReference
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Member
+import java.util.WeakHashMap
 
 typealias IScopedHookCallback = ScopedHookParam.(MethodHookParam) -> Unit
 typealias IHookCallback = (MethodHookParam) -> Unit
+
+private val proxyRef = WeakHashMap<Any, Any>()
+/*
+ * Bind a proxy to the implement's lifecycle via WeakHashMap.
+ *
+ *
+ * Do not hold a strong reference to `impl` inside the proxy!
+ * It will create a strong-reference loop and cause memory leaks.
+ *
+ * See Implementation note https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/WeakHashMap.html
+ * */
+internal fun <TImpl> TImpl.bindProxy(proxy: Any) {
+    synchronized(proxyRef) {
+        proxyRef[this] = proxy
+    }
+}
+
+/*
+ * Creates a GC-safe proxy bound to the implement's lifecycle via WeakHashMap.
+ *
+ * WARN: Capturing the host instance directly in the closure will create a strong-reference loop and cause memory leaks.
+ * */
+internal inline fun <reified TProxy: Any, TImpl> TImpl.createProxy(crossinline createProxy: (impl: WeakReference<TImpl>) -> TProxy): TProxy {
+    val hostRef = WeakReference(this)
+    val proxy = createProxy(hostRef)
+    this.bindProxy(proxy)
+    return proxy
+}
 
 class HookDsl<TCallback>(emptyCallback: TCallback) {
     var before: TCallback = emptyCallback

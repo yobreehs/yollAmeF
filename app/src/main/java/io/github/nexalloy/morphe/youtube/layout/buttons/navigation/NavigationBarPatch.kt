@@ -56,6 +56,8 @@ val NavigationBar = patch(
 
     // Swap create with notifications button.
     // TODO Morphe uses addOSNameHook(Endpoint.GUIDE, ...) which depends on clientContextHookPatch.
+    // setExtensionIsPatchIncluded(NavigationBarPatch::class.java)
+
     // Alternative: scopedHook on AutoMotiveFeatureMethod.
     ::addCreateButtonViewFingerprint.hookMethod(scopedHook(::AutoMotiveFeatureMethod.member) {
         before { param ->

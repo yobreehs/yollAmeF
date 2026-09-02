@@ -5,6 +5,8 @@ import app.morphe.extension.youtube.patches.VideoInformation
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
+import io.github.nexalloy.bindProxy
+import io.github.nexalloy.createProxy
 import io.github.nexalloy.findFirstFieldByExactType
 import io.github.nexalloy.getStaticObjectField
 import io.github.nexalloy.hookMethod
@@ -61,11 +63,11 @@ class PlaybackController(
     private val getVideoTime: Method,
     val seekSourceNone: Any
 ) : VideoInformation.PlaybackController {
-    val obj = WeakReference(obj)
-
     init {
-        XposedHelpers.setAdditionalInstanceField(obj, "patch_controller", this)
+        obj.bindProxy(this)
     }
+
+    val obj = WeakReference(obj)
 
     override fun patch_seekTo(videoTime: Long): Boolean {
         return seekTo(obj.get(), videoTime, seekSourceNone) as Boolean
@@ -83,13 +85,16 @@ class PlaybackController(
 val playerControllerFieldName = "playerController"
 
 class PlaybackSpeedMenu(
-    obj: Any
+    menu: Any
 ) : VideoInformation.PlaybackSpeedMenuInterface {
+    val controller = WeakReference(XposedHelpers.getAdditionalInstanceField(menu, playerControllerFieldName))
 
-    val playerController = XposedHelpers.getAdditionalInstanceField(obj, playerControllerFieldName)
+    init {
+        menu.bindProxy(this)
+    }
 
     override fun patch_setSpeed(speed: Float) {
-        setPlaybackSpeedMethod(playerController, speed)
+        setPlaybackSpeedMethod(controller.get(), speed)
     }
 }
 
@@ -222,13 +227,13 @@ val VideoInformationPatch = patch(
     InitializePlaybackSpeedValuesFingerprint.declaredClass.constructors[0].hookMethod {
         val playerControllerClass = ::PlayerControllerClass.clazz
         after {
-            VideoInformation.setPlaybackSpeedMenu(PlaybackSpeedMenu(it.thisObject))
             val c = it.args.first { it.javaClass == playerControllerClass }
             XposedHelpers.setAdditionalInstanceField(
                 it.thisObject,
                 playerControllerFieldName,
                 c
             )
+            VideoInformation.setPlaybackSpeedMenu(PlaybackSpeedMenu(it.thisObject))
         }
     }
 
@@ -330,9 +335,16 @@ val VideoInformationPatch = patch(
 
     exoPlayerClass.constructors.single().hookMethod {
         before {
-            VideoInformation.initializeExoPlayerImpl { f, f1 ->
-                setPlaybackParametersMethod(it.thisObject, playbackParametersClass.new(f, f1))
-            }
+            VideoInformation.initializeExoPlayerImpl(
+                it.thisObject.createProxy { impl ->
+                    VideoInformation.ExoPlayerImpl { speed, pitch ->
+                        setPlaybackParametersMethod(
+                            impl.get(),
+                            playbackParametersClass.new(speed, pitch)
+                        )
+                    }
+                }
+            )
         }
     }
 

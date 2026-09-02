@@ -2,7 +2,6 @@
 
 package io.github.nexalloy.morphe.youtube.layout.hide.general
 
-import android.support.v7.widget.RecyclerView
 import android.view.View
 import app.morphe.extension.shared.ResourceUtils.getDimenIdentifier
 import app.morphe.extension.shared.ResourceUtils.getIdIdentifier
@@ -31,6 +30,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScree
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
 import io.github.nexalloy.morphe.youtube.misc.engagement.EngagementPanelHook
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
@@ -87,16 +87,13 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_explore_podcast_section"),
                 SwitchPreference("morphe_hide_featured_channels_section"),
                 SwitchPreference("morphe_hide_featured_links_section"),
-                SwitchPreference("morphe_hide_featured_places_section"),
                 SwitchPreference("morphe_hide_featured_playlists_section"),
                 SwitchPreference("morphe_hide_featured_videos_section"),
-                SwitchPreference("morphe_hide_gaming_section"),
                 SwitchPreference("morphe_hide_hashtag_section"),
                 SwitchPreference("morphe_hide_how_this_was_made_section"),
                 SwitchPreference("morphe_hide_hype_points"),
                 SwitchPreference("morphe_hide_info_cards_section"),
                 SwitchPreference("morphe_hide_key_concepts_section"),
-                SwitchPreference("morphe_hide_music_section"),
                 SwitchPreference("morphe_hide_quizzes_section"),
                 SwitchPreference("morphe_hide_search_inside_this_video_section"),
                 SwitchPreference("morphe_hide_subscribe_button"),
@@ -136,6 +133,7 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_comments_preview_comment", summary = true),
                 SwitchPreference("morphe_hide_comments_thanks_button"),
                 SwitchPreference("morphe_hide_comments_timestamp_button"),
+                SwitchPreference("morphe_hide_comments_top_fans_button"),
 //                SwitchPreference("morphe_sanitize_comments_highlighted_search_links", summary = true)
             ),
             sorting = Sorting.UNSORTED
@@ -196,10 +194,10 @@ val HideLayoutComponents = patch(
             key = "morphe_hide_keyword_content_screen",
             sorting = Sorting.UNSORTED,
             preferences = setOf(
-                SwitchPreference("morphe_hide_keyword_content_home"),
-                SwitchPreference("morphe_hide_keyword_content_subscriptions"),
-                SwitchPreference("morphe_hide_keyword_content_search"),
                 SwitchPreference("morphe_hide_keyword_content_comments"),
+                SwitchPreference("morphe_hide_keyword_content_home"),
+                SwitchPreference("morphe_hide_keyword_content_search"),
+                SwitchPreference("morphe_hide_keyword_content_subscriptions"),
                 TextPreference("morphe_hide_keyword_content_phrases", inputType = InputType.TEXT_MULTI_LINE),
                 PreferenceCategory(
                     key = "morphe_hide_keyword_content_stats_category",
@@ -288,6 +286,7 @@ val HideLayoutComponents = patch(
         PreferenceScreenPreference(
             key = "morphe_hide_filter_bar_screen",
             preferences = setOf(
+                SwitchPreference("morphe_hide_filter_bar_in_channel_page"),
                 SwitchPreference("morphe_hide_filter_bar_in_comments"),
                 SwitchPreference("morphe_hide_filter_bar_in_feed"),
                 SwitchPreference("morphe_hide_filter_bar_in_related_videos"),
@@ -308,6 +307,7 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_community_button"),
                 SwitchPreference("morphe_hide_join_button"),
                 SwitchPreference("morphe_hide_links_preview", summary = true),
+                SwitchPreference("morphe_hide_members_only_chip", summary = true),
                 SwitchPreference("morphe_hide_members_shelf", summary = true),
                 SwitchPreference("morphe_hide_posts_shelf"),
                 SwitchPreference("morphe_hide_store_button"),
@@ -375,11 +375,9 @@ val HideLayoutComponents = patch(
 //        SwitchPreference("morphe_hide_youtube_doodles", summary = true),
     )
 
-//    if (is_20_21_or_greater) {
-//        PreferenceScreen.FEED.addPreferences(
-//            SwitchPreference("morphe_hide_you_may_like_section")
-//        )
-//    }
+//    PreferenceScreen.FEED.addPreferences(
+//        SwitchPreference("morphe_hide_you_may_like_section")
+//    )
 
     PreferenceScreen.GENERAL.addPreferences(
         PreferenceScreenPreference(
@@ -468,13 +466,17 @@ val HideLayoutComponents = patch(
     // dimen.bar_container_height
 
     // id.related_chip_cloud
-    // TODO
+
+
+    // fix: related video overlay is broken due to patch.
+    insertLiteralOverride(45614162L, LayoutComponentsFilter::hideInRelatedVideos)
+    insertLiteralOverride(45661108L, LayoutComponentsFilter::hideInRelatedVideos)
+
+    // TODO PanelSubheaderFingerprint
 
     // endregion
 
     // TODO hide you may like section — SearchSuggestionEndpoint/SearchBoxTypingString METHOD_MID (complex helper)
-
-    // TODO PanelSubheaderFingerprint
 
     // region TODO hide flyout menu
 /*
@@ -557,7 +559,7 @@ val HideLayoutComponents = patch(
             when (id) {
                 parent_container -> LayoutComponentsFilter.hideSubscribedChannelsBar(view)
                 information_button -> CommentsFilter.hideCommentsInfoButton(view)
-                related_chip_cloud -> LayoutComponentsFilter.hideInRelatedVideos(view as RecyclerView)
+                related_chip_cloud -> LayoutComponentsFilter.hideInRelatedVideos(view)
                 thumbnail_and_emoji_picker_container -> CommentsFilter.hideLiveChatEmojiButton(view)
                 inline_extra_buttons_container -> CommentsFilter.hideLiveChatThanksButton(view)
                 jewels_button_container -> CommentsFilter.hideLiveChatGiftButton(view)

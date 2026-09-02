@@ -1,19 +1,18 @@
 package io.github.nexalloy.morphe.youtube.ad
 
 import android.view.View
-import app.morphe.extension.music.patches.HideAdsPatch
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.youtube.patches.components.AdsFilter
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import io.github.nexalloy.morphe.shared.ad.HideFullscreenAds
+import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.layout.hide.general.HideHorizontalShelves
 import io.github.nexalloy.morphe.youtube.misc.engagement.EngagementPanelHook
 import io.github.nexalloy.morphe.youtube.misc.engagement.addEngagementPanelIdHook
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
-import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
@@ -60,6 +59,8 @@ val HideAds = patch(
             }
         }
     }
+
+    // TODO BuildClientContextBody
 
     // TODO: Hide YouTube Premium promotions
 
@@ -111,10 +112,8 @@ val HideAds = patch(
 
     // TODO Hide paid promotion label in miniplayer
 
-    /**
-     * TODO [AdsFilter.hideAds] OsNameHook
-     */
-    /**
-     * TODO [AdsFilter.hideVideoAds] OsNameHook
-     */
+    // TODO [AdsFilter.hideAds] OsNameHook
+    // TODO [AdsFilter.hideVideoAds] OsNameHook
+    // TODO [AdsFilter.overrideGuideOSName] OsNameHook
+
 }
