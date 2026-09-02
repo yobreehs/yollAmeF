@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.youtube.interaction.swipecontrols
 
+import android.view.View
 import app.morphe.extension.shared.settings.preference.ColorPickerWithOpacitySliderPreference
 import app.morphe.extension.shared.settings.preference.SeekBarPreference
 import app.morphe.extension.youtube.settings.preference.SwipeZonePreference
@@ -33,9 +34,21 @@ val SwipeControls = patch(
 //    }
 
     PreferenceScreen.SWIPE_CONTROLS.addPreferences(
-        SwitchPreference("morphe_swipe_brightness", summary = true),
-        SwitchPreference("morphe_swipe_volume", summary = true),
-        SwitchPreference("morphe_swipe_speed", summary = true),
+        ListPreference(
+            "morphe_swipe_left_zone",
+            entriesKey = "morphe_swipe_zone_action_entries",
+            entryValuesKey = "morphe_swipe_zone_action_entry_values"
+        ),
+        ListPreference(
+            "morphe_swipe_right_zone",
+            entriesKey = "morphe_swipe_zone_action_entries",
+            entryValuesKey = "morphe_swipe_zone_action_entry_values"
+        ),
+        ListPreference(
+            "morphe_swipe_top_zone",
+            entriesKey = "morphe_swipe_zone_action_entries",
+            entryValuesKey = "morphe_swipe_zone_action_entry_values"
+        ),
         NonInteractivePreference(
             key = "morphe_swipe_zone_width",
             tag = SeekBarPreference::class.java,
@@ -70,6 +83,7 @@ val SwipeControls = patch(
             selectable = true,
         ),
         ListPreference("morphe_swipe_speed_step"),
+        SwitchPreference("morphe_swipe_ignore_when_locked", summary = true),
         SwitchPreference("morphe_swipe_press_to_engage", summary = true),
         SwitchPreference("morphe_swipe_haptic_feedback"),
         SwitchPreference("morphe_swipe_save_and_restore_brightness", summary = true),
@@ -102,5 +116,13 @@ val SwipeControls = patch(
 
     if (!is_20_34_or_greater) {
         insertLiteralOverride(45631116L, SwipeControlsHostActivity::allowSwipeChangeVideo)
+    }
+
+    PlayerOverlayContainerFingerprint.hookMethod {
+        val overlayNameField = ::PlayerOverlayNameField.field
+        before {
+            val overlayName = overlayNameField.get(it.thisObject) as String?
+            SwipeControlsHostActivity.setPlayerOverlay(it.thisObject as View, overlayName)
+        }
     }
 }

@@ -31,6 +31,13 @@ val RememberPlaybackSpeed = patch {
                 entryValuesKey = null,
                 tag = CustomVideoSpeedListPreference::class.java
             ),
+            ListPreference(
+                key = "morphe_playback_audio_pitch_default",
+                // List is shared with video speeds.
+                entriesKey = null,
+                entryValuesKey = null,
+                tag = CustomVideoSpeedListPreference::class.java
+            ),
             SwitchPreference("morphe_remember_playback_speed_last_selected", summary = true),
             SwitchPreference("morphe_remember_playback_speed_last_selected_toast", summary = true),
             SwitchPreference("morphe_disable_playback_speed_music", summary = true)

@@ -282,6 +282,7 @@ abstract class CopyResourcesTask @Inject constructor() : DefaultTask() {
             "downloads/drawable" to null,
             "speedbutton/drawable" to null,
             "navigationbuttons/drawable" to null,
+            "speed/drawable" to null,
         )
 
         for ((resourcePath, excludes) in resourcePaths) {

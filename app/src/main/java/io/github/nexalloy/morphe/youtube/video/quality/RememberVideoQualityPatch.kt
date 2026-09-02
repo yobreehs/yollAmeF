@@ -76,7 +76,4 @@ val RememberVideoQuality = patch {
             RememberVideoQualityPatch.userChangedQuality(selectedQualityIndex)
         }
     })
-
-    // TODO overridePlatypusVideoQualityFlag
-
 }

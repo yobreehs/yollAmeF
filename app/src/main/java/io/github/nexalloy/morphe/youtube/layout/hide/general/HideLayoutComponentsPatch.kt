@@ -22,6 +22,7 @@ import app.morphe.extension.youtube.settings.preference.HTMLPreference
 import app.morphe.extension.youtube.settings.preference.KeywordContentStatsPreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.litho.filter.emptyComponentClass
+import io.github.nexalloy.morphe.shared.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
@@ -34,7 +35,6 @@ import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
 import io.github.nexalloy.morphe.youtube.misc.engagement.EngagementPanelHook
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.youtube.misc.litho.node.TreeNodeElementHook
-import io.github.nexalloy.morphe.youtube.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.youtube.misc.litho.observer.LayoutReloadObserver
 import io.github.nexalloy.morphe.youtube.misc.navigation.NavigationBarHook
 import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
@@ -132,6 +132,7 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_comments_gift_button"),
                 SwitchPreference("morphe_hide_comments_info_button"),
                 SwitchPreference("morphe_hide_comments_live_chat_donators_bar"),
+                SwitchPreference("morphe_hide_comments_live_chat_tooltips", summary = true),
                 SwitchPreference("morphe_hide_comments_preview_comment", summary = true),
                 SwitchPreference("morphe_hide_comments_thanks_button"),
                 SwitchPreference("morphe_hide_comments_timestamp_button"),
@@ -141,12 +142,14 @@ val HideLayoutComponents = patch(
         ),
         SwitchPreference("morphe_hide_channel_bar"),
         SwitchPreference("morphe_hide_channel_watermark"),
+        SwitchPreference("morphe_hide_chapters_timeline_button"),
         SwitchPreference("morphe_hide_crowdfunding_box"),
         SwitchPreference("morphe_hide_emergency_box"),
         SwitchPreference("morphe_hide_info_panels", summary = true),
         SwitchPreference("morphe_hide_join_membership_button"),
         SwitchPreference("morphe_hide_live_chat_replay_button", summary = true),
         SwitchPreference("morphe_hide_medical_panels"),
+        SwitchPreference("morphe_hide_player_gesture_hints", summary = true),
 //        SwitchPreference("morphe_hide_snackbar"),
         SwitchPreference("morphe_hide_subscribers_community_guidelines"),
         SwitchPreference("morphe_hide_sync_button"),
@@ -171,6 +174,7 @@ val HideLayoutComponents = patch(
                     SwitchPreference("morphe_hide_news_menu"),
                     SwitchPreference("morphe_hide_sports_menu"),
                     SwitchPreference("morphe_hide_courses_menu"),
+                    SwitchPreference("morphe_hide_learning_menu"),
                     SwitchPreference("morphe_hide_fashion_menu"),
                     SwitchPreference("morphe_hide_podcasts_menu"),
                     SwitchPreference("morphe_hide_playables_menu"),
@@ -180,6 +184,7 @@ val HideLayoutComponents = patch(
                     SwitchPreference("morphe_hide_youtube_music_menu"),
                     SwitchPreference("morphe_hide_youtube_kids_menu"),
                     SwitchPreference("morphe_hide_youtube_create_menu"),
+                    SwitchPreference("morphe_hide_youtube_works_menu"),
                     SwitchPreference("morphe_hide_privacy_tos_footer")
                 )
             )
@@ -342,9 +347,11 @@ val HideLayoutComponents = patch(
         SwitchPreference("morphe_hide_horizontal_shelves", summary = true),
         SwitchPreference("morphe_hide_hyped_label"),
         SwitchPreference("morphe_hide_image_shelf", summary = true),
+        SwitchPreference("morphe_hide_invite_to_message_card", summary = true),
         SwitchPreference("morphe_hide_latest_videos_button", summary = true),
         SwitchPreference("morphe_hide_mix_playlists"),
         SwitchPreference("morphe_hide_movies_section"),
+        SwitchPreference("morphe_hide_notifications_menu_header", summary = true),
         SwitchPreference("morphe_hide_notify_me_button", summary = true),
         SwitchPreference("morphe_hide_playables", summary = true),
 //        SwitchPreference("morphe_hide_search_term_thumbnails", summary = true),
@@ -495,6 +502,12 @@ val HideLayoutComponents = patch(
     // TODO hide search term thumbnails
 
 
+    // region hide live chat tooltips
+
+    // layout.tooltip_content_view
+
+    // endregion
+
     // region hide live chat emoji button
 
     // id.thumbnail_and_emoji_picker_container
@@ -523,6 +536,12 @@ val HideLayoutComponents = patch(
 
     // endregion
 
+    // region hide player chapters & timeline button
+
+    // id.time_bar_entry_point_tap_container
+
+    // endregion
+
     // id hook
     DexMethod("Landroid/view/ViewGroup;->findViewById(I)Landroid/view/View;").hookMethod {
         val parent_container = getIdIdentifier("parent_container")
@@ -531,6 +550,7 @@ val HideLayoutComponents = patch(
         val thumbnail_and_emoji_picker_container = getIdIdentifier("thumbnail_and_emoji_picker_container")
         val inline_extra_buttons_container = getIdIdentifier("inline_extra_buttons_container")
         val jewels_button_container = getIdIdentifier("jewels_button_container")
+        val time_bar_entry_point_tap_container = getIdIdentifier("time_bar_entry_point_tap_container")
         after {
             val id = it.args[0] as Int
             val view = it.result as? View ?: return@after
@@ -541,6 +561,7 @@ val HideLayoutComponents = patch(
                 thumbnail_and_emoji_picker_container -> CommentsFilter.hideLiveChatEmojiButton(view)
                 inline_extra_buttons_container -> CommentsFilter.hideLiveChatThanksButton(view)
                 jewels_button_container -> CommentsFilter.hideLiveChatGiftButton(view)
+                time_bar_entry_point_tap_container -> LayoutComponentsFilter.hideChaptersTimelineButton(view)
             }
         }
     }
@@ -553,6 +574,7 @@ val HideLayoutComponents = patch(
         val content_pill = getLayoutIdentifier("content_pill")
         val bar = getLayoutIdentifier("bar")
         val sync_button = getLayoutIdentifier("sync_button")
+        val tooltip_content_view = getLayoutIdentifier("tooltip_content_view")
         after {
             val view = it.result as View
             when (it.args[0] as Int) {
@@ -561,6 +583,7 @@ val HideLayoutComponents = patch(
                 album_card -> LayoutComponentsFilter.hideAlbumCard(view)
                 content_pill, bar -> LayoutComponentsFilter.hideLatestVideosButton(view)
                 sync_button -> LayoutComponentsFilter.hideSyncButton(view)
+                tooltip_content_view -> CommentsFilter.hideLiveChatTooltip(view)
             }
         }
     }

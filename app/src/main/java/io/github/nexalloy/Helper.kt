@@ -32,6 +32,10 @@ class HookDsl<TCallback>(emptyCallback: TCallback) {
     }
 }
 
+fun Member.hookMethod(cb: XC_MethodHook) {
+    XposedBridge.hookMethod(this, cb)
+}
+
 inline fun Member.hookMethod(crossinline block: HookDsl<IHookCallback>.() -> Unit) {
     val builder = HookDsl<IHookCallback> {}.apply(block)
     hookMethodInternal(builder.before, builder.after)

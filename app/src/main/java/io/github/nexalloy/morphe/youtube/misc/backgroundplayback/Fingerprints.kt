@@ -1,6 +1,5 @@
 package io.github.nexalloy.morphe.youtube.misc.backgroundplayback
 
-import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.Opcode
@@ -100,22 +99,3 @@ val backgroundPlaybackManagerShortsFingerprint = findMethodListDirect {
         }
     }
 }
-
-object ShortsBackgroundPlaybackFeatureFlagFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    returnType = "Z",
-    parameters = listOf(),
-    filters = listOf(
-        literal(45415425)
-    )
-)
-
-internal const val PIP_INPUT_CONSUMER_FEATURE_FLAG = 45638483L
-
-// Fix 'E/InputDispatcher: Window handle pip_input_consumer has no registered input channel'
-@RequireAppVersion("19.34.00", "21.21.00")
-object PipInputConsumerFeatureFlagFingerprint : Fingerprint(
-    filters = listOf(
-        literal(PIP_INPUT_CONSUMER_FEATURE_FLAG)
-    )
-)

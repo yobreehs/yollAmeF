@@ -33,3 +33,26 @@ val LithoDialogField = findFieldDirect {
         }.fieldRef!!
     }
 }
+
+private object CustomDialogOnBackPressedParentFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("L"),
+    filters = listOf(
+        methodCall("Landroid/app/Dialog;->onBackPressed()V")
+    ),
+    custom = {
+        declaredClass {
+            superClass {
+                descriptor = "Landroid/app/Dialog;"
+            }
+        }
+    }
+)
+
+internal object CustomDialogOnBackPressedFingerprint : Fingerprint(
+    classFingerprint = CustomDialogOnBackPressedParentFingerprint,
+    name = "onBackPressed",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf(),
+)

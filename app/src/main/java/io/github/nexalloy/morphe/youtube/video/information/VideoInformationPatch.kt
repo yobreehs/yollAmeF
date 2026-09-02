@@ -20,6 +20,7 @@ import io.github.nexalloy.morphe.youtube.video.playerresponse.addPlayerResponseM
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponseVideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
+import io.github.nexalloy.new
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import java.lang.ref.WeakReference
@@ -303,7 +304,43 @@ val VideoInformationPatch = patch(
 
     // TODO ChannelInformationFingerprint
 
+
+    // region ExoPlayerImpl.
+
+    val exoPlayerClass =
+        classLoader.loadClass(::playbackParametersSetterFingerprint.dexMethod.className)
+
+    val setPlaybackParametersMethod = ::playbackParametersSetterFingerprint.method
+
+    val playbackParametersClass =
+        classLoader.loadClass(::playbackParametersSetterFingerprint.dexMethod.paramTypeNames[0])
+
+    val floatFields = playbackParametersClass.declaredFields.filter { it.type == Float::class.java }
+    val speedField = floatFields[0]
+    val pitchField = floatFields[1]
+    ::playbackParametersSetterFingerprint.hookMethod {
+        before {
+            val newParam = playbackParametersClass.new(
+                speedField.get(it.args[0]),
+                VideoInformation.getPlaybackAudioPitch()
+            )
+            it.args[0] = newParam
+        }
+    }
+
+    exoPlayerClass.constructors.single().hookMethod {
+        before {
+            VideoInformation.initializeExoPlayerImpl { f, f1 ->
+                setPlaybackParametersMethod(it.thisObject, playbackParametersClass.new(f, f1))
+            }
+        }
+    }
+
+    // endregion
+
     onCreateHook.add { VideoInformation.initialize(it) }
     videoSpeedChangedHook.add { VideoInformation.videoSpeedChanged(it) }
     userSelectedPlaybackSpeedHook.add { VideoInformation.userSelectedPlaybackSpeed(it) }
+
+    // TODO Addon
 }

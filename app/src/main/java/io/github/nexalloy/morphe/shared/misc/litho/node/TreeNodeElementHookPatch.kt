@@ -1,10 +1,11 @@
-package io.github.nexalloy.morphe.youtube.misc.litho.node
+package io.github.nexalloy.morphe.shared.misc.litho.node
 
 import app.morphe.extension.shared.patches.TreeNodeElementPatch
+import io.github.nexalloy.Patch
+import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
-import io.github.nexalloy.morphe.shared.misc.litho.context.conversionContextPatch
-import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.patch
+
 
 private val componentLoadedHooks = mutableListOf<(String, MutableList<Any?>) -> Unit>()
 private val lazilyConvertedElementLoadedHooks =
@@ -37,12 +38,26 @@ fun onLazilyConvertedElementLoaded(
     lazilyConvertedElementLoadedHooks.forEach { hook -> hook(identifier, treeNodeResultList) }
 }
 
-val TreeNodeElementHook = patch(
+/**
+ * Shared factory for the tree-node element hook patch used by both YouTube and YT Music.
+ *
+ * Hooks the tree-node result list from Litho so that patched extensions can inspect (and
+ * physically remove entries from) the list before it is converted into rendered components.
+ *
+ * @param sharedExtensionPatchDep The app-specific `sharedExtensionPatch`.
+ * @param conversionContextPatchDep The app-specific `conversionContextPatch`.
+ */
+internal fun createTreeNodeElementHookPatch(
+    sharedExtensionPatchDep: Patch,
+    conversionContextPatchDep: Patch,
+    addLithoContainerInterface: Boolean,
+    useLegacyContextRegister: PatchExecutor.() -> Boolean
+) = patch(
     description = "Hooks the tree node element lists to the extension."
 ) {
     dependsOn(
-        LithoFilter,
-        conversionContextPatch
+        sharedExtensionPatchDep,
+        conversionContextPatchDep
     )
 
     TreeNodeResultListFingerprint.hookMethod {

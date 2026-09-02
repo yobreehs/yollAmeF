@@ -17,11 +17,6 @@ import io.github.nexalloy.morphe.resourceMappings
 import io.github.nexalloy.morphe.returns
 import io.github.nexalloy.morphe.string
 
-internal object NewAdvancedQualityMenuStyleFlyout : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    filters = listOf(literal(45712556))
-)
-
 internal const val FIXED_RESOLUTION_STRING = ", initialPlaybackVideoQualityFixedResolution="
 
 internal object PlaybackStartParametersToStringFingerprint : Fingerprint(

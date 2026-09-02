@@ -3,6 +3,7 @@ package io.github.nexalloy.morphe.shared.misc.audio.tracks
 import app.morphe.extension.shared.patches.ForceOriginalAudioPatch
 import app.morphe.extension.shared.settings.preference.ForceOriginalAudioSwitchPreference
 import io.github.nexalloy.PatchExecutor
+import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatureFlagFingerprint
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
@@ -16,6 +17,8 @@ internal fun forceOriginalAudioPatch(
     executeBlock: PatchExecutor.() -> Unit = {},
     fixUseLocalizedAudioTrackFlag: PatchExecutor.() -> Boolean,
     forcedServerAdaptiveStreaming: PatchExecutor.() -> Boolean,
+    mainActivityOnCreateFingerprint: Fingerprint,
+    subclassExtensionClassDescriptor: String,
     preferenceScreen: BasePreferenceScreen.Screen
 ) = patch(
     name = "Force original audio",

@@ -1,65 +1,57 @@
 package io.github.nexalloy.morphe.youtube.layout.shortsnoresume
 
-import io.github.nexalloy.morphe.AccessFlags
+import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation
 import io.github.nexalloy.morphe.Opcode
-import io.github.nexalloy.morphe.accessFlags
-import io.github.nexalloy.morphe.findMethodDirect
-import io.github.nexalloy.morphe.fingerprint
+import io.github.nexalloy.morphe.StringComparisonType
+import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.literal
-import io.github.nexalloy.morphe.opcodes
-import io.github.nexalloy.morphe.parameters
-import io.github.nexalloy.morphe.returns
+import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.opcode
+import io.github.nexalloy.morphe.string
 
-val userWasInShortsFingerprint = findMethodDirect {
-    runCatching {
-        fingerprint {
-            returns("V")
-            accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-            parameters("Ljava/lang/Object;")
-            strings("userIsInShorts: ")
-        }
-    }.getOrElse {
-        findMethod {
-            matcher {
-                returns("V")
-                accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-                parameters("Ljava/lang/Object;")
-                opcodes(
-                    Opcode.INVOKE_INTERFACE, // userWasInShortsProtoStoreProvider
-                    Opcode.MOVE_RESULT_OBJECT,
-                    Opcode.CHECK_CAST,
-                    Opcode.NEW_INSTANCE,
-                    Opcode.INVOKE_DIRECT, // userWasInShortsBuilder
-                    Opcode.INVOKE_INTERFACE,
-                    Opcode.RETURN_VOID,
-                )
-            }
-        }.findMethod {
-            matcher {
-                opcodes(
-                    Opcode.CHECK_CAST, // p1, Ljava/lang/Boolean; // userIsInShorts
-                    Opcode.INVOKE_VIRTUAL, // Ljava/lang/Boolean;->booleanValue()Z
-                    Opcode.MOVE_RESULT,
-                    Opcode.IGET_OBJECT,
-                    Opcode.MOVE_OBJECT,
-                    Opcode.CHECK_CAST,
-                    Opcode.IGET_OBJECT,
-                    Opcode.INVOKE_INTERFACE, // userWasInShortsProtoStoreProvider
-                )
-            }
-        }.single()
-    }
-}
+@RequireAppVersion("21.03.00")
+internal object UserWasInShortsEvaluateAnchorFingerprint: Fingerprint(
+    returnType = "Z",
+    filters = listOf(
+        literal(1073815471),
+        literal(1073815469)
+    )
+)
 
 /**
- * 18.15.40+
+ * 21.03+
  */
-internal object UserWasInShortsConfigFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    returnType = "Z",
-    parameters = listOf(),
+@RequireAppVersion("21.03.00")
+internal object UserWasInShortsEvaluateFingerprint : Fingerprint(
+    classFingerprint = UserWasInShortsEvaluateAnchorFingerprint,
     filters = listOf(
-        literal(45358360L)
-    ),
+        methodCall(
+            opcode = Opcode.INVOKE_DIRECT_RANGE,
+            name = "<init>",
+            parameters = listOf("L", "Z", "Z", "L", "Z")
+        ),
+//        methodCall( // 21.30+
+//            opcode = Opcode.INVOKE_DIRECT_RANGE,
+//            name = "<init>",
+//            parameters = listOf("L", "L", "L", "L", "L", "L",  "Ljava/lang/String;"),
+//            location = InstructionLocation.MatchAfterWithin(50)
+//        )
+    )
+)
+
+/**
+ * 20.02+
+ */
+@RequireAppVersion("20.02.00", "21.03.00")
+internal object UserWasInShortsListenerFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("Ljava/lang/Object;"),
+    filters = listOf(
+        checkCast("Ljava/lang/Boolean;"),
+        methodCall(smali = "Ljava/lang/Boolean;->booleanValue()Z", location = InstructionLocation.MatchAfterImmediately()),
+        opcode(Opcode.MOVE_RESULT, InstructionLocation.MatchAfterImmediately()),
+        string("ShortsStartup SetUserWasInShortsListener", StringComparisonType.CONTAINS, InstructionLocation.MatchAfterWithin(30))
+    )
 )

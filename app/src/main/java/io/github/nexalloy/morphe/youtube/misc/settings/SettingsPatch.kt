@@ -83,8 +83,13 @@ val SettingsHook = patch(
         selectable = true,
     )
 
+//    if (!is_21_30_or_greater) {
+//        PreferenceScreen.GENERAL.addPreferences(
+//            SwitchPreference("morphe_restore_old_settings_menus")
+//        )
+//    }
+
 //    PreferenceScreen.GENERAL.addPreferences(
-//        SwitchPreference("morphe_restore_old_settings_menus")
 //        SwitchPreference("morphe_settings_search_history"),
 //        SwitchPreference("morphe_show_menu_icons")
 //    )

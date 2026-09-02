@@ -2,8 +2,10 @@ package io.github.nexalloy.morphe.shared.misc.litho.filter
 
 import app.morphe.extension.shared.patches.components.Filter
 import app.morphe.extension.shared.patches.components.LithoFilterPatch
+import de.robv.android.xposed.XC_MethodReplacement
 import io.github.nexalloy.Patch
 import io.github.nexalloy.PatchExecutor
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.new
@@ -66,11 +68,16 @@ fun addLithoFilter(filter: Filter){
 internal fun sharedLithoFilterPatch(
     hookNonNativeBuffer: () -> Boolean,
     overrideUpbFeatureFlag: () -> Boolean,
+    useLegacyLithoFiltering: () -> Boolean,
     block: PatchExecutor.() -> Unit,
 ): Patch = patch(
     description = "Hooks the method which parses the bytes into a ComponentContext to filter components."
 ) {
     block()
+
+
+    LithoFilterPatch::class.java.getDeclaredMethod("useLegacyLithoFiltering")
+        .hookMethod(XC_MethodReplacement.returnConstant(useLegacyLithoFiltering()))
 
     //region Pass the buffer into extension.
     if (!hookNonNativeBuffer()) {
