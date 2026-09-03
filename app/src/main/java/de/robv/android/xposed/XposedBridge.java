@@ -1,5 +1,7 @@
 package de.robv.android.xposed;
 
+import static io.github.libxposed.api.XposedInterface.ExceptionMode;
+
 import android.util.Log;
 
 import java.lang.reflect.Constructor;
@@ -30,7 +32,7 @@ public class XposedBridge {
         XposedBridge.xposedInterface = xposedInterface;
     }
 
-    public static XC_MethodHook.Unhook hookMethod(Member member, XposedInterface.Hooker callback) {
+    public static XC_MethodHook.Unhook hookMethod(Member member, XC_MethodHook callback) {
         if (xposedInterface == null) {
             throw new IllegalStateException("xposedInterface has not been initialized. Call register() first.");
         }
@@ -39,7 +41,9 @@ public class XposedBridge {
             throw new IllegalStateException();
         }
 
-        var hookMethod = xposedInterface.hook(executable).intercept(callback);
+        var hookMethod = xposedInterface.hook(executable)
+                .setPriority(callback.priority)
+                .intercept(callback);
         return new XC_MethodHook.Unhook(hookMethod);
     }
 

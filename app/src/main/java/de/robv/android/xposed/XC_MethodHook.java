@@ -10,6 +10,15 @@ import java.util.Objects;
 import io.github.libxposed.api.XposedInterface;
 
 public abstract class XC_MethodHook implements XposedInterface.Hooker {
+    public final int priority;
+
+    public XC_MethodHook() {
+        this(XposedInterface.PRIORITY_DEFAULT);
+    }
+
+    public XC_MethodHook(int priority) {
+        this.priority = priority;
+    }
 
     /**
      * Called before the invocation of the method.
@@ -22,7 +31,7 @@ public abstract class XC_MethodHook implements XposedInterface.Hooker {
      * @param param Information about the method call.
      * @throws Throwable Everything the callback throws is caught and logged.
      */
-    public void beforeHookedMethod(MethodHookParam param) throws Throwable {
+    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
     }
 
     /**
@@ -36,7 +45,7 @@ public abstract class XC_MethodHook implements XposedInterface.Hooker {
      * @param param Information about the method call.
      * @throws Throwable Everything the callback throws is caught and logged.
      */
-    public void afterHookedMethod(MethodHookParam param) throws Throwable {
+    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
     }
 
     @Override
@@ -136,9 +145,9 @@ public abstract class XC_MethodHook implements XposedInterface.Hooker {
          *
          * <p>If called from {@link #beforeHookedMethod}, it prevents the call to the original method.
          */
-        private void setThrowable(Throwable throwable) {
+        void setThrowable(Throwable throwable) {
             /*
-             * This compatibility class intentionally make `setThrowable` private.
+             * This compatibility class intentionally make `setThrowable` package-only accessibility.
              * If you want to implement `setThrowable` to override throwable,
              * `setExceptionMode(PASSTHROUGH)` is necessary.
              * */
