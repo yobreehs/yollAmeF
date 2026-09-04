@@ -65,6 +65,28 @@ enum class StringComparisonType(val value: StringMatchType) {
     }
 }
 
+/**
+ * Matches two lists of parameters.
+ *
+ * @param targetMethodParameters Method parameters to search in.
+ * @param fingerprintParameters Parameters to check. Uses [StringComparisonType] type semantics.
+ */
+fun parametersMatch(
+    targetMethodParameters: Iterable<CharSequence>,
+    fingerprintParameters: Iterable<CharSequence>,
+): Boolean {
+    if (fingerprintParameters.count() != targetMethodParameters.count()) return false
+    val fingerprintIterator = fingerprintParameters.iterator()
+
+    targetMethodParameters.forEach { targetParameter ->
+        val fingerprintParameter = fingerprintIterator.next()
+        if (!StringComparisonType.typeDeclarationToComparison(fingerprintParameter)
+                .compare(targetParameter, fingerprintParameter)) return false
+    }
+
+    return true
+}
+
 internal fun parametersMatch(
     targetMethodParameters: Iterable<CharSequence>,
     fingerprintParameters: Iterable<CharSequence>,

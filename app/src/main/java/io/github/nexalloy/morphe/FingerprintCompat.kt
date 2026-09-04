@@ -259,7 +259,7 @@ open class Fingerprint internal constructor(
         extraMethodMatcherBlocks?.forEach { block -> block() }
     }
 
-    private fun buildMethodMatcher(): MethodMatcher =
+    fun buildMethodMatcher(): MethodMatcher =
         MethodMatcher().apply(methodMatcherBuilder)
 
     /**
