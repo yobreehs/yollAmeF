@@ -5,6 +5,11 @@ on:
     tags:
       - '*.*.*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g. 2.0.107). Empty = manual-<sha>'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -44,7 +49,9 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         TAG=${GITHUB_REF#refs/tags/}
-        if [ -z "$TAG" ] || [ "$TAG" = "$GITHUB_REF" ]; then
+        if [ -n "${{ inputs.version }}" ]; then
+          TAG=${{ inputs.version }}
+        elif [ -z "$TAG" ] || [ "$TAG" = "$GITHUB_REF" ]; then
           TAG=manual-$(git rev-parse --short HEAD)
         fi
         cd app/build/outputs/apk/release/

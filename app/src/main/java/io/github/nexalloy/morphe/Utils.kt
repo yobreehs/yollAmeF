@@ -226,3 +226,34 @@ fun MethodData.indexOfFirstInstructionReversed(startIndex: Int? = null, filter: 
 
     return instructions.indexOfLast(filter)
 }
+
+private fun getParamTypeSigns(paramSigns: String): List<String> {
+    val params = mutableListOf<String>()
+    var left = 0
+    var right = 0
+    while (right < paramSigns.length) {
+        val c = paramSigns[right]
+        if (c == '[') {
+            right++
+            continue
+        } else if (c == 'L') {
+            val end = paramSigns.indexOf(';', right)
+            right = end
+        }
+        val sign = paramSigns.substring(left, right + 1)
+        params.add(sign)
+        left = ++right
+    }
+    if (left != right) {
+        throw IllegalStateException("Unknown signString: $paramSigns")
+    }
+    return params
+}
+
+val MethodData.parameters: List<String>
+    get() {
+        val idx1 = descriptor.indexOf("->")
+        val idx2 = descriptor.indexOf("(", idx1 + 1)
+        val idx3 = descriptor.indexOf(")", idx2 + 1)
+        return getParamTypeSigns(descriptor.substring(idx2 + 1, idx3))
+    }

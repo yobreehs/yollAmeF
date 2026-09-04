@@ -2,7 +2,7 @@ package io.github.nexalloy.morphe.youtube.layout.buttons.navigation
 
 import android.widget.TextView
 import app.morphe.extension.youtube.patches.NavigationBarPatch
-import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatureFlagFingerprint
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
@@ -86,41 +86,20 @@ val NavigationBar = patch(
     // TODO Hide navigation bar — addBottomBarContainerHook
 
     // Force on/off translucent effect on status bar and navigation buttons.
-    ::experimentalBooleanFeatureFlagFingerprint.hookMethod {
-        after {
-            val flagId = it.args[1] as Long
-            when (flagId) {
-                // Translucent status bar.
-                45400535L -> it.result =
-                    NavigationBarPatch.useTranslucentNavigationStatusBar(it.result as Boolean)
-                // Translucent navigation buttons (YouTube nav + system buttons).
-                45630927L, 45632194L -> it.result =
-                    NavigationBarPatch.useTranslucentNavigationButtons(it.result as Boolean)
-            }
-        }
-    }
-
-    ::experimentalBooleanFeatureFlagFingerprint.hookMethod {
-        after {
-            // Animated navigation tabs.
-            if (it.args[1] == 45680008L) {
-                it.result =
-                    NavigationBarPatch.useAnimatedNavigationButtons(it.result as Boolean)
-            }
-        }
-    }
+    // Translucent status bar.
+    insertLiteralOverride(45400535L, NavigationBarPatch::useTranslucentNavigationStatusBar)
+    // Translucent system buttons feature flag.
+    insertLiteralOverride(45632194L, NavigationBarPatch::useTranslucentNavigationButtons)
+    // Translucent navigation bar buttons feature flag.
+    insertLiteralOverride(45630927L, NavigationBarPatch::useTranslucentNavigationButtons)
 
     if (is_20_46_or_greater) {
         // Feature interferes with translucent status bar and must be forced off.
-        ::experimentalBooleanFeatureFlagFingerprint.hookMethod {
-            after {
-                if (it.args[1] == 45736608L) {
-                    it.result =
-                        NavigationBarPatch.allowCollapsingToolbarLayout(it.result as Boolean)
-                }
-            }
-        }
+        insertLiteralOverride(45736608L, NavigationBarPatch::allowCollapsingToolbarLayout)
     }
+
+    // Animated navigation tabs.
+    insertLiteralOverride(45680008L, NavigationBarPatch::useAnimatedNavigationButtons)
 
     // TODO Narrow navigation buttons — PivotBarChangedFingerprint/PivotBarStyleFingerprint METHOD_MID
 

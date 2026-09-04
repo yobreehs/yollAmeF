@@ -19,6 +19,8 @@ import java.lang.reflect.Member
 typealias IScopedHookCallback = ScopedHookParam.(MethodHookParam) -> Unit
 typealias IHookCallback = (MethodHookParam) -> Unit
 
+fun <T> Array<T>.atLast(index: Int) = this[this.size - index]
+
 class HookDsl<TCallback>(emptyCallback: TCallback) {
     var before: TCallback = emptyCallback
     var after: TCallback = emptyCallback
