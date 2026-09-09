@@ -11,4 +11,34 @@
         <item>com.strava</item>
         <item>com.alltrails.alltrails</item>
     </string-array>
+
+    <string-array name="morphe_app_refresh_rate_entries">
+        <item>@string/morphe_app_refresh_rate_default</item>
+        <item>@string/morphe_app_refresh_rate_60</item>
+        <item>@string/morphe_app_refresh_rate_90</item>
+        <item>@string/morphe_app_refresh_rate_120</item>
+        <item>@string/morphe_app_refresh_rate_144</item>
+    </string-array>
+
+    <string-array name="morphe_app_refresh_rate_entry_values">
+        <item>DEFAULT</item>
+        <item>60</item>
+        <item>90</item>
+        <item>120</item>
+        <item>144</item>
+    </string-array>
+
+    <string-array name="morphe_app_refresh_rate_type_entries">
+        <item>@string/morphe_app_refresh_rate_type_always</item>
+        <item>@string/morphe_app_refresh_rate_type_portrait</item>
+        <item>@string/morphe_app_refresh_rate_type_fullscreen</item>
+        <item>@string/morphe_app_refresh_rate_type_portrait_fullscreen</item>
+    </string-array>
+
+    <string-array name="morphe_app_refresh_rate_type_entry_values">
+        <item>ALWAYS</item>
+        <item>PORTRAIT</item>
+        <item>FULLSCREEN</item>
+        <item>PORTRAIT_FULLSCREEN</item>
+    </string-array>
 </resources>

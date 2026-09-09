@@ -24,6 +24,7 @@ import io.github.nexalloy.morphe.youtube.layout.thumbnails.BypassImageRegionRest
 import io.github.nexalloy.morphe.youtube.misc.backgroundplayback.BackgroundPlayback
 import io.github.nexalloy.morphe.youtube.misc.debugging.EnableDebugging
 import io.github.nexalloy.morphe.youtube.misc.privacy.SanitizeSharingLinks
+import io.github.nexalloy.morphe.youtube.misc.refreshrate.AppRefreshRate
 import io.github.nexalloy.morphe.youtube.misc.settings.SettingsHook
 import io.github.nexalloy.morphe.youtube.shared.YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE
 import io.github.nexalloy.morphe.youtube.video.audio.ForceOriginalAudio
@@ -89,6 +90,7 @@ val YouTubePatches = arrayOf(
     EnableDebugging,
     ForceOriginalAudio,
     DisableVideoCodecs,
+    AppRefreshRate,
     AlternativeThumbnailsPatch,
     BypassImageRegionRestrictionsPatch,
     CheckRecycleBitmapMediaSession,

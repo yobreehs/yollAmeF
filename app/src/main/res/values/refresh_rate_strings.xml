@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_app_refresh_rate_title">App refresh rate</string>
+    <string name="morphe_app_refresh_rate_default">Default</string>
+    <string name="morphe_app_refresh_rate_60">60 Hz</string>
+    <string name="morphe_app_refresh_rate_90">90 Hz</string>
+    <string name="morphe_app_refresh_rate_120">120 Hz</string>
+    <string name="morphe_app_refresh_rate_144">144 Hz</string>
+    <string name="morphe_app_refresh_rate_type_title">Apply refresh rate to</string>
+    <string name="morphe_app_refresh_rate_type_always">Always</string>
+    <string name="morphe_app_refresh_rate_type_portrait">Portrait playback</string>
+    <string name="morphe_app_refresh_rate_type_fullscreen">Fullscreen playback</string>
+    <string name="morphe_app_refresh_rate_type_portrait_fullscreen">Portrait and fullscreen playback</string>
+    <string name="morphe_settings_screen_13_new_patches_title">New features</string>
+    <string name="morphe_new_patches_chapter_1_title">App refresh rate</string>
+</resources>

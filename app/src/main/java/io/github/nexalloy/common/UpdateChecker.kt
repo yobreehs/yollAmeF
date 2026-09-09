@@ -101,7 +101,10 @@ class UpdateChecker() : CoroutineScope {
             try {
                 val response = Fuel.get(
                     "https://api.github.com/repos/$OWNER/$REPO/releases/latest",
-                    headers = mapOf("Accept" to "application/vnd.github.html+json")
+                    headers = mapOf(
+                        "Accept" to "application/vnd.github+json",
+                        "User-Agent" to "FemAlloy/$currentVersionCode"
+                    )
                 )
                 if (response.statusCode != 200) {
                     Logger.printException { "Failed to fetch latest release: HTTP ${response.statusCode}" }
