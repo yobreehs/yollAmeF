@@ -90,6 +90,7 @@ val HideShortsComponents = patch(
 
 
     addLithoFilter(ShortsFilter())
+    addLithoFilter(HomeShortsFilter())
 
     // TODO Hide sound button.
     // TODO Hide the navigation bar.
