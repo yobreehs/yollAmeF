@@ -13,7 +13,6 @@
 #   public *;
 #}
 
--keep class io.github.nexalloy.MainHook { <init>(); }
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 -keepnames class * extends io.github.nexalloy.morphe.Fingerprint
 -keepclassmembers class **.* {
@@ -31,4 +30,11 @@
 
 -assumenosideeffects class app.morphe.extension.shared.settings.* {
     public <init>(...);
+}
+
+#
+-dontwarn io.github.libxposed.annotation.**
+-adaptresourcefilecontents META-INF/xposed/java_init.list
+-keep,allowoptimization,allowobfuscation public class * extends io.github.libxposed.api.XposedModule {
+    public <init>();
 }

@@ -2,7 +2,6 @@ package io.github.nexalloy.morphe.shared.misc.debugging
 
 import app.morphe.extension.shared.patches.EnableDebuggingPatch
 import io.github.nexalloy.PatchExecutor
-import io.github.nexalloy.atLast
 import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
@@ -10,10 +9,18 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractiveP
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
+import io.github.nexalloy.patch
+import io.github.nexalloy.atLast
 
-fun PatchExecutor.EnableDebugging(
+fun enableDebuggingPatch(
+    hookStringFeatureFlag: PatchExecutor.() -> Boolean,
+    hookLongFeatureFlag: PatchExecutor.() -> Boolean,
+    hookDoubleFeatureFlag: PatchExecutor.() -> Boolean,
     preferenceScreen: BasePreferenceScreen.Screen,
     additionalDebugPreferences: List<BasePreference> = emptyList()
+) = patch(
+    name = "Enable debugging",
+    description = "Adds options for debugging and exporting Morphe logs to the clipboard.",
 ) {
     val preferences = mutableSetOf<BasePreference>(
         SwitchPreference("morphe_debug"),
@@ -56,33 +63,39 @@ fun PatchExecutor.EnableDebugging(
         }
     }
 
-    ::experimentalDoubleFeatureFlagFingerprint.hookMethod {
-        after {
-            it.result = EnableDebuggingPatch.isDoubleFeatureFlagEnabled(
-                it.result as Double,
-                it.args.atLast(2) as Long,
-                it.args.atLast(1) as Double
-            )
+    if (hookDoubleFeatureFlag()) {
+        ::experimentalDoubleFeatureFlagFingerprint.hookMethod {
+            after {
+                it.result = EnableDebuggingPatch.isDoubleFeatureFlagEnabled(
+                    it.result as Double,
+                    it.args.atLast(2) as Long,
+                    it.args.atLast(1) as Double
+                )
+            }
         }
     }
 
-    ::experimentalLongFeatureFlagFingerprint.memberOrNull?.hookMethod {
-        after {
-            it.result = EnableDebuggingPatch.isLongFeatureFlagEnabled(
-                it.result as Long,
-                it.args.atLast(2) as Long,
-                it.args.atLast(1) as Long
-            )
+    if (hookLongFeatureFlag()) {
+        ::experimentalLongFeatureFlagFingerprint.memberOrNull?.hookMethod {
+            after {
+                it.result = EnableDebuggingPatch.isLongFeatureFlagEnabled(
+                    it.result as Long,
+                    it.args.atLast(2) as Long,
+                    it.args.atLast(1) as Long
+                )
+            }
         }
     }
 
-    ::experimentalStringFeatureFlagFingerprint.memberOrNull?.hookMethod {
-        after {
-            it.result = EnableDebuggingPatch.isStringFeatureFlagEnabled(
-                it.result as String,
-                it.args.atLast(2) as Long,
-                it.args.atLast(1) as String
-            )
+    if (hookStringFeatureFlag()) {
+        ::experimentalStringFeatureFlagFingerprint.memberOrNull?.hookMethod {
+            after {
+                it.result = EnableDebuggingPatch.isStringFeatureFlagEnabled(
+                    it.result as String,
+                    it.args.atLast(2) as Long,
+                    it.args.atLast(1) as String
+                )
+            }
         }
     }
 

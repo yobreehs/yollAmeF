@@ -5,10 +5,10 @@ import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.settings.preference.ImportExportPreference
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
 import app.morphe.extension.youtube.settings.YouTubeActivityHook
+import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
 import io.github.nexalloy.R
-import io.github.nexalloy.hookMethod
+import io.github.nexalloy.invokeOriginalMethod
 import io.github.nexalloy.morphe.shared.misc.initialization.initializationPatch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
@@ -40,21 +40,19 @@ val SettingsHook = patch(
                 else -> return@before
             }
 
-            XposedBridge.invokeOriginalMethod(
-                param.method, param.thisObject, arrayOf(xml)
-            )
+            param.invokeOriginalMethod(arrayOf(xml))
         }
     }
 
-    val superOnCreate = ::licenseActivitySuperOnCreate.method
-    superOnCreate.hookMethod { }
+    val superOnCreateMethod = ::licenseActivitySuperOnCreate.method
+    val superOnCreate = xposed.getInvoker(superOnCreateMethod)
 
     ::licenseActivityOnCreateFingerprint.hookMethod(object : XC_MethodReplacement() {
-        override fun replaceHookedMethod(param: MethodHookParam) {
+        override fun replaceHookedMethod(param: XC_MethodHook.MethodHookParam) {
             val activity = param.thisObject as Activity
             YouTubeActivityHook.initialize(activity)
             activity.theme.applyStyle(R.style.ListDividerNull, true)
-            XposedBridge.invokeOriginalMethod(superOnCreate, param.thisObject, param.args)
+            superOnCreate.invokeSpecial(param.thisObject, *param.args)
         }
     })
 
@@ -83,8 +81,13 @@ val SettingsHook = patch(
         selectable = true,
     )
 
+//    if (!is_21_30_or_greater) {
+//        PreferenceScreen.GENERAL.addPreferences(
+//            SwitchPreference("morphe_restore_old_settings_menus")
+//        )
+//    }
+
 //    PreferenceScreen.GENERAL.addPreferences(
-//        SwitchPreference("morphe_restore_old_settings_menus")
 //        SwitchPreference("morphe_settings_search_history"),
 //        SwitchPreference("morphe_show_menu_icons")
 //    )

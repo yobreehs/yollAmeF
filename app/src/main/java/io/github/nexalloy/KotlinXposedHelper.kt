@@ -34,6 +34,9 @@ typealias Replacer = (MethodHookParam) -> Any?
 
 fun MethodHookParam.invokeOriginalMethod(): Any? = invokeOriginalMethod(method, thisObject, args)
 
+fun MethodHookParam.invokeOriginalMethod(args: Array<*>?): Any? =
+    invokeOriginalMethod(method, thisObject, args)
+
 inline fun <T, R> T.runCatchingOrNull(func: T.() -> R?) = try {
     func()
 } catch (e: Throwable) {

@@ -6,7 +6,5 @@ import io.github.nexalloy.patch
 val HideAds = patch(
     name = "Hide ads",
 ) {
-    ::adInjectorFingerprint.hookMethod(object : XC_MethodReplacement() {
-        override fun replaceHookedMethod(param: MethodHookParam): Any? = false
-    })
+    ::adInjectorFingerprint.hookMethod(XC_MethodReplacement.returnConstant(false))
 }

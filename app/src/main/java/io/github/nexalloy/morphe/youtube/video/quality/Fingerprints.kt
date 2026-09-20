@@ -2,7 +2,9 @@ package io.github.nexalloy.morphe.youtube.video.quality
 
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
+import io.github.nexalloy.morphe.ResourceType
 import io.github.nexalloy.morphe.accessFlags
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findFieldDirect
@@ -11,16 +13,14 @@ import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
+import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.opcodes
 import io.github.nexalloy.morphe.parameters
+import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.resourceMappings
 import io.github.nexalloy.morphe.returns
 import io.github.nexalloy.morphe.string
-
-internal object NewAdvancedQualityMenuStyleFlyout : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    filters = listOf(literal(45712556))
-)
 
 internal const val FIXED_RESOLUTION_STRING = ", initialPlaybackVideoQualityFixedResolution="
 
@@ -64,28 +64,11 @@ val videoQualityItemOnClickFingerprint = fingerprint {
     methodMatcher { name = "onItemClick" }
 }
 
-val videoQualityQuickMenuAdvancedMenuDescription get() = resourceMappings[
-    "string",
-    "video_quality_quick_menu_advanced_menu_description",
-]
-
-val videoQualityMenuOptionsFingerprint = fingerprint {
-    accessFlags(AccessFlags.STATIC)
-    returns("[L")
-    parameters("Landroid/content/Context", "L", "L")
-    opcodes(
-        Opcode.CONST_4, // First instruction of method.
-        Opcode.CONST_4,
-        Opcode.IF_EQZ,
-        Opcode.IGET_BOOLEAN, // Use the quality menu, that contains the advanced menu.
-        Opcode.IF_NEZ,
-    )
-    literal { videoQualityQuickMenuAdvancedMenuDescription }
-}
-val videoQualityBottomSheetListFragmentTitle get() = resourceMappings[
-    "layout",
-    "video_quality_bottom_sheet_list_fragment_title",
-]
+val videoQualityBottomSheetListFragmentTitle
+    get() = resourceMappings[
+        "layout",
+        "video_quality_bottom_sheet_list_fragment_title",
+    ]
 
 val videoQualityMenuViewInflateFingerprint = findMethodListDirect {
     // two matches in versions 20.43.32
@@ -115,3 +98,53 @@ val videoQualityMenuViewInflateFingerprint = findMethodListDirect {
         }
     }
 }
+
+val ShowVideoQualityQuickMenuFingerprint = findMethodListDirect {
+    val matcher = Fingerprint(
+        accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+        returnType = "V",
+        strings = listOf("VIDEO_QUALITIES_QUICK_MENU_BOTTOM_SHEET_FRAGMENT"),
+        filters = listOf(
+            opcode(Opcode.MOVE_RESULT),
+            opcode(
+                opcode = Opcode.IF_NEZ,
+                location = MatchAfterWithin(3)
+            ),
+            methodCall(
+                opcode = Opcode.INVOKE_VIRTUAL,
+                name = "getSupportFragmentManager",
+                location = MatchAfterWithin(3)
+            ),
+            methodCall(
+                opcode = Opcode.INVOKE_VIRTUAL,
+                parameters = listOf("L", "Ljava/lang/String;"),
+                returnType = "V",
+                location = MatchAfterWithin(5)
+            )
+        )
+    ).buildMethodMatcher()
+    findMethod { matcher(matcher) }
+}
+
+internal object ShortsQualityMenuFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf("Z"),
+    returnType = "V",
+    filters = listOf(
+        resourceLiteral(
+            type = ResourceType.STRING,
+            name = "video_quality_unavailable_announcement"
+        )
+    )
+)
+
+internal object ShortsQualityConstructorFingerprint : Fingerprint(
+    classFingerprint = ShortsQualityMenuFingerprint,
+    name = "<init>",
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IPUT_OBJECT,
+            definingClass = "this"
+        )
+    )
+)

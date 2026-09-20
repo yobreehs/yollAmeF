@@ -10,8 +10,14 @@ import app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch
 import io.github.nexalloy.HookDsl
 import io.github.nexalloy.IHookCallback
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_28_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_30_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_31_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_04_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_05_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_36_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
@@ -22,9 +28,7 @@ class ControlInitializer(
 )
 
 private data class TopControlLayout(
-    val layout: Int,
-    val startViewId: Int,
-    val endViewId: Int
+    val layout: Int, val startViewId: Int, val endViewId: Int
 )
 
 private val topControlLayouts = mutableListOf<TopControlLayout>()
@@ -38,6 +42,15 @@ fun addTopControl(layout: Int, startViewId: Int, endViewId: Int) {
 
 fun addLegacyBottomControl(layout: Int) {
     bottomControlLayouts.add(layout)
+}
+
+private var newPlayerControlsOverride = false
+
+internal fun disableNewPlayerControlsFeatureFlag() {
+    if (!is_21_04_or_greater || newPlayerControlsOverride) return
+    newPlayerControlsOverride = true
+
+    insertLiteralOverride(45752335L)
 }
 
 fun initializeTopControl(control: ControlInitializer) {
@@ -97,10 +110,41 @@ val LegacyPlayerControls = patch(
         VersionCheck,
     )
 
-    if (is_20_31_or_greater) {
+    if (is_20_31_or_greater && !is_21_36_or_greater) {
         PreferenceScreen.PLAYER.addPreferences(
             SwitchPreference("morphe_restore_old_player_buttons", summary = true)
         )
+    }
+
+    if (is_21_36_or_greater) {
+        disableNewPlayerControlsFeatureFlag()
+    }
+
+    // Override flags that interfere with old player icons override.
+    insertLiteralOverride(45757309, LegacyPlayerControlsPatch::allowModernPlayerLayoutFlags)
+    insertLiteralOverride(45771730, LegacyPlayerControlsPatch::allowModernPlayerLayoutFlags)
+    insertLiteralOverride(45763727, LegacyPlayerControlsPatch::allowModernPlayerLayoutFlags)
+    fun overrideExploderLayout(id: Long) = insertLiteralOverride(
+        id, LegacyPlayerControlsPatch::usePlayerBottomControlsExploderLayout
+    )
+
+    // A/B test for a slightly different bottom overlay controls,
+    // that uses layout file youtube_video_exploder_controls_bottom_ui_container.xml
+    // The change to support this is simple and only requires adding buttons to both layout files,
+    // but for now force this different layout off since it's still an experimental test.
+    overrideExploderLayout(45643739L)
+
+    // Turn off a/b tests of ugly player buttons that don't match the style of custom player buttons.
+    if (!is_21_36_or_greater) {
+        overrideExploderLayout(45686474L)
+    }
+
+    if (is_20_28_or_greater) {
+        overrideExploderLayout(45709810L)
+    }
+
+    if (is_20_30_or_greater) {
+        overrideExploderLayout(45713296)
     }
 
     DexMethod("Landroid/view/ViewStub;->inflate()Landroid/view/View;").hookMethod {
@@ -150,6 +194,16 @@ val LegacyPlayerControls = patch(
         }
     }
 
-    DexMethod("Landroid/support/constraint/ConstraintLayout;->onLayout(ZIIII)V").hookMethod(onLayoutHook)
-    DexMethod("Landroidx/constraintlayout/widget/ConstraintLayout;->onLayout(ZIIII)V").hookMethod(onLayoutHook)
+    DexMethod("Landroid/support/constraint/ConstraintLayout;->onLayout(ZIIII)V").hookMethod(
+        onLayoutHook
+    )
+    DexMethod("Landroidx/constraintlayout/widget/ConstraintLayout;->onLayout(ZIIII)V").hookMethod(
+        onLayoutHook
+    )
+
+    if (is_21_05_or_greater) {
+        insertLiteralOverride(45750838L, LegacyPlayerControlsPatch::useModernPlayerTopControls)
+    }
+
+    // TODO Addon
 }

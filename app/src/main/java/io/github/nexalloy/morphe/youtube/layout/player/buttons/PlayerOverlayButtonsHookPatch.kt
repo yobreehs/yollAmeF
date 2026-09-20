@@ -1,6 +1,7 @@
 package io.github.nexalloy.morphe.youtube.layout.player.buttons
 
 import android.view.View
+import app.morphe.extension.youtube.videoplayer.PlayerOverlayButton
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.fullscreen_button_id
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
@@ -20,8 +21,12 @@ val playerOverlayButtonsHook = patch {
             if (innerDepth != 0) return@after
             if (it.args[0] == fullscreenButtonId) {
                 val view = it.result as? View ?: return@after
+                PlayerOverlayButton.initializeButton(view)
                 initializeButtonList.forEach { func -> func(view) }
             }
         }
     })
+
+    // TODO Addon
+    // addPlayerBottomButton(AddOnApi::initializeButton)
 }

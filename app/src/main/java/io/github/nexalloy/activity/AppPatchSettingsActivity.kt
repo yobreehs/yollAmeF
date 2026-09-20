@@ -2,10 +2,7 @@
 
 package io.github.nexalloy.activity
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context.MODE_PRIVATE
-import android.content.Context.MODE_WORLD_READABLE
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
@@ -18,9 +15,9 @@ import android.provider.Settings
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
-import io.github.nexalloy.appPatchConfigurations
+import io.github.libxposed.service.XposedService
 import io.github.nexalloy.R
-import java.io.File
+import io.github.nexalloy.appPatchConfigurations
 
 class AppPatchSettingsActivity : Activity() {
 
@@ -56,149 +53,126 @@ class AppPatchSettingsActivity : Activity() {
         return super.onOptionsItemSelected(item)
     }
 
-    @SuppressLint("WorldReadableFiles")
-    class AppPatchSettingsFragment : PreferenceFragment() {
+    @Suppress("OVERRIDE_DEPRECATION")
+    class AppPatchSettingsFragment : PreferenceFragment(), SettingApplication.ServiceStateListener {
 
         @Deprecated("Deprecated in Java")
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
+        }
 
-            // Retrieve appName from the Activity's Intent extras
-            val appName = arguments?.getString(ARGUMENT_APP_NAME)
-            val appPatchInfo = appPatchConfigurations.find { it.appName == appName }
-            if (appPatchInfo == null) throw Exception("AppPatchInfo not found, app_name: $appName")
-            val defaultPatchStates = appPatchInfo.patches.associate { it.name to it.use }
+        private var mService: XposedService? = null
 
-            val screen = preferenceManager.createPreferenceScreen(context)
-            /** XSharedPreference
-             * @see io.github.nexalloy.PatchExecutor.patchPreferences */
-            preferenceManager.sharedPreferencesMode = resolvePreferencesMode(appPatchInfo.packageName)
-            preferenceManager.sharedPreferencesName = appPatchInfo.packageName
-            // Force-create the preference file (so target apps can read the default patch states
-            // even before the user touches anything) and make it readable by other UIDs.
-            runCatching {
-                preferenceManager.sharedPreferences.let { prefs ->
-                    val editor = prefs.edit()
-                    defaultPatchStates.forEach { (key, value) ->
-                        if (!prefs.contains(key)) editor.putBoolean(key, value)
-                    }
-                    editor.commit()
-                    makePrefsWorldReadable(prefs)
-                }
+        override fun onStart() {
+            super.onStart()
+            SettingApplication.addServiceStateListener(this, true)
+        }
+
+        override fun onStop() {
+            SettingApplication.removeServiceStateListener(this)
+            super.onStop()
+        }
+
+        override fun onServiceStateChanged(service: XposedService?) {
+            mService = service
+            if (service == null) {
+                activity.actionBar?.title = "Binder is null"
+                return
             }
 
-            object : Preference(context) {
-                @Deprecated("Deprecated in Java")
-                override fun onBindView(view: View) {
-                    super.onBindView(view)
-                    view.findViewById<Button>(R.id.button_default).setOnClickListener {
-                        restoreDefaultPreferences(defaultPatchStates)
-                    }
-                    view.findViewById<Button>(R.id.button_none).setOnClickListener {
-                        setAllPreferences(false)
-                    }
-                    val isInstalled = runCatching {
-                        context.packageManager.getPackageInfo(appPatchInfo.packageName, 0)
-                    }.isSuccess
+            activity.runOnUiThread {
+                // Retrieve appName from the Activity's Intent extras
+                val appName = arguments?.getString(ARGUMENT_APP_NAME)
+                val appPatchInfo = appPatchConfigurations.find { it.appName == appName }
+                if (appPatchInfo == null) throw Exception("AppPatchInfo not found, app_name: $appName")
+                val defaultPatchStates = appPatchInfo.patches.associate { it.name to it.use }
 
-                    view.findViewById<Button>(R.id.button_app_info).apply {
-                        if (!isInstalled) visibility = View.GONE
-                        setOnClickListener {
-                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                .setData(Uri.parse("package:${appPatchInfo.packageName}"))
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            startActivity(intent)
-                        }
-                    }
-                }
-            }.apply {
-                layoutResource = R.layout.preference_header_buttons
-                screen.addPreference(this)
-            }
+                val screen = preferenceManager.createPreferenceScreen(context)
 
-            for (patchInfo in appPatchInfo.patches.sortedBy { it.name }) {
-                if (patchInfo.name == "") continue
-                if (patchInfo.name.startsWith("<")) continue
-                CheckBoxPreference(context).apply {
-                    /** XSharedPreference
-                     * @see io.github.nexalloy.PatchExecutor.applyPatches */
-                    key = patchInfo.name // Pref Key
-                    title = patchInfo.name
-                    summary = patchInfo.description
-                    setDefaultValue(patchInfo.use)
-                    setOnPreferenceChangeListener { preference, newValue ->
-                        val vibrator =
-                            context.getSystemService(VIBRATOR_SERVICE) as Vibrator?
-                        if (vibrator?.hasVibrator() ?: false) {
-                            vibrator.vibrate(50)
+                val remotePrefs = service.getRemotePreferences(appPatchInfo.packageName)
+
+                object : Preference(context) {
+                    @Deprecated("Deprecated in Java")
+                    override fun onBindView(view: View) {
+                        super.onBindView(view)
+                        view.findViewById<Button>(R.id.button_default).setOnClickListener {
+                            restoreDefaultPreferences(remotePrefs, defaultPatchStates)
                         }
-                        // Persist synchronously so the target app's XSharedPreferences observes the
-                        // change immediately, and keep the file accessible from other UIDs.
-                        runCatching {
-                            preference.preferenceManager.sharedPreferences.let { prefs ->
-                                prefs.edit().putBoolean(preference.key, newValue as Boolean).commit()
-                                makePrefsWorldReadable(prefs)
+                        view.findViewById<Button>(R.id.button_none).setOnClickListener {
+                            setAllPreferences(remotePrefs, false)
+                        }
+                        val isInstalled = runCatching {
+                            context.packageManager.getPackageInfo(appPatchInfo.packageName, 0)
+                        }.isSuccess
+
+                        view.findViewById<Button>(R.id.button_app_info).apply {
+                            if (!isInstalled) visibility = View.GONE
+                            setOnClickListener {
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    .setData(Uri.parse("package:${appPatchInfo.packageName}"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(intent)
                             }
                         }
-                        true
                     }
+                }.apply {
+                    layoutResource = R.layout.preference_header_buttons
                     screen.addPreference(this)
                 }
-            }
 
-            preferenceScreen = screen
-        }
+                for (patchInfo in appPatchInfo.patches.sortedBy { it.name }) {
+                    if (patchInfo.name == "") continue
+                    if (patchInfo.name.startsWith("<")) continue
+                    CheckBoxPreference(context).apply {
+                        key = patchInfo.name // Pref Key
+                        title = patchInfo.name
+                        summary = patchInfo.description
+                        isChecked = remotePrefs.getBoolean(patchInfo.name, patchInfo.use)
 
-        /**
-         * LSPosed (new XSharedPreferences, min API 93) redirects the module's preference files into
-         * `/data/misc/<uuid>/prefs/<modulePkg>/` and only publishes them world-readable when the
-         * `MODE_WORLD_READABLE` flag is used. Frameworks that do not hook `checkMode` throw a
-         * [SecurityException] on Android 14+ (targetSdk >= 34), in which case fall back to
-         * [MODE_PRIVATE] and rely on the explicit chmod in [makePrefsWorldReadable].
-         */
-        @SuppressLint("WorldReadableFiles")
-        private fun resolvePreferencesMode(prefsName: String): Int =
-            try {
-                context!!.getSharedPreferences(prefsName, MODE_WORLD_READABLE)
-                MODE_WORLD_READABLE
-            } catch (_: SecurityException) {
-                MODE_PRIVATE
-            }
+                        setOnPreferenceChangeListener { _, newValue ->
+                            val enabled = newValue as Boolean
+                            remotePrefs.edit().putBoolean(key, enabled).apply()
 
-        /**
-         * Target apps run under a different UID, so the preference file (and its parent directory)
-         * must be readable/writable by everyone. On LSPosed this targets the world-readable redirect
-         * file under `/data/misc`. Best-effort: never crashes when the framework rejects the change.
-         */
-        @SuppressLint("WorldReadableFiles")
-        private fun makePrefsWorldReadable(prefs: SharedPreferences) {
-            runCatching {
-                val file = prefs.javaClass.getMethod("getFile").invoke(prefs) as File
-                file.parentFile?.setReadable(true, false)
-                file.parentFile?.setExecutable(true, false)
-                file.setReadable(true, false)
-                file.setWritable(true, false)
+                            val vibrator =
+                                context.getSystemService(VIBRATOR_SERVICE) as Vibrator?
+                            if (vibrator?.hasVibrator() ?: false) {
+                                vibrator.vibrate(50)
+                            }
+                            true
+                        }
+                        screen.addPreference(this)
+                    }
+                }
+
+                preferenceScreen = screen
             }
         }
 
-        fun setAllPreferences(enable: Boolean) {
+        fun setAllPreferences(prefs: SharedPreferences, enable: Boolean) {
             if (!isAdded) return
+            val editor = prefs.edit()
             for (i in 0 until preferenceScreen.preferenceCount) {
                 val preference = preferenceScreen.getPreference(i)
                 if (preference is CheckBoxPreference) {
                     preference.isChecked = enable
+                    editor.putBoolean(preference.key, enable)
                 }
             }
+            editor.apply()
         }
 
-        fun restoreDefaultPreferences(defaultPatchStates: Map<String, Boolean>) {
+        fun restoreDefaultPreferences(prefs: SharedPreferences,defaultPatchStates: Map<String, Boolean>) {
             if (!isAdded) return
+            val editor = prefs.edit()
             for (i in 0 until preferenceScreen.preferenceCount) {
                 val preference = preferenceScreen.getPreference(i)
                 if (preference is CheckBoxPreference) {
-                    preference.isChecked = defaultPatchStates[preference.key] ?: preference.isChecked
+                    preference.isChecked =
+                        defaultPatchStates[preference.key] ?: preference.isChecked
+                    editor.putBoolean(preference.key, preference.isChecked)
                 }
             }
+            editor.apply()
         }
     }
 }

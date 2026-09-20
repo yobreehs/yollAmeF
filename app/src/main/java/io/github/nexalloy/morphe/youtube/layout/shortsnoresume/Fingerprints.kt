@@ -32,6 +32,12 @@ internal object UserWasInShortsEvaluateFingerprint : Fingerprint(
             name = "<init>",
             parameters = listOf("L", "Z", "Z", "L", "Z")
         ),
+//        methodCall( // 21.30+
+//            opcode = Opcode.INVOKE_DIRECT_RANGE,
+//            name = "<init>",
+//            parameters = listOf("L", "L", "L", "L", "L", "L",  "Ljava/lang/String;"),
+//            location = InstructionLocation.MatchAfterWithin(50)
+//        )
     )
 )
 

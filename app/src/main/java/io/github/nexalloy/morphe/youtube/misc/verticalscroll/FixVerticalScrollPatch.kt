@@ -12,6 +12,7 @@ val FixVerticalScroll = patch(
     dependsOn(VersionCheck)
 
     if (is_21_18_or_greater) {
+        // Can cause issues with scrolling.
         insertLiteralOverride(45782902L)
     }
 

@@ -2,6 +2,7 @@ package io.github.nexalloy.morphe.music.layout.upgradebutton
 
 import de.robv.android.xposed.XposedHelpers
 import io.github.nexalloy.patch
+import java.lang.reflect.Field
 
 val HideUpgradeButton = patch(
     name = "Hide upgrade button",
@@ -9,12 +10,20 @@ val HideUpgradeButton = patch(
 ) {
     // TODO Patch is obsolete and was replaced by navigation bar patch
     ::pivotBarConstructorFingerprint.hookMethod {
-        val pivotBarElementField = ::pivotBarElementField.field
+        var pivotBarElementField: Field? = null
 
         after { param ->
-            val list = pivotBarElementField.get(param.thisObject)
+            if (pivotBarElementField == null) {
+                pivotBarElementField = param.thisObject.let {
+                    it.javaClass.declaredFields.first { f ->
+                        f.get(it) is List<*>
+                    }
+                }
+            }
+
+            val list = pivotBarElementField.get(param.thisObject) as ArrayList<*>
             try {
-                XposedHelpers.callMethod(list, "remove", 4)
+                list.removeAt(4)
             } catch (e: XposedHelpers.InvocationTargetError) {
                 if (e.cause !is IndexOutOfBoundsException) throw e
             }

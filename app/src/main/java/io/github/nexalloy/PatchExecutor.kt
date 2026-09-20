@@ -13,10 +13,11 @@ import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedInterface.Hooker
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.nexalloy.BuildConfig.DEBUG
 import io.github.nexalloy.morphe.Fingerprint
 import org.luckypray.dexkit.DexKitBridge
@@ -55,11 +56,11 @@ class Patch(
     val run: PatchExecutor.() -> Unit
 )
 
-interface IHook {
-    val classLoader: ClassLoader
+abstract class IHook(val xposed: XposedInterface) : XposedInterface by xposed {
+    abstract val classLoader: ClassLoader
 
     fun DexMethod.hookMethod(callback: XC_MethodHook) {
-        XposedBridge.hookMethod(toMember(), callback)
+        toMember().hookMethod(callback)
     }
 
     fun DexMethod.hookMethod(block: HookDsl<IHookCallback>.() -> Unit) {
@@ -94,6 +95,8 @@ interface IHook {
     }
 
     fun DexField.toField() = getFieldInstance(classLoader)
+
+    override fun getApiVersion(): Int = xposed.apiVersion
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -143,33 +146,17 @@ class DependedHookFailedException(
 ) : Exception("Depended hook $subHookName failed.", exception)
 
 @SuppressLint("CommitPrefEdits")
-class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) : IHook {
-    override val classLoader = lpparam.classLoader!!
+class PatchExecutor(
+    val appContext: Application,
+    val lpparam: XposedModuleInterface.PackageReadyParam,
+    xposed: XposedInterface
+) : IHook(xposed) {
+    override val classLoader = lpparam.classLoader
 
     /**
      * @see io.github.nexalloy.activity.AppPatchSettingsActivity.AppPatchSettingsFragment.onCreate
      * */
-    private val patchPreferences = getPatchPreferences()
-
-    /**
-     * Reads the module's patch preferences for this target app.
-     *
-     * Since LSPosed API 93 (new XSharedPreferences) the module's preference files are stored under
-     * `/data/misc/<uuid>/prefs/<modulePkg>/`. SELinux blocks direct `access()` on that path from the
-     * target app, so `file.exists()`/`file.canRead()` return false even though `XSharedPreferences`
-     * itself can read the file through the framework's file-access service. Gating on `file.canRead()`
-     * (as done previously) made the preferences appear empty and silently reverted every module
-     * settings toggle back to its default value.
-     *
-     * Use the `XSharedPreferences` instance directly: it reads through the file-access service on
-     * LSPosed, falls back to the module's own data directory on legacy frameworks, and returns the
-     * default value whenever the file is genuinely unavailable.
-     */
-    private fun getPatchPreferences(): XSharedPreferences {
-        val prefs = XSharedPreferences(BuildConfig.APPLICATION_ID, lpparam.packageName)
-        runCatching { prefs.makeWorldReadable() }
-        return prefs
-    }
+    private val patchPreferences = xposed.getRemotePreferences(lpparam.packageName)
 
     private lateinit var patches: Array<Patch>
     private val appliedPatches = mutableSetOf<Patch>()
@@ -181,7 +168,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
     private var dexkit = run {
         System.loadLibrary("dexkit")
         DexKitCacheBridge.init(cache)
-        DexKitCacheBridge.create("", lpparam.appInfo.sourceDir)
+        DexKitCacheBridge.create("", lpparam.applicationInfo.sourceDir)
     }
 
     fun applyPatches(patches: Array<Patch>) {
@@ -216,7 +203,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
         if (!isCached) {
             cache.clearAll()
             cache.putString("id", id)
-            Utils.showToastLong("FemAlloy is initializing, please wait...")
+            Utils.showToastLong("NexAlloy is initializing, please wait...")
         }
     }
 
@@ -241,7 +228,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
         cache.saveCache()
         val success = failedPatches.isEmpty()
         if (!success) {
-            XposedBridge.log("${lpparam.appInfo.packageName} version: ${getAppVersion()}")
+            XposedBridge.log("${lpparam.applicationInfo.packageName} version: ${getAppVersion()}")
             Utils.showToastLong("Error while apply following patches:\n${failedPatches.joinToString { it.name }}")
         }
     }
@@ -249,7 +236,7 @@ class PatchExecutor(val appContext: Application, val lpparam: LoadPackageParam) 
     private fun logDebugInfo() {
         val success = failedPatches.isEmpty()
         if (DEBUG) {
-            XposedBridge.log("${lpparam.appInfo.packageName} version: ${getAppVersion()}")
+            XposedBridge.log("${lpparam.applicationInfo.packageName} version: ${getAppVersion()}")
             if (success) {
                 Utils.showToastLong("apply patches success")
             }

@@ -1,13 +1,203 @@
 package io.github.nexalloy.morphe
 
-import io.github.nexalloy.morphe.Opcode.*
+import de.robv.android.xposed.XC_MethodReplacement
+import io.github.nexalloy.hookMethod
+import io.github.nexalloy.morphe.Opcode.ADD_DOUBLE
+import io.github.nexalloy.morphe.Opcode.ADD_DOUBLE_2ADDR
+import io.github.nexalloy.morphe.Opcode.ADD_FLOAT
+import io.github.nexalloy.morphe.Opcode.ADD_FLOAT_2ADDR
+import io.github.nexalloy.morphe.Opcode.ADD_INT
+import io.github.nexalloy.morphe.Opcode.ADD_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.ADD_INT_LIT16
+import io.github.nexalloy.morphe.Opcode.ADD_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.ADD_LONG
+import io.github.nexalloy.morphe.Opcode.ADD_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.AGET
+import io.github.nexalloy.morphe.Opcode.AGET_BOOLEAN
+import io.github.nexalloy.morphe.Opcode.AGET_BYTE
+import io.github.nexalloy.morphe.Opcode.AGET_CHAR
+import io.github.nexalloy.morphe.Opcode.AGET_OBJECT
+import io.github.nexalloy.morphe.Opcode.AGET_SHORT
+import io.github.nexalloy.morphe.Opcode.AGET_WIDE
+import io.github.nexalloy.morphe.Opcode.AND_INT
+import io.github.nexalloy.morphe.Opcode.AND_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.AND_INT_LIT16
+import io.github.nexalloy.morphe.Opcode.AND_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.AND_LONG
+import io.github.nexalloy.morphe.Opcode.AND_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.ARRAY_LENGTH
+import io.github.nexalloy.morphe.Opcode.CONST
+import io.github.nexalloy.morphe.Opcode.CONST_16
+import io.github.nexalloy.morphe.Opcode.CONST_4
+import io.github.nexalloy.morphe.Opcode.CONST_CLASS
+import io.github.nexalloy.morphe.Opcode.CONST_HIGH16
+import io.github.nexalloy.morphe.Opcode.CONST_STRING
+import io.github.nexalloy.morphe.Opcode.CONST_STRING_JUMBO
+import io.github.nexalloy.morphe.Opcode.CONST_WIDE
+import io.github.nexalloy.morphe.Opcode.CONST_WIDE_16
+import io.github.nexalloy.morphe.Opcode.CONST_WIDE_32
+import io.github.nexalloy.morphe.Opcode.CONST_WIDE_HIGH16
+import io.github.nexalloy.morphe.Opcode.DIV_DOUBLE
+import io.github.nexalloy.morphe.Opcode.DIV_DOUBLE_2ADDR
+import io.github.nexalloy.morphe.Opcode.DIV_FLOAT
+import io.github.nexalloy.morphe.Opcode.DIV_FLOAT_2ADDR
+import io.github.nexalloy.morphe.Opcode.DIV_INT
+import io.github.nexalloy.morphe.Opcode.DIV_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.DIV_INT_LIT16
+import io.github.nexalloy.morphe.Opcode.DIV_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.DIV_LONG
+import io.github.nexalloy.morphe.Opcode.DIV_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.DOUBLE_TO_FLOAT
+import io.github.nexalloy.morphe.Opcode.DOUBLE_TO_INT
+import io.github.nexalloy.morphe.Opcode.DOUBLE_TO_LONG
+import io.github.nexalloy.morphe.Opcode.FLOAT_TO_DOUBLE
+import io.github.nexalloy.morphe.Opcode.FLOAT_TO_INT
+import io.github.nexalloy.morphe.Opcode.FLOAT_TO_LONG
+import io.github.nexalloy.morphe.Opcode.IGET
+import io.github.nexalloy.morphe.Opcode.IGET_BOOLEAN
+import io.github.nexalloy.morphe.Opcode.IGET_BYTE
+import io.github.nexalloy.morphe.Opcode.IGET_CHAR
+import io.github.nexalloy.morphe.Opcode.IGET_OBJECT
+import io.github.nexalloy.morphe.Opcode.IGET_SHORT
+import io.github.nexalloy.morphe.Opcode.IGET_WIDE
+import io.github.nexalloy.morphe.Opcode.INSTANCE_OF
+import io.github.nexalloy.morphe.Opcode.INT_TO_BYTE
+import io.github.nexalloy.morphe.Opcode.INT_TO_CHAR
+import io.github.nexalloy.morphe.Opcode.INT_TO_DOUBLE
+import io.github.nexalloy.morphe.Opcode.INT_TO_FLOAT
+import io.github.nexalloy.morphe.Opcode.INT_TO_LONG
+import io.github.nexalloy.morphe.Opcode.INT_TO_SHORT
+import io.github.nexalloy.morphe.Opcode.LONG_TO_DOUBLE
+import io.github.nexalloy.morphe.Opcode.LONG_TO_FLOAT
+import io.github.nexalloy.morphe.Opcode.LONG_TO_INT
+import io.github.nexalloy.morphe.Opcode.MOVE
+import io.github.nexalloy.morphe.Opcode.MOVE_16
+import io.github.nexalloy.morphe.Opcode.MOVE_EXCEPTION
+import io.github.nexalloy.morphe.Opcode.MOVE_FROM16
+import io.github.nexalloy.morphe.Opcode.MOVE_OBJECT
+import io.github.nexalloy.morphe.Opcode.MOVE_OBJECT_16
+import io.github.nexalloy.morphe.Opcode.MOVE_OBJECT_FROM16
+import io.github.nexalloy.morphe.Opcode.MOVE_RESULT
+import io.github.nexalloy.morphe.Opcode.MOVE_RESULT_OBJECT
+import io.github.nexalloy.morphe.Opcode.MOVE_RESULT_WIDE
+import io.github.nexalloy.morphe.Opcode.MOVE_WIDE
+import io.github.nexalloy.morphe.Opcode.MOVE_WIDE_16
+import io.github.nexalloy.morphe.Opcode.MOVE_WIDE_FROM16
+import io.github.nexalloy.morphe.Opcode.MUL_DOUBLE
+import io.github.nexalloy.morphe.Opcode.MUL_DOUBLE_2ADDR
+import io.github.nexalloy.morphe.Opcode.MUL_FLOAT
+import io.github.nexalloy.morphe.Opcode.MUL_FLOAT_2ADDR
+import io.github.nexalloy.morphe.Opcode.MUL_INT
+import io.github.nexalloy.morphe.Opcode.MUL_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.MUL_INT_LIT16
+import io.github.nexalloy.morphe.Opcode.MUL_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.MUL_LONG
+import io.github.nexalloy.morphe.Opcode.MUL_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.NEG_DOUBLE
+import io.github.nexalloy.morphe.Opcode.NEG_FLOAT
+import io.github.nexalloy.morphe.Opcode.NEG_INT
+import io.github.nexalloy.morphe.Opcode.NEG_LONG
+import io.github.nexalloy.morphe.Opcode.NEW_ARRAY
+import io.github.nexalloy.morphe.Opcode.NEW_INSTANCE
+import io.github.nexalloy.morphe.Opcode.NOT_INT
+import io.github.nexalloy.morphe.Opcode.NOT_LONG
+import io.github.nexalloy.morphe.Opcode.OR_INT
+import io.github.nexalloy.morphe.Opcode.OR_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.OR_INT_LIT16
+import io.github.nexalloy.morphe.Opcode.OR_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.OR_LONG
+import io.github.nexalloy.morphe.Opcode.OR_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.REM_DOUBLE
+import io.github.nexalloy.morphe.Opcode.REM_DOUBLE_2ADDR
+import io.github.nexalloy.morphe.Opcode.REM_FLOAT
+import io.github.nexalloy.morphe.Opcode.REM_FLOAT_2ADDR
+import io.github.nexalloy.morphe.Opcode.REM_INT
+import io.github.nexalloy.morphe.Opcode.REM_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.REM_INT_LIT16
+import io.github.nexalloy.morphe.Opcode.REM_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.REM_LONG
+import io.github.nexalloy.morphe.Opcode.REM_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.RSUB_INT
+import io.github.nexalloy.morphe.Opcode.RSUB_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.SGET
+import io.github.nexalloy.morphe.Opcode.SGET_BOOLEAN
+import io.github.nexalloy.morphe.Opcode.SGET_BYTE
+import io.github.nexalloy.morphe.Opcode.SGET_CHAR
+import io.github.nexalloy.morphe.Opcode.SGET_OBJECT
+import io.github.nexalloy.morphe.Opcode.SGET_SHORT
+import io.github.nexalloy.morphe.Opcode.SGET_WIDE
+import io.github.nexalloy.morphe.Opcode.SHL_INT
+import io.github.nexalloy.morphe.Opcode.SHL_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.SHL_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.SHL_LONG
+import io.github.nexalloy.morphe.Opcode.SHL_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.SHR_INT
+import io.github.nexalloy.morphe.Opcode.SHR_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.SHR_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.SHR_LONG
+import io.github.nexalloy.morphe.Opcode.SHR_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.SUB_DOUBLE
+import io.github.nexalloy.morphe.Opcode.SUB_DOUBLE_2ADDR
+import io.github.nexalloy.morphe.Opcode.SUB_FLOAT
+import io.github.nexalloy.morphe.Opcode.SUB_FLOAT_2ADDR
+import io.github.nexalloy.morphe.Opcode.SUB_INT
+import io.github.nexalloy.morphe.Opcode.SUB_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.SUB_LONG
+import io.github.nexalloy.morphe.Opcode.SUB_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.USHR_INT
+import io.github.nexalloy.morphe.Opcode.USHR_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.USHR_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.USHR_LONG
+import io.github.nexalloy.morphe.Opcode.USHR_LONG_2ADDR
+import io.github.nexalloy.morphe.Opcode.XOR_INT
+import io.github.nexalloy.morphe.Opcode.XOR_INT_2ADDR
+import io.github.nexalloy.morphe.Opcode.XOR_INT_LIT16
+import io.github.nexalloy.morphe.Opcode.XOR_INT_LIT8
+import io.github.nexalloy.morphe.Opcode.XOR_LONG
+import io.github.nexalloy.morphe.Opcode.XOR_LONG_2ADDR
 import org.luckypray.dexkit.result.FieldData
 import org.luckypray.dexkit.result.InstructionData
 import org.luckypray.dexkit.result.MethodData
 import java.util.EnumSet
 
+@Suppress("NOTHING_TO_INLINE")
+inline fun setExtensionIsPatchIncluded(extension: Class<*>){
+    extension.getDeclaredMethod("isPatchIncluded").hookMethod(XC_MethodReplacement.returnConstant(true))
+}
+
 private val MethodData.definingClass
     get() = this.declaredClass?.descriptor
+
+private fun getParamTypeSigns(paramSigns: String): List<String> {
+    val params = mutableListOf<String>()
+    var left = 0
+    var right = 0
+    while (right < paramSigns.length) {
+        val c = paramSigns[right]
+        if (c == '[') {
+            right++
+            continue
+        } else if (c == 'L') {
+            val end = paramSigns.indexOf(';', right)
+            right = end
+        }
+        val sign = paramSigns.substring(left, right + 1)
+        params.add(sign)
+        left = ++right
+    }
+    if (left != right) {
+        throw IllegalStateException("Unknown signString: $paramSigns")
+    }
+    return params
+}
+
+val MethodData.parameters: List<String>
+    get() {
+        val idx1 = descriptor.indexOf("->")
+        val idx2 = descriptor.indexOf("(", idx1 + 1)
+        val idx3 = descriptor.indexOf(")", idx2 + 1)
+        return getParamTypeSigns(descriptor.substring(idx2 + 1, idx3))
+    }
 
 val writeOpcodes: EnumSet<Opcode> = EnumSet.of(
     ARRAY_LENGTH,
