@@ -2,6 +2,7 @@ package io.github.nexalloy.morphe.youtube
 
 import android.app.Activity
 import app.morphe.extension.shared.Utils
+import io.github.libxposed.api.XposedInterface
 import io.github.nexalloy.ExtensionResourceHook
 import io.github.nexalloy.addModuleAssets
 import io.github.nexalloy.injectHostClassLoaderToSelf
@@ -61,6 +62,7 @@ fun insertLiteralOverride(id: Long, override: (Boolean) -> Boolean) {
 
 val FeatureOverride = patch {
     ::experimentalBooleanFeatureFlagFingerprint.hookMethod {
+        priority = XposedInterface.PRIORITY_DEFAULT - 1
         after {
             val id = it.args.atLast(2) as Long
             val orig = it.result as Boolean

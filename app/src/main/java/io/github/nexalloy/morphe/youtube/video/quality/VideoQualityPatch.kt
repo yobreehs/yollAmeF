@@ -1,14 +1,14 @@
 package io.github.nexalloy.morphe.youtube.video.quality
 
 import app.morphe.extension.shared.settings.preference.NoTitlePreferenceCategory
-import io.github.nexalloy.patch
-import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
+import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_40_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
+import io.github.nexalloy.patch
 
 val settingsMenuVideoQualityGroup = mutableSetOf<BasePreference>()
 

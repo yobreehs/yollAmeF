@@ -1,8 +1,10 @@
 package io.github.nexalloy.morphe.youtube.video.speed.remember
 
 import app.morphe.extension.youtube.patches.playback.speed.RememberPlaybackSpeedPatch
+import app.morphe.extension.youtube.settings.preference.ChannelWhitelistPreference
 import app.morphe.extension.youtube.settings.preference.CustomVideoSpeedListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.shared.InitializePlaybackSpeedValuesFingerprint
 import io.github.nexalloy.morphe.youtube.video.information.PlaybackSpeedMenu
@@ -31,9 +33,21 @@ val RememberPlaybackSpeed = patch {
                 entryValuesKey = null,
                 tag = CustomVideoSpeedListPreference::class.java
             ),
+            ListPreference(
+                key = "morphe_playback_audio_pitch_default",
+                // List is shared with video speeds.
+                entriesKey = null,
+                entryValuesKey = null,
+                tag = CustomVideoSpeedListPreference::class.java
+            ),
             SwitchPreference("morphe_remember_playback_speed_last_selected", summary = true),
             SwitchPreference("morphe_remember_playback_speed_last_selected_toast", summary = true),
-            SwitchPreference("morphe_disable_playback_speed_music", summary = true)
+            SwitchPreference("morphe_disable_playback_speed_music", summary = true),
+            NonInteractivePreference(
+                key = "morphe_playback_speed_channel_whitelist",
+                tag = ChannelWhitelistPreference::class.java,
+                selectable = true
+            )
         )
     )
 

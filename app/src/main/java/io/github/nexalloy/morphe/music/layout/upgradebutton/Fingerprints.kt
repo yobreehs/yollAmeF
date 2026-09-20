@@ -2,7 +2,6 @@ package io.github.nexalloy.morphe.music.layout.upgradebutton
 
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Opcode
-import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.fingerprint
 
 internal val pivotBarConstructorFingerprint = fingerprint {
@@ -15,8 +14,4 @@ internal val pivotBarConstructorFingerprint = fingerprint {
         Opcode.IPUT_OBJECT,
         Opcode.RETURN_VOID
     )
-}
-
-val pivotBarElementField = findFieldDirect {
-    pivotBarConstructorFingerprint().declaredClass!!.fields.single { f -> f.typeName == "java.util.List" }
 }

@@ -5,6 +5,8 @@ import app.morphe.extension.youtube.patches.VideoInformation
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
+import io.github.nexalloy.bindProxy
+import io.github.nexalloy.createProxy
 import io.github.nexalloy.findFirstFieldByExactType
 import io.github.nexalloy.getStaticObjectField
 import io.github.nexalloy.hookMethod
@@ -20,6 +22,7 @@ import io.github.nexalloy.morphe.youtube.video.playerresponse.addPlayerResponseM
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponseVideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
+import io.github.nexalloy.new
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import java.lang.ref.WeakReference
@@ -60,11 +63,11 @@ class PlaybackController(
     private val getVideoTime: Method,
     val seekSourceNone: Any
 ) : VideoInformation.PlaybackController {
-    val obj = WeakReference(obj)
-
     init {
-        XposedHelpers.setAdditionalInstanceField(obj, "patch_controller", this)
+        obj.bindProxy(this)
     }
+
+    val obj = WeakReference(obj)
 
     override fun patch_seekTo(videoTime: Long): Boolean {
         return seekTo(obj.get(), videoTime, seekSourceNone) as Boolean
@@ -82,13 +85,16 @@ class PlaybackController(
 val playerControllerFieldName = "playerController"
 
 class PlaybackSpeedMenu(
-    obj: Any
+    menu: Any
 ) : VideoInformation.PlaybackSpeedMenuInterface {
+    val controller = WeakReference(XposedHelpers.getAdditionalInstanceField(menu, playerControllerFieldName))
 
-    val playerController = XposedHelpers.getAdditionalInstanceField(obj, playerControllerFieldName)
+    init {
+        menu.bindProxy(this)
+    }
 
     override fun patch_setSpeed(speed: Float) {
-        setPlaybackSpeedMethod(playerController, speed)
+        setPlaybackSpeedMethod(controller.get(), speed)
     }
 }
 
@@ -221,13 +227,13 @@ val VideoInformationPatch = patch(
     InitializePlaybackSpeedValuesFingerprint.declaredClass.constructors[0].hookMethod {
         val playerControllerClass = ::PlayerControllerClass.clazz
         after {
-            VideoInformation.setPlaybackSpeedMenu(PlaybackSpeedMenu(it.thisObject))
             val c = it.args.first { it.javaClass == playerControllerClass }
             XposedHelpers.setAdditionalInstanceField(
                 it.thisObject,
                 playerControllerFieldName,
                 c
             )
+            VideoInformation.setPlaybackSpeedMenu(PlaybackSpeedMenu(it.thisObject))
         }
     }
 
@@ -301,9 +307,52 @@ val VideoInformationPatch = patch(
         }
     }
 
-    // TODO ChannelInformationFingerprint
+    // TODO Set channel information.
+
+
+    // region ExoPlayerImpl.
+
+    val exoPlayerClass =
+        classLoader.loadClass(::playbackParametersSetterFingerprint.dexMethod.className)
+
+    val setPlaybackParametersMethod = ::playbackParametersSetterFingerprint.method
+
+    val playbackParametersClass =
+        classLoader.loadClass(::playbackParametersSetterFingerprint.dexMethod.paramTypeNames[0])
+
+    val floatFields = playbackParametersClass.declaredFields.filter { it.type == Float::class.java }
+    val speedField = floatFields[0]
+    val pitchField = floatFields[1]
+    ::playbackParametersSetterFingerprint.hookMethod {
+        before {
+            val newParam = playbackParametersClass.new(
+                speedField.get(it.args[0]),
+                VideoInformation.getPlaybackAudioPitch()
+            )
+            it.args[0] = newParam
+        }
+    }
+
+    exoPlayerClass.constructors.single().hookMethod {
+        before {
+            VideoInformation.initializeExoPlayerImpl(
+                it.thisObject.createProxy { impl ->
+                    VideoInformation.ExoPlayerImpl { speed, pitch ->
+                        setPlaybackParametersMethod(
+                            impl.get(),
+                            playbackParametersClass.new(speed, pitch)
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    // endregion
 
     onCreateHook.add { VideoInformation.initialize(it) }
     videoSpeedChangedHook.add { VideoInformation.videoSpeedChanged(it) }
     userSelectedPlaybackSpeedHook.add { VideoInformation.userSelectedPlaybackSpeed(it) }
+
+    // TODO Addon
 }

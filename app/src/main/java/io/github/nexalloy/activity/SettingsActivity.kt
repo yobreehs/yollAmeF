@@ -1,8 +1,7 @@
-@file:Suppress("DEPRECATION") @file:SuppressLint("WorldReadableFiles")
+@file:Suppress("DEPRECATION")
 
 package io.github.nexalloy.activity
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
@@ -19,6 +18,7 @@ import android.view.MenuItem
 import android.window.OnBackInvokedDispatcher
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
+import io.github.libxposed.service.XposedService
 import io.github.nexalloy.AppPatchInfo
 import io.github.nexalloy.BuildConfig
 import io.github.nexalloy.R
@@ -26,7 +26,9 @@ import io.github.nexalloy.appPatchConfigurations
 import io.github.nexalloy.common.UpdateChecker
 import kotlin.system.exitProcess
 
-class SettingsActivity : Activity() {
+class SettingsActivity : Activity(), SettingApplication.ServiceStateListener {
+
+    private var mService: XposedService? = null
     private lateinit var aboutPreference: MorpheAboutPreference
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,8 +54,23 @@ class SettingsActivity : Activity() {
             .commit()
     }
 
+    override fun onStart() {
+        super.onStart()
+        SettingApplication.addServiceStateListener(this, true)
+    }
+
+    override fun onStop() {
+        SettingApplication.removeServiceStateListener(this)
+        super.onStop()
+    }
+
+    override fun onServiceStateChanged(service: XposedService?) {
+        mService = service
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.xp_settings_menu, menu)
+        menu.findItem(R.id.menu_disable_auto_check).isVisible = false
         return true
     }
 
@@ -61,12 +78,15 @@ class SettingsActivity : Activity() {
         val aliasName = ComponentName(this, SettingsActivity::class.java.name + "Alias")
         menu.findItem(R.id.menu_hide_icon).isChecked =
             packageManager.getComponentEnabledSetting(aliasName) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+
+        val menuDisableAutoCheck = menu.findItem(R.id.menu_disable_auto_check)
         try {
-            val prefs = getSharedPreferences("prefs", MODE_WORLD_READABLE)
-            menu.findItem(R.id.menu_disable_auto_check).isChecked =
+            val prefs = mService!!.getRemotePreferences("prefs")
+            menuDisableAutoCheck.isChecked =
                 prefs.getBoolean("disable_auto_check_update", false)
-        } catch (_: SecurityException) {
-            menu.findItem(R.id.menu_disable_auto_check).isVisible = false
+            menuDisableAutoCheck.isVisible = true
+        } catch (_: Throwable) {
+            menuDisableAutoCheck.isVisible = false
         }
         return true
     }
@@ -77,22 +97,29 @@ class SettingsActivity : Activity() {
                 aboutPreference.onPreferenceClickListener?.onPreferenceClick(aboutPreference)
                 true
             }
+
             R.id.menu_hide_icon -> {
                 val newChecked = !item.isChecked
                 item.isChecked = newChecked
                 val aliasName = ComponentName(this, SettingsActivity::class.java.name + "Alias")
                 val status = if (newChecked) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                             else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                packageManager.setComponentEnabledSetting(aliasName, status, PackageManager.DONT_KILL_APP)
+                else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                packageManager.setComponentEnabledSetting(
+                    aliasName,
+                    status,
+                    PackageManager.DONT_KILL_APP
+                )
                 true
             }
+
             R.id.menu_disable_auto_check -> {
                 val newChecked = !item.isChecked
                 item.isChecked = newChecked
-                getSharedPreferences("prefs", MODE_WORLD_READABLE)
+                mService!!.getRemotePreferences("prefs")
                     .edit().putBoolean("disable_auto_check_update", newChecked).apply()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -103,15 +130,21 @@ class SettingsActivity : Activity() {
         exitProcess(0)
     }
 
-    class SettingsFragment : PreferenceFragment() {
+    @Suppress("OVERRIDE_DEPRECATION")
+    class SettingsFragment : PreferenceFragment(), SettingApplication.ServiceStateListener {
+        private var mService: XposedService? = null
+
+        private var offPreference: Preference? = null
+        private var onCategory: PreferenceCategory? = null
+
         fun AppPatchInfo.getPreference(): Preference {
-            val preference = Preference(context)
-            preference.title = appName
-            preference.key = appName
-            preference.intent = Intent(context, AppPatchSettingsActivity::class.java).apply {
-                putExtra(AppPatchSettingsActivity.ARGUMENT_APP_NAME, appName)
+            return Preference(context).apply {
+                title = appName
+                key = appName
+                intent = Intent(context, AppPatchSettingsActivity::class.java).apply {
+                    putExtra(AppPatchSettingsActivity.ARGUMENT_APP_NAME, appName)
+                }
             }
-            return preference
         }
 
         @Deprecated("Deprecated in Java")
@@ -166,33 +199,66 @@ class SettingsActivity : Activity() {
                 autoCheckUpdate()
             }
 
-            val isModuleActivated: Boolean = try {
-                context.getSharedPreferences("prefs", MODE_WORLD_READABLE)
-                true
-            } catch (_: SecurityException) {
-                false
-            }
+            updateDynamicUI(false)
+        }
 
-            if (!isModuleActivated) {
-                rootScreen.addPreference(Preference(context).apply {
+        fun updateDynamicUI(on: Boolean) {
+            val rootScreen = preferenceScreen ?: return
+            if (onCategory != null) rootScreen.removePreference(onCategory)
+            if (offPreference != null) rootScreen.removePreference(offPreference)
+
+            if (!on) {
+                offPreference = Preference(context).apply {
                     setSummary(R.string.module_not_activated_summary)
                     isEnabled = false
-                })
-                return
-            }
+                    rootScreen.addPreference(this)
+                }
+            } else {
+                onCategory = PreferenceCategory(context).apply {
+                    setTitle(R.string.patch_selection)
 
-            val patchSelectionCategory = PreferenceCategory(context).apply {
-                setTitle(R.string.patch_selection)
-                rootScreen.addPreference(this)
-            }
-            Preference(context).apply {
-                setSummary(R.string.force_stop_to_apply_summary)
-                isEnabled = false
-                patchSelectionCategory.addPreference(this)
-            }
+                    rootScreen.addPreference(this)
 
-            for (appPatchInfo in appPatchConfigurations) {
-                patchSelectionCategory.addPreference(appPatchInfo.getPreference())
+                    this.addPreference(Preference(context).apply {
+                        setSummary(R.string.force_stop_to_apply_summary)
+                        isEnabled = false
+                    })
+
+                    for (appPatchInfo in appPatchConfigurations) {
+                        this.addPreference(appPatchInfo.getPreference())
+                    }
+                }
+            }
+        }
+
+        override fun onStart() {
+            super.onStart()
+            SettingApplication.addServiceStateListener(this, true)
+        }
+
+        override fun onStop() {
+            SettingApplication.removeServiceStateListener(this)
+            super.onStop()
+        }
+
+        override fun onServiceStateChanged(service: XposedService?) {
+            mService = service
+
+            activity?.runOnUiThread {
+                if (service == null) {
+                    updateDynamicUI(false)
+                    return@runOnUiThread
+                }
+
+                val isModuleActivated: Boolean = try {
+                    service.getRemotePreferences("prefs")
+                    service.apiVersion
+                    true
+                } catch (_: Throwable) {
+                    false
+                }
+
+                updateDynamicUI(isModuleActivated)
             }
         }
     }

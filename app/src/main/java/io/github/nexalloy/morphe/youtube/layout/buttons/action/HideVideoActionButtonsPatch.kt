@@ -5,12 +5,12 @@ import app.morphe.extension.youtube.patches.components.QuickActionButtonsFilter
 import app.morphe.extension.youtube.patches.components.VideoActionButtonsFilter
 import io.github.nexalloy.callMethod
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
+import io.github.nexalloy.morphe.shared.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.youtube.misc.litho.node.TreeNodeElementHook
-import io.github.nexalloy.morphe.youtube.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.shared.WatchNextResponseParserFingerprint
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch

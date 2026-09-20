@@ -10,10 +10,11 @@ import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.youtube.patches.VersionCheckPatch
 import app.morphe.extension.youtube.shared.NavigationBar
+import io.github.nexalloy.createProxy
 import io.github.nexalloy.enumValueOf
+import io.github.nexalloy.morphe.youtube.shared.mainActivityOnBackPressedFingerprint
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
-import io.github.nexalloy.morphe.youtube.shared.mainActivityOnBackPressedFingerprint
 import org.luckypray.dexkit.wrap.DexMethod
 
 fun onNavigationTabCreated(button: NavigationBar.NavigationButton, tabView: View) {
@@ -37,21 +38,28 @@ val NavigationBarHook = patch(
         after { NavigationBar.navigationTabLoaded(it.result as View) }
     })
 
-    ::initializeButtonsFingerprint.hookMethod(scopedHook(PivotBarButtonsCreateResourceViewFingerprint.member) {
-        after {
-            val isYouTab = runCatching {
-                Utils.getChildViewByResourceName<View>(
-                    it.result as ViewGroup,
-                    "you_tab_border"
-                ) ?: throw Exception("You tab border not found")
-            }.isSuccess
-            if (isYouTab) {
-                NavigationBar.setLastAppNavigationEnumYou()
-            }
+//    if (!is_20_28_or_greater) {
+//        // TODO
+//    }
 
-            NavigationBar.navigationTabLoaded(it.result as View)
-        }
-    })
+    ::initializeButtonsFingerprint.hookMethod(
+        scopedHook(
+            PivotBarButtonsCreateResourceStyledViewFingerprint.member
+        ) {
+            after {
+                val isYouTab = runCatching {
+                    Utils.getChildViewByResourceName<View>(
+                        it.result as ViewGroup,
+                        "you_tab_border"
+                    ) ?: throw Exception("You tab border not found")
+                }.isSuccess
+                if (isYouTab) {
+                    NavigationBar.setLastAppNavigationEnumYou()
+                }
+
+                NavigationBar.navigationTabLoaded(it.result as View)
+            }
+        })
 
     val selectedTab = ThreadLocal<View>()
     ::pivotBarButtonsViewSetSelectedFingerprint.hookMethod {
@@ -97,7 +105,11 @@ val NavigationBarHook = patch(
             val toolbar = Utils.getChildView<View>(
                 layout, false
             ) { it: View -> appCompatToolbarClass.isAssignableFrom(it.javaClass) }
-            NavigationBar.setToolbar { getNavigationIcon(toolbar) as Drawable? }
+            NavigationBar.setToolbar(toolbar.createProxy { impl ->
+                NavigationBar.AppCompatToolbarPatchInterface {
+                    getNavigationIcon(impl.get()) as Drawable?
+                }
+            })
         }
     })
 
