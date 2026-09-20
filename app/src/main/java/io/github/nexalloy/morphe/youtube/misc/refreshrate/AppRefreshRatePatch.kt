@@ -17,6 +17,7 @@ val AppRefreshRate = patch(
 ) {
     PreferenceScreen.NEW_PATCHES.addPreferences(
         PreferenceCategory(
+            key = "morphe_new_patches_chapter_1",
             titleKey = "morphe_new_patches_chapter_1_title",
             preferences = setOf(
                 NonInteractivePreference(

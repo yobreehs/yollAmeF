@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Vibrator
 import android.preference.CheckBoxPreference
@@ -27,6 +28,14 @@ class AppPatchSettingsActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Android 15+ enforces edge-to-edge and ignores layout fitsSystemWindows.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
+                val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars())
+                view.setPadding(0, bars.top, 0, bars.bottom)
+                insets
+            }
+        }
         setContentView(R.layout.activity_app_patch_settings)
 
         actionBar?.setDisplayHomeAsUpEnabled(true)

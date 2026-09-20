@@ -40,6 +40,14 @@ class SettingsActivity : Activity(), SettingApplication.ServiceStateListener {
                 onBackPressed()
             }
         }
+        // Android 15+ enforces edge-to-edge and ignores layout fitsSystemWindows.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
+                val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars())
+                view.setPadding(0, bars.top, 0, bars.bottom)
+                insets
+            }
+        }
         setContentView(R.layout.activity_settings)
         actionBar?.setDisplayShowHomeEnabled(false)
 
