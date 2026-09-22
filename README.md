@@ -59,6 +59,7 @@
 ### Reddit
 - Hide ads
 - Sanitize sharing links
+- Start as guest
 
 ### Google Photos
 - Spoof Pixel XL
