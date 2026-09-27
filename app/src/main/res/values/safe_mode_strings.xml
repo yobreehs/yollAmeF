@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_disable_safe_mode_title">Disable safe mode</string>
+    <string name="morphe_disable_safe_mode_summary">Turns off Safety Mode of the app so comments and content load normally</string>
+</resources>
