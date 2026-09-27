@@ -26,6 +26,7 @@ import io.github.nexalloy.morphe.youtube.misc.backgroundplayback.BackgroundPlayb
 import io.github.nexalloy.morphe.youtube.misc.debugging.EnableDebugging
 import io.github.nexalloy.morphe.youtube.misc.privacy.SanitizeSharingLinks
 import io.github.nexalloy.morphe.youtube.misc.refreshrate.AppRefreshRate
+import io.github.nexalloy.morphe.youtube.misc.safemode.DisableSafeMode
 import io.github.nexalloy.morphe.youtube.misc.settings.SettingsHook
 import io.github.nexalloy.morphe.youtube.shared.YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE
 import io.github.nexalloy.morphe.youtube.video.audio.ForceOriginalAudio
@@ -95,6 +96,7 @@ val YouTubePatches = arrayOf(
     AppRefreshRate,
     AlternativeThumbnailsPatch,
     BypassImageRegionRestrictionsPatch,
+    DisableSafeMode,
     CheckRecycleBitmapMediaSession,
     // make sure settingsHook at end to build preferences
     SettingsHook,

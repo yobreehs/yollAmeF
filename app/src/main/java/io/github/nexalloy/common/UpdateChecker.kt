@@ -102,25 +102,20 @@ class UpdateChecker() : CoroutineScope {
     fun checkUpdate(silent: Boolean = true) {
         launch {
             try {
-                val response = Fuel.get(
-                    "https://api.github.com/repos/$OWNER/$REPO/releases/latest",
-                    headers = mapOf(
-                        "Accept" to "application/vnd.github+json",
-                        "User-Agent" to "FemAlloy/$currentVersionCode"
-                    )
-                )
-                if (response.statusCode != 200) {
-                    Logger.printException { "Failed to fetch latest release: HTTP ${response.statusCode}" }
+                // /releases/latest returns 404 when the repository has no GitHub Release objects
+                // (for example only git tags). Fall back to the newest release from the list endpoint,
+                // and finally skip silently.
+                val latest = fetchLatestRelease() ?: run {
+                    Logger.printDebug { "no release found for $OWNER/$REPO" }
+                    if (!silent) Utils.showToastLong("FemAlloy is up to date.")
                     return@launch
                 }
 
-                val content = response.source.readString()
-                Logger.printDebug { content }
-                latestRelease = Gson().fromJson(content, ReleaseInfo::class.java)
-                latestVersionInfo = VersionInfo.fromTagName(latestRelease.tagName)
+                latestRelease = latest
+                latestVersionInfo = VersionInfo.fromTagName(latest.tagName)
                 Logger.printDebug { "$latestVersionInfo" }
                 if (latestVersionInfo.versionCode > currentVersionCode) {
-                    Logger.printInfo { "Found new version of FemAlloy ${latestRelease.tagName}" }
+                    Logger.printInfo { "Found new version of FemAlloy ${latest.tagName}" }
                     showUpdateDialog()
                 } else {
                     Logger.printInfo { "no update found for FemAlloy" }
@@ -130,6 +125,36 @@ class UpdateChecker() : CoroutineScope {
                 Logger.printException({ "checkUpdate error" }, e)
             }
         }
+    }
+
+    private suspend fun fetchLatestRelease(): ReleaseInfo? {
+        val api = "https://api.github.com/repos/$OWNER/$REPO"
+        val headers = mapOf(
+            "Accept" to "application/vnd.github+json",
+            "User-Agent" to "FemAlloy/$currentVersionCode"
+        )
+
+        // Try the latest release first.
+        val latest = Fuel.get("$api/releases/latest", headers = headers)
+        when (latest.statusCode) {
+            200 -> return runCatching {
+                Gson().fromJson(latest.source.readString(), ReleaseInfo::class.java)
+            }.getOrNull()?.takeIf { !it.tagName.isNullOrBlank() }
+
+            // 404: no "latest" release; fall through to the releases list.
+            else -> Logger.printDebug { "releases/latest returned HTTP ${latest.statusCode}" }
+        }
+
+        // Fall back to the newest release from the list (includes pre-releases).
+        val releases = Fuel.get("$api/releases?per_page=1", headers = headers)
+        if (releases.statusCode != 200) {
+            Logger.printDebug { "releases list returned HTTP ${releases.statusCode}" }
+            return null
+        }
+        val list = runCatching {
+            Gson().fromJson(releases.source.readString(), Array<ReleaseInfo>::class.java)
+        }.getOrNull() ?: return null
+        return list.firstOrNull()?.takeIf { !it.tagName.isNullOrBlank() }
     }
 
     @Deprecated("Test only.")
