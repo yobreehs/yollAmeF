@@ -215,6 +215,7 @@ class FingerprintsKtTest(val apkPath: Path) {
             apkPath.name.startsWith("com.google.android.youtube") -> "youtube"
             apkPath.name.startsWith("com.google.android.apps.youtube.music") -> "music"
             apkPath.name.startsWith("com.reddit.frontpage") -> "reddit"
+            apkPath.name.startsWith("com.alightcreative.motion") -> "alight"
             else -> return@sequence
         }
 
