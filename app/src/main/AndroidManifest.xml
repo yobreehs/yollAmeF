@@ -55,5 +55,11 @@
             android:exported="false"
             android:parentActivityName=".activity.SettingsActivity"
             android:theme="@style/SettingsTheme" />
+
+        <!-- LSPosed: declare module scope so target apps show in "Recommended apps"
+             and get selected by default when the module is enabled. -->
+        <meta-data
+            android:name="xposedscope"
+            android:value="com.google.android.youtube;com.google.android.apps.youtube.music;com.reddit.frontpage;com.google.android.apps.photos;com.microblink.photomath;com.instagram.android;com.instagram.barcelona;com.strava;com.alltrails.alltrails;com.alightcreative.motion" />
     </application>
 </manifest>
