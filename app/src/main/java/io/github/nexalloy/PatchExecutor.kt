@@ -165,15 +165,32 @@ class PatchExecutor(
     // cache
     private val moduleRel = BuildConfig.COMMIT_HASH
     private var cache = SharedPrefCache(appContext)
-    private var dexkit = run {
+    private lateinit var dexkit: DexKitCacheBridge.RecyclableBridge
+
+    /**
+     * DexKit (a native library + APK scanning) is only needed when at least one
+     * patch is actually enabled. Loading it regardless was fine everywhere except
+     * for apps whose native protection (e.g. PairIP) detects foreign libraries in
+     * the process and crashes even before any hook runs.
+     */
+    private fun ensureDexkitInitialized() {
+        if (::dexkit.isInitialized) return
         System.loadLibrary("dexkit")
         DexKitCacheBridge.init(cache)
-        DexKitCacheBridge.create("", lpparam.applicationInfo.sourceDir)
+        dexkit = DexKitCacheBridge.create("", lpparam.applicationInfo.sourceDir)
     }
 
     fun applyPatches(patches: Array<Patch>) {
+        val anyEnabled = patches.any {
+            patchPreferences?.getBoolean(it.name, it.use) ?: it.use
+        }
+        if (!anyEnabled) {
+            Logger.printDebug { "${lpparam.packageName} handleLoadPackage: no enabled patches, skipping initialization" }
+            return
+        }
         this.patches = patches
         val t = measureTimeMillis {
+            ensureDexkitInitialized()
             loadCacheIfValid()
             try {
                 executePatches()
