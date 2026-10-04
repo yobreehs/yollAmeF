@@ -16,11 +16,13 @@
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 -keepnames class * extends io.github.nexalloy.morphe.Fingerprint
 
-# FemAlloy: settings registered only by their constructor side effect (e.g.
-# APP_REFRESH_RATE_TYPE) look unused to R8, and the -assumenosideeffects rule below then
-# drops the registration entirely in release builds, breaking Setting.getSettingFromPath().
--keepclassmembers class app.morphe.extension.youtube.settings.Settings {
-    public static final app.morphe.extension.shared.settings.StringSetting APP_REFRESH_RATE_TYPE;
+# FemAlloy: settings registered only by their constructor side effect look unused to R8,
+# and the -assumenosideeffects rule below then drops the registration entirely in release
+# builds, breaking Setting.getSettingFromPath(). The refresh-rate-type setting is declared
+# in the parent SharedYouTubeSettings (EnumSetting) and is read by BaseAppRefreshRatePatch;
+# keep it so the registration side effect survives.
+-keepclassmembers class app.morphe.extension.shared.settings.SharedYouTubeSettings {
+    public static final app.morphe.extension.shared.settings.EnumSetting APP_REFRESH_RATE_TYPE;
 }
 -keepclassmembers class **.* {
     public <init>(android.content.Context, android.util.AttributeSet);

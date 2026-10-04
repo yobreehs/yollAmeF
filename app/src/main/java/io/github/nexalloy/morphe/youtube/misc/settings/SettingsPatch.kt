@@ -1,6 +1,9 @@
 package io.github.nexalloy.morphe.youtube.misc.settings
 
 import android.app.Activity
+import android.app.Dialog
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Build
 import android.view.View
 import android.view.WindowInsets
@@ -23,6 +26,8 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
 import io.github.nexalloy.morphe.shared.settings.preferences
 import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.PlayerOverlayButtonsSettings
 import io.github.nexalloy.patch
+import org.luckypray.dexkit.wrap.DexMethod
+import java.lang.ref.WeakReference
 
 @Suppress("UNREACHABLE_CODE")
 val SettingsHook = patch(
@@ -32,6 +37,10 @@ val SettingsHook = patch(
         PlayerOverlayButtonsSettings,
         initializationPatch()
     )
+
+    // The injected settings activity ("Morphe settings"), used to scope the dialog
+    // inset fallback below to the settings submenu dialogs only.
+    var settingsActivityRef: WeakReference<Activity> = WeakReference(null)
 
     ::PreferenceFragmentCompat_addPreferencesFromResource.hookMethod {
         val settings_fragment = ResourceUtils.getXmlIdentifier("settings_fragment")
@@ -54,12 +63,24 @@ val SettingsHook = patch(
     ::licenseActivityOnCreateFingerprint.hookMethod(object : XC_MethodReplacement() {
         override fun replaceHookedMethod(param: XC_MethodHook.MethodHookParam) {
             val activity = param.thisObject as Activity
+            settingsActivityRef = WeakReference(activity)
             YouTubeActivityHook.initialize(activity)
             activity.theme.applyStyle(R.style.ListDividerNull, true)
             superOnCreate.invokeSpecial(param.thisObject, *param.args)
             applySettingsInsets(activity)
         }
     })
+
+    // FemAlloy safety net: the extension only applies system-bar insets to submenu dialogs
+    // whose PreferenceScreen is a direct child of the root screen. Screens nested inside
+    // PreferenceCategory chapters ("New features" → Player → Ambient mode, refresh rate,
+    // channel search, ...) are missed on builds without the submodule fix, so every settings
+    // submenu dialog is padded here as well.
+    DexMethod("Landroid/app/Dialog;->show()V").hookMethod {
+        after { param ->
+            applyDialogInsets(param.thisObject as Dialog, settingsActivityRef)
+        }
+    }
 
     // Remove other methods as they will break as the onCreate method is modified above.
     ::licenseActivityNOTonCreate.dexMethodList.forEach {
@@ -283,4 +304,75 @@ private fun applySettingsInsets(activity: Activity) {
             decorView.requestApplyInsets()
         }
     }
+}
+
+/**
+ * FemAlloy safety net for submenu dialogs of the injected settings screen.
+ *
+ * The extension's toolbar/insets handling only walks PreferenceScreens that are direct children
+ * of the root screen, so screens nested inside PreferenceCategory chapters ("New features" →
+ * Player → Ambient mode, ...) open without system bar padding on builds without the submodule
+ * fix. This hooks every Dialog shown from the settings activity and pads the dialog's content
+ * root using the same redundant paths as [applySettingsInsets].
+ *
+ * Only dialogs that expose a preference list (android.R.id.list) are touched, so unrelated
+ * dialogs (restart confirmation, import/export, log viewer, ...) are left untouched.
+ */
+private fun applyDialogInsets(dialog: Dialog, settingsActivityRef: WeakReference<Activity>) {
+    runCatching {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return@runCatching
+        val activity = settingsActivityRef.get() ?: return@runCatching
+        val dialogActivity = unwrapActivity(dialog.context) ?: return@runCatching
+        if (dialogActivity !== activity) return@runCatching
+
+        val window = dialog.window ?: return@runCatching
+        val decorView = window.decorView ?: return@runCatching
+        // Legacy PreferenceScreen submenu dialogs expose the list under android.R.id.list.
+        if (decorView.findViewById<View>(android.R.id.list) == null) return@runCatching
+        val root = decorView.findViewById<View>(android.R.id.content)?.parent as? View ?: return@runCatching
+
+        fun applyFrom(insets: WindowInsets?) {
+            if (insets == null) return
+            val status = insets.getInsets(WindowInsets.Type.statusBars())
+            val nav = insets.getInsets(WindowInsets.Type.navigationBars())
+            val cutout = insets.getInsets(WindowInsets.Type.displayCutout())
+            root.setPadding(cutout.left, status.top, cutout.right, nav.bottom)
+            Logger.printDebug {
+                "Settings dialog insets: status=${status.top} nav=${nav.bottom} " +
+                    "cutout=(${cutout.left},${cutout.right}) padding=${root.paddingTop}"
+            }
+        }
+
+        // 1) Apply immediately from the current insets, if already dispatched.
+        applyFrom(decorView.rootWindowInsets)
+
+        // 2) Keep padding up to date when insets change.
+        root.setOnApplyWindowInsetsListener { _, insets ->
+            applyFrom(insets)
+            insets
+        }
+
+        // 3) Fallback: re-apply on every layout pass.
+        decorView.viewTreeObserver.addOnGlobalLayoutListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                applyFrom(decorView.rootWindowInsets)
+            }
+        }
+
+        // Force a fresh insets dispatch in case the window already delivered them.
+        root.requestApplyInsets()
+    }
+}
+
+/**
+ * Walks ContextWrapper chains (e.g. dialog contexts created from an activity with the activity
+ * theme applied) up to the enclosing Activity, or null if none.
+ */
+private fun unwrapActivity(context: Context): Activity? {
+    var ctx: Context? = context
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return ctx as? Activity
 }
