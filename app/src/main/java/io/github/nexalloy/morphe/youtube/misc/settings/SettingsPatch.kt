@@ -2,7 +2,9 @@ package io.github.nexalloy.morphe.youtube.misc.settings
 
 import android.app.Activity
 import android.os.Build
+import android.view.View
 import android.view.WindowInsets
+import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.settings.preference.ImportExportPreference
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
@@ -233,21 +235,52 @@ object PreferenceScreen : BasePreferenceScreen() {
  * Android 15+ (YouTube 21.39) enforces edge-to-edge, so the injected settings activity content
  * is drawn behind the system bars. The extension only applies insets to submenu dialogs, so the
  * root screen is padded here instead.
+ *
+ * The padding is applied through three redundant paths to survive every timing/ordering quirk of
+ * the window insets dispatch:
+ *  1. synchronously from the current [android.view.WindowInsets] if already available,
+ *  2. via an [View.OnLayoutChangeListener] for dynamic inset changes,
+ *  3. via a global layout listener that re-applies the padding on every layout pass
+ *     (idempotent — [View.setPadding] short-circuits when values are unchanged).
  */
 private fun applySettingsInsets(activity: Activity) {
     runCatching {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return@runCatching
-        activity.window?.decorView?.post {
-            val content = activity.findViewById<android.view.View>(android.R.id.content)
-                ?: return@post
-            content.setOnApplyWindowInsetsListener { view, insets ->
+        val window = activity.window ?: return@runCatching
+        val decorView = window.decorView ?: return@runCatching
+
+        decorView.post {
+            val content = activity.findViewById<View>(android.R.id.content) ?: return@post
+
+            fun applyFrom(insets: WindowInsets?) {
+                if (insets == null) return
                 val status = insets.getInsets(WindowInsets.Type.statusBars())
                 val nav = insets.getInsets(WindowInsets.Type.navigationBars())
                 val cutout = insets.getInsets(WindowInsets.Type.displayCutout())
-                view.setPadding(cutout.left, status.top, cutout.right, nav.bottom)
+                content.setPadding(cutout.left, status.top, cutout.right, nav.bottom)
+                Logger.printDebug {
+                    "Settings insets: status=${status.top} nav=${nav.bottom} " +
+                        "cutout=(${cutout.left},${cutout.right}) padding=${content.paddingTop}"
+                }
+            }
+
+            // 1) Apply immediately from the current insets, if already dispatched.
+            applyFrom(decorView.rootWindowInsets)
+
+            // 2) Keep padding up to date when insets change.
+            content.setOnApplyWindowInsetsListener { _, insets ->
+                applyFrom(insets)
                 insets
             }
-            content.requestApplyInsets()
+
+            // 3) Fallback: re-apply on every layout pass.
+            decorView.viewTreeObserver.addOnGlobalLayoutListener {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    applyFrom(decorView.rootWindowInsets)
+                }
+            }
+
+            decorView.requestApplyInsets()
         }
     }
 }
