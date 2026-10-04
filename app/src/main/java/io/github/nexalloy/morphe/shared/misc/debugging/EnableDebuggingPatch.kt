@@ -45,13 +45,9 @@ fun enableDebuggingPatch(
         )
     )
 
-    preferenceScreen.addPreferences(
-        PreferenceScreenPreference(
-            key = "morphe_debug_screen",
-            sorting = Sorting.UNSORTED,
-            preferences = preferences,
-        )
-    )
+    // Register the debug preferences flat into the given screen (for the fork, the
+    // dedicated "Debug" root screen) instead of a nested sub-screen.
+    preferenceScreen.addPreferences(*preferences.toTypedArray())
 
     // Hook the methods that look up if a feature flag is active.
     ::experimentalBooleanFeatureFlagFingerprint.hookMethod {

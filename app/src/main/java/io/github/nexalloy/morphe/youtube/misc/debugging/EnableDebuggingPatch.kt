@@ -11,7 +11,7 @@ val EnableDebugging = enableDebuggingPatch(
     // 20.40 has changes not worth supporting.
     hookLongFeatureFlag = { !is_20_40_or_greater || is_20_41_or_greater },
     hookDoubleFeatureFlag = { !is_20_40_or_greater || is_20_41_or_greater },
-    preferenceScreen = PreferenceScreen.MISC,
+    preferenceScreen = PreferenceScreen.DEBUG,
     additionalDebugPreferences = listOf(
         SwitchPreference(
             "morphe_debug_protobuffer",

@@ -13,6 +13,7 @@
     <string name="morphe_app_refresh_rate_type_fullscreen">Просмотр в полном экране</string>
     <string name="morphe_app_refresh_rate_type_portrait_fullscreen">Просмотр в портрете и полном экране</string>
     <string name="morphe_settings_screen_13_new_patches_title">Новые функции</string>
+    <string name="morphe_settings_screen_14_debug_title">Отладка</string>
     <string name="morphe_new_patches_chapter_1_title">Частота обновления приложения</string>
     <string name="morphe_new_patches_chapter_2_title">Воспроизведение</string>
     <string name="morphe_new_patches_chapter_3_title">Лента</string>
