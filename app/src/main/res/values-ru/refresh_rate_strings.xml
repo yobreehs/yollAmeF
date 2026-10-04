@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_app_refresh_rate_title">Частота обновления приложения</string>
+    <string name="morphe_app_refresh_rate_summary">Принудительная частота обновления экрана для приложения</string>
+    <string name="morphe_app_refresh_rate_default">По умолчанию</string>
+    <string name="morphe_app_refresh_rate_60">60 Гц</string>
+    <string name="morphe_app_refresh_rate_90">90 Гц</string>
+    <string name="morphe_app_refresh_rate_120">120 Гц</string>
+    <string name="morphe_app_refresh_rate_144">144 Гц</string>
+    <string name="morphe_app_refresh_rate_type_title">Применять частоту к</string>
+    <string name="morphe_app_refresh_rate_type_always">Всегда</string>
+    <string name="morphe_app_refresh_rate_type_portrait">Просмотр в портрете</string>
+    <string name="morphe_app_refresh_rate_type_fullscreen">Просмотр в полном экране</string>
+    <string name="morphe_app_refresh_rate_type_portrait_fullscreen">Просмотр в портрете и полном экране</string>
+    <string name="morphe_settings_screen_13_new_patches_title">Новые функции</string>
+    <string name="morphe_new_patches_chapter_1_title">Частота обновления приложения</string>
+    <string name="morphe_new_patches_chapter_2_title">Воспроизведение</string>
+    <string name="morphe_new_patches_chapter_3_title">Лента</string>
+    <string name="morphe_new_patches_chapter_4_title">Поиск</string>
+</resources>

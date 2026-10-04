@@ -37,7 +37,7 @@ class MainHook : XposedModule() {
         inContext(param) { app ->
             this.app = app
             if (isReVancedPatched(param)) {
-                Utils.showToastLong("NexAlloy module does not work with patched app")
+                Utils.showToastLong("FemAlloy module does not work with patched app")
                 return@inContext
             }
 

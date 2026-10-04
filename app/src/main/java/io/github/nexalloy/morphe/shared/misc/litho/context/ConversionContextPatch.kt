@@ -6,6 +6,8 @@ import java.lang.reflect.Field
 
 lateinit var identifierField: Field
 lateinit var pathBuilderField: Field
+lateinit var horizontalCollectionSwipeProtectorField: Field
+lateinit var heightConstraintField: Field
 
 data class ConversionContext(val conversion: Any) : ContextInterface {
     override fun patch_getPathBuilder() =
@@ -13,6 +15,12 @@ data class ConversionContext(val conversion: Any) : ContextInterface {
 
     override fun patch_getIdentifier() =
         identifierField.get(conversion) as? String ?: ""
+
+    override fun patch_getHorizontalCollectionSwipeProtector() =
+        horizontalCollectionSwipeProtectorField.get(conversion)
+
+    override fun patch_getHeightConstraint() =
+        heightConstraintField.get(conversion) as? Int
 
     override fun toString() = conversion.toString()
 }
@@ -26,4 +34,6 @@ internal val conversionContextPatch = patch(
 
     identifierField = ::identifierFieldData.field
     pathBuilderField = ::pathBuilderFieldData.field
+    horizontalCollectionSwipeProtectorField = ::horizontalCollectionSwipeProtectorFieldData.field
+    heightConstraintField = ::heightConstraintFieldData.field
 }
