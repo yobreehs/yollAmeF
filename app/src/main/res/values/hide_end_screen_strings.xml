@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_hide_end_screen_title">Hide end screen</string>
+    <string name="morphe_hide_end_screen_summary">Hide the video suggestions (and channel icons) shown at the end of a video</string>
+</resources>
