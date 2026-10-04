@@ -13,8 +13,9 @@ import io.github.nexalloy.BuildConfig
 /**
  * Sets a preferred display refresh rate on the activity window.
  *
- * Reads the module settings from the module's `<targetPackage>.xml` file (the file the settings
- * UI writes to, see [HomeShortsFilter] for the same approach) once at startup.
+ * Reads the module settings fresh on every application (the settings are edited in the same
+ * process, in the target app's "morphe_prefs" file), so a change takes effect immediately
+ * instead of only after a process restart.
  */
 object AppRefreshRateController {
 
@@ -32,21 +33,30 @@ object AppRefreshRateController {
         }
     }
 
-    private val enabledTargetRate: Int? by lazy {
-        val prefs = runCatching {
+    private fun readEnabledTargetRate(): Int? {
+        // The in-app refresh rate preference (RefreshRatePreference) stores the value in the
+        // target app's "morphe_prefs" as a string. Fall back to the module prefs where older
+        // builds stored it.
+        val fromInAppPrefs = runCatching {
+            Utils.getContext().getSharedPreferences("morphe_prefs", Context.MODE_PRIVATE)
+                .getString("morphe_app_refresh_rate", null)?.toIntOrNull()
+        }.getOrNull() ?: 0
+        val modulePrefs = runCatching {
             XSharedPreferences(BuildConfig.APPLICATION_ID, Utils.getContext().packageName)
-        }.getOrNull() ?: return@lazy null
+                .getInt("morphe_app_refresh_rate", 0)
+        }.getOrDefault(0)
 
-        val rate = prefs.getInt("morphe_app_refresh_rate", 0)
-        if (rate > 0) rate else null
+        val rate = if (fromInAppPrefs > 0) fromInAppPrefs else modulePrefs
+        return rate.takeIf { it > 0 }
     }
 
-    private val refreshRateType: RefreshRateType by lazy {
-        val prefs = runCatching {
-            XSharedPreferences(BuildConfig.APPLICATION_ID, Utils.getContext().packageName)
-        }.getOrNull()
-        val typeString = prefs?.getString("morphe_app_refresh_rate_type", "ALWAYS")
-        runCatching { RefreshRateType.valueOf(typeString ?: "ALWAYS") }.getOrDefault(RefreshRateType.ALWAYS)
+    private fun readRefreshRateType(): RefreshRateType {
+        val typeString = runCatching {
+            Utils.getContext().getSharedPreferences("morphe_prefs", Context.MODE_PRIVATE)
+                .getString("morphe_app_refresh_rate_type", "ALWAYS")
+        }.getOrDefault("ALWAYS")
+        return runCatching { RefreshRateType.valueOf(typeString ?: "ALWAYS") }
+            .getOrDefault(RefreshRateType.ALWAYS)
     }
 
     @Volatile
@@ -64,7 +74,7 @@ object AppRefreshRateController {
     private val trackedWindows = mutableSetOf<Window>()
 
     /**
-     * Injection point: called on the main activity creation.
+     * Injection point: called on the main activity creation and resume.
      */
     @JvmStatic
     fun initialize(activity: Activity) {
@@ -82,7 +92,7 @@ object AppRefreshRateController {
 
     private fun setWindowRefreshRate(context: Context, window: Window?) {
         if (window == null) return
-        val targetRate = enabledTargetRate ?: return
+        val targetRate = readEnabledTargetRate() ?: return
 
         runCatching {
             if (preferredDisplayModeId == null) {
@@ -118,7 +128,7 @@ object AppRefreshRateController {
     }
 
     private fun applyRefreshRateToWindow(window: Window) {
-        val shouldOverride = refreshRateType.appliesTo(playbackPortrait, playbackFullscreen)
+        val shouldOverride = readRefreshRateType().appliesTo(playbackPortrait, playbackFullscreen)
 
         val params = window.attributes
         if (shouldOverride && preferredDisplayModeId != null && preferredDisplayModeId!! > 0) {

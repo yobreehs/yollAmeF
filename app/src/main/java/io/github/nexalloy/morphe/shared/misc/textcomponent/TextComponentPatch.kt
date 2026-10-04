@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.shared.misc.textcomponent
 
+import app.morphe.extension.shared.patches.components.ContextInterface
 import io.github.nexalloy.morphe.shared.SpannableStringBuilderFingerprint
 import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
 import io.github.nexalloy.morphe.shared.spannableStringBuilderGetSpannedMethod
@@ -22,12 +23,12 @@ val textComponentPatch = patch(
     }
 }
 
-private val hooks = mutableListOf<(Any, CharSequence) -> Unit>()
-private val overrides = mutableListOf<(Any, CharSequence) -> String>()
+private val hooks = mutableListOf<(ContextInterface, CharSequence) -> Unit>()
+private val overrides = mutableListOf<(ContextInterface, CharSequence) -> String>()
 
 internal fun hookSpannableString(
-    hook: (Any, CharSequence) -> Unit,
+    hook: (ContextInterface, CharSequence) -> Unit,
 //    overrideSpan: Boolean = false
 ) {
-    hooks.add { a, b -> hook(a, b) }
+    hooks.add(hook)
 }

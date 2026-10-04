@@ -74,6 +74,11 @@ val SwipeControls = patch(
             selectable = true,
         ),
         NonInteractivePreference(
+            key = "morphe_swipe_brightness_steps",
+            tag = SeekBarPreference::class.java,
+            selectable = true,
+        ),
+        NonInteractivePreference(
             key = "morphe_swipe_volume_distance",
             tag = SeekBarPreference::class.java,
             selectable = true,

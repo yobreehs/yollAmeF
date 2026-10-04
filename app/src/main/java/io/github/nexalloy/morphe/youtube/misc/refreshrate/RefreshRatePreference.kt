@@ -72,12 +72,19 @@ class RefreshRatePreference(context: Context, attrs: AttributeSet) : Preference(
             .show()
     }
 
-    private fun savedValue(): Int =
-        runCatching { sharedPreferences.getInt(key, 0) }.getOrDefault(0)
+    private fun savedValue(): Int {
+        // The extension's Settings declares `morphe_app_refresh_rate` as a StringSetting,
+        // so the value must be stored as a string. Storing it as a primitive int makes the
+        // extension deletions (SharedPrefCategory) log "Found conflicting preference"
+        // and wipe the setting. Read legacy int values as a fallback.
+        val prefs = sharedPreferences
+        runCatching { prefs.getString(key, null) }?.getOrNull()?.toIntOrNull()?.let { return it }
+        return runCatching { prefs.getInt(key, 0) }.getOrDefault(0)
+    }
 
     private fun saveValue(value: Int) {
         runCatching {
-            sharedPreferences.edit().putInt(key, value).commit()
+            sharedPreferences.edit().putString(key, value.toString()).commit()
         }
         updateSummary()
         notifyChanged()

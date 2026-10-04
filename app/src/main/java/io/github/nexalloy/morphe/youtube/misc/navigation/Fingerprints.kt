@@ -2,12 +2,18 @@ package io.github.nexalloy.morphe.youtube.misc.navigation
 
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
+import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.ResourceType
 import io.github.nexalloy.morphe.accessFlags
+import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.fingerprint
+import io.github.nexalloy.morphe.literal
+import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.resourceMappings
 import io.github.nexalloy.morphe.returns
@@ -126,3 +132,44 @@ val getNavIconResIdFingerprint = findMethodListDirect {
         }
     }
 }
+
+/**
+ * Predictive back gesture callback (Android 13+), which does not call
+ * `Activity.onBackPressed()`. Needed so the search-bar closing state is updated
+ * on devices that use predictive back.
+ *
+ * Ported from Morphe v1.45.0:
+ * `patches/src/main/kotlin/app/morphe/patches/youtube/misc/backgesture/Fingerprints.kt`
+ */
+internal object PredictiveGesturesOnBackCancelledFingerprint : Fingerprint(
+    name = "onBackCancelled",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf(),
+    filters = listOf(
+        literal(0),
+        opcode(Opcode.IF_NEZ, location = MatchAfterImmediately()),
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            type = "Ljava/lang/Object;",
+            location = MatchAfterWithin(5)
+        ),
+        literal(-1, location = MatchAfterWithin(10)),
+    )
+)
+
+internal object PredictiveGesturesOnBackInvokedFingerprint : Fingerprint(
+    classFingerprint = PredictiveGesturesOnBackCancelledFingerprint,
+    name = "onBackInvoked"
+)
+
+/**
+ * The pivot bar consumes touches, so a tap on an already selected navigation tab
+ * (which closes an on-screen search) can only be detected here.
+ */
+internal object PivotBarDispatchTouchEventFingerprint : Fingerprint(
+    definingClass = "Lcom/google/android/libraries/youtube/rendering/ui/pivotbar/PivotBar;",
+    name = "dispatchTouchEvent",
+    returnType = "Z",
+    parameters = listOf("Landroid/view/MotionEvent;")
+)

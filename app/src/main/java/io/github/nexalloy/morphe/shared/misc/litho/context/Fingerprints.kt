@@ -2,6 +2,7 @@ package io.github.nexalloy.morphe.shared.misc.litho.context
 
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findFieldDirect
+import io.github.nexalloy.morphe.findFieldFromToString
 import io.github.nexalloy.morphe.youtube.shared.conversionContextFingerprintToString
 import org.luckypray.dexkit.result.FieldUsingType
 
@@ -20,4 +21,17 @@ val identifierFieldData = findFieldDirect {
 
 val pathBuilderFieldData = findFieldDirect {
     conversionContextClass(this).fields.single { it.typeSign == "Ljava/lang/StringBuilder;" }
+}
+
+// Added in Morphe v1.45 for ContextInterface#patch_getHorizontalCollectionSwipeProtector()
+// and ContextInterface#patch_getHeightConstraint(). Located through the fields printed by
+// the conversion context toString(), same as the upstream patcher does.
+val horizontalCollectionSwipeProtectorFieldData = findFieldDirect {
+    conversionContextFingerprintToString(this)
+        .findFieldFromToString("horizontalCollectionSwipeProtector=")
+}
+
+val heightConstraintFieldData = findFieldDirect {
+    conversionContextFingerprintToString(this)
+        .findFieldFromToString("heightConstraint=")
 }

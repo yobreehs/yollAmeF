@@ -1,6 +1,7 @@
 package io.github.nexalloy.morphe.youtube.video.information
 
 import app.morphe.extension.shared.Logger
+import app.morphe.extension.shared.patches.ExoPlayerInterface
 import app.morphe.extension.youtube.patches.VideoInformation
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
@@ -335,9 +336,9 @@ val VideoInformationPatch = patch(
 
     exoPlayerClass.constructors.single().hookMethod {
         before {
-            VideoInformation.initializeExoPlayerImpl(
+            VideoInformation.initializeExoPlayer(
                 it.thisObject.createProxy { impl ->
-                    VideoInformation.ExoPlayerImpl { speed, pitch ->
+                    ExoPlayerInterface { speed, pitch ->
                         setPlaybackParametersMethod(
                             impl.get(),
                             playbackParametersClass.new(speed, pitch)

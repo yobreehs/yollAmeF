@@ -36,6 +36,13 @@ val AppRefreshRate = patch(
         }
     }
 
+    // Re-apply on resume so settings changes (rate or type) take effect without a restart.
+    DexMethod("$YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE->onResume()V").hookMethod {
+        before {
+            AppRefreshRateController.initialize(it.thisObject as Activity)
+        }
+    }
+
     VideoState.onChange.addObserver { state ->
         val type = PlayerType.current
         AppRefreshRateController.setPlayerIsActive(

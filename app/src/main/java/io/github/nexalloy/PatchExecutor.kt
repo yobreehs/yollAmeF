@@ -220,7 +220,7 @@ class PatchExecutor(
         if (!isCached) {
             cache.clearAll()
             cache.putString("id", id)
-            Utils.showToastLong("NexAlloy is initializing, please wait...")
+            Utils.showToastLong("FemAlloy is initializing, please wait...")
         }
     }
 

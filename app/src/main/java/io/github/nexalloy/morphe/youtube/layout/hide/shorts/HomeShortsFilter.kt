@@ -36,7 +36,7 @@ class HomeShortsFilter : Filter() {
         contextInterface: ContextInterface,
         identifier: String,
         accessibility: String,
-        path: String,
+        path: CharSequence,
         buffer: ByteArray,
         asciiStrings: BufferAsciiStrings,
         matchedGroup: StringFilterGroup,
