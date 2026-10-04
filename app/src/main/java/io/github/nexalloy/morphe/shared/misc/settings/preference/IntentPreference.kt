@@ -22,7 +22,9 @@ class IntentPreference(
         return super.build(ctx, prefMgr).also { pref ->
             pref.intent = Intent().apply {
                 component = ComponentName(intent.targetPackageSupplier(), intent.targetClass)
-                putExtra("data", intent.data)
+                if (intent.data.isNotEmpty()) {
+                    putExtra("data", intent.data)
+                }
             }
         }
     }

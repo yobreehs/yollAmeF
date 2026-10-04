@@ -1,23 +1,44 @@
 package io.github.nexalloy.morphe.shared.misc.litho.context
 
-import io.github.nexalloy.morphe.findClassDirect
+import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.findFieldDirect
-import io.github.nexalloy.morphe.youtube.shared.conversionContextFingerprintToString
-import org.luckypray.dexkit.result.FieldUsingType
+import io.github.nexalloy.morphe.findFieldFromToString
 
-val conversionContextClass = findClassDirect {
-    conversionContextFingerprintToString(this).declaredClass!!
+internal const val IDENTIFIER_PROPERTY = ", identifierProperty="
+internal const val HORIZONTAL_COLLECTION_SWIPE_PROTECTOR_PROPERTY = "horizontalCollectionSwipeProtector="
+internal const val HEIGHT_CONSTRAINT_PROPERTY = "heightConstraint="
+
+internal object ConversionContextToStringFingerprint : Fingerprint(
+    name = "toString",
+    parameters = listOf(),
+    returnType = "Ljava/lang/String;",
+    strings = listOf(
+//        "ConversionContext{", // Partial string match.
+        ", widthConstraint=",
+        ", templateLoggerFactory=",
+        ", rootDisposableContainer=",
+        IDENTIFIER_PROPERTY
+    )
+)
+
+val stringBuilderFieldData = findFieldDirect {
+    val conversionContextClassDef = ConversionContextToStringFingerprint().declaredClass!!
+    conversionContextClassDef.fields.single { field ->
+        field.typeSign == "Ljava/lang/StringBuilder;"
+    }
 }
+
 val identifierFieldData = findFieldDirect {
-    val stringFieldIndex =
-        if (findMethod { matcher { usingStrings(", pathInternal=") } }.any()) 2 else 1
-    conversionContextClass(this).methods.single {
-        it.isConstructor && it.paramCount != 0
-    }.usingFields.filter {
-        it.usingType == FieldUsingType.Write && it.field.typeName == String::class.java.name
-    }[stringFieldIndex].field
+    val method = ConversionContextToStringFingerprint()
+    method.findFieldFromToString(IDENTIFIER_PROPERTY)
 }
 
-val pathBuilderFieldData = findFieldDirect {
-    conversionContextClass(this).fields.single { it.typeSign == "Ljava/lang/StringBuilder;" }
+val horizontalSwipeFieldData = findFieldDirect {
+    val method = ConversionContextToStringFingerprint()
+    method.findFieldFromToString(HORIZONTAL_COLLECTION_SWIPE_PROTECTOR_PROPERTY)
+}
+
+val heightConstraintData = findFieldDirect {
+    val method = ConversionContextToStringFingerprint()
+    method.findFieldFromToString(HEIGHT_CONSTRAINT_PROPERTY)
 }

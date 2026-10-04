@@ -7,9 +7,9 @@ import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
 import io.github.nexalloy.patch
 
 
-private val componentLoadedHooks = mutableListOf<(String, MutableList<Any?>) -> Unit>()
+private val componentLoadedHooks = mutableListOf<(CharSequence, MutableList<Any?>) -> Unit>()
 private val lazilyConvertedElementLoadedHooks =
-    mutableListOf<(String, MutableList<Any?>) -> Unit>()
+    mutableListOf<(CharSequence, MutableList<Any?>) -> Unit>()
 
 /**
  * Register a handler to be called when a lazily converted element list is loaded.
@@ -18,7 +18,7 @@ private val lazilyConvertedElementLoadedHooks =
  *                The handler can modify the list in-place to filter elements.
  */
 fun hookTreeNodeResult(
-    handler: (String, MutableList<Any?>) -> Unit,
+    handler: (CharSequence, MutableList<Any?>) -> Unit,
     isLazilyConvertedElement: Boolean = true
 ) {
     val list =
@@ -27,12 +27,12 @@ fun hookTreeNodeResult(
     list.add(handler)
 }
 
-fun onComponentLoaded(path: String, treeNodeResultList: MutableList<Any?>) {
+fun onComponentLoaded(path: CharSequence, treeNodeResultList: MutableList<Any?>) {
     componentLoadedHooks.forEach { hook -> hook(path, treeNodeResultList) }
 }
 
 fun onLazilyConvertedElementLoaded(
-    identifier: String,
+    identifier: CharSequence,
     treeNodeResultList: MutableList<Any?>
 ) {
     lazilyConvertedElementLoadedHooks.forEach { hook -> hook(identifier, treeNodeResultList) }

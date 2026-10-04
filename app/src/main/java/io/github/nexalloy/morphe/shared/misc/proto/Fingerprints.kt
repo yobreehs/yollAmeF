@@ -3,12 +3,12 @@ package io.github.nexalloy.morphe.shared.misc.proto
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.Opcode
-import io.github.nexalloy.morphe.RestrictQuery
+import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.string
 
-@RestrictQuery
+@StrictQuery
 internal object NewElementProtoParserFingerprint : Fingerprint(
     classFingerprint = ProtoStuffReflectionFingerprint,
     accessFlags = listOf(AccessFlags.STATIC),

@@ -6,13 +6,21 @@ import java.lang.reflect.Field
 
 lateinit var identifierField: Field
 lateinit var pathBuilderField: Field
+lateinit var horizontalSwipeField: Field
+lateinit var heightConstraint: Field
 
 data class ConversionContext(val conversion: Any) : ContextInterface {
+    override fun patch_getIdentifier() =
+        identifierField.get(conversion) as? String ?: ""
+
     override fun patch_getPathBuilder() =
         pathBuilderField.get(conversion) as StringBuilder
 
-    override fun patch_getIdentifier() =
-        identifierField.get(conversion) as? String ?: ""
+    override fun patch_getHeightConstraint(): Int? =
+        heightConstraint.get(conversion) as Int?
+
+    override fun patch_getHorizontalCollectionSwipeProtector(): Any? =
+        horizontalSwipeField.get(conversion)
 
     override fun toString() = conversion.toString()
 }
@@ -23,7 +31,8 @@ data class ConversionContext(val conversion: Any) : ContextInterface {
 internal val conversionContextPatch = patch(
     description = "Hooks the method to use the conversion context in an extension."
 ) {
-
     identifierField = ::identifierFieldData.field
-    pathBuilderField = ::pathBuilderFieldData.field
+    pathBuilderField = ::stringBuilderFieldData.field
+    horizontalSwipeField = ::horizontalSwipeFieldData.field
+    heightConstraint = ::heightConstraintData.field
 }

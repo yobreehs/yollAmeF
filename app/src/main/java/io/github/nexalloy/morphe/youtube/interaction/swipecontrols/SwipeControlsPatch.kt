@@ -16,6 +16,7 @@ import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_34_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.shared.mainActivityClass
+import io.github.nexalloy.morphe.youtube.video.audio.soundBoostPatch
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.patch
 
@@ -25,7 +26,8 @@ val SwipeControls = patch(
 ) {
     dependsOn(
         PlayerTypeHook,
-        VideoInformationPatch
+        VideoInformationPatch,
+        soundBoostPatch
     )
 
 //    if (!is_20_34_or_greater) {
@@ -82,6 +84,7 @@ val SwipeControls = patch(
             "morphe_swipe_volume_steps",
             tag = SwipeVolumeStepsPreference::class.java
         ),
+        SwitchPreference("morphe_volume_boost", summary = true),
         NonInteractivePreference(
             key = "morphe_swipe_speed_sensitivity",
             tag = SeekBarPreference::class.java,

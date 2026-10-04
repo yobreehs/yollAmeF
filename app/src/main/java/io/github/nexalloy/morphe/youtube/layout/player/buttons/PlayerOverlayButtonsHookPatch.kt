@@ -21,11 +21,12 @@ val playerOverlayButtonsHook = patch {
             if (innerDepth != 0) return@after
             if (it.args[0] == fullscreenButtonId) {
                 val view = it.result as? View ?: return@after
-                PlayerOverlayButton.initializeButton(view)
                 initializeButtonList.forEach { func -> func(view) }
             }
         }
     })
+
+    addPlayerBottomButton(PlayerOverlayButton::initializeButton)
 
     // TODO Addon
     // addPlayerBottomButton(AddOnApi::initializeButton)

@@ -1,9 +1,9 @@
 package io.github.nexalloy.morphe.youtube.layout.startpage
 
 import io.github.nexalloy.morphe.Fingerprint
-import io.github.nexalloy.morphe.InstructionLocation
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
+import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.literal
@@ -18,6 +18,7 @@ internal object IntentActionFingerprint : Fingerprint(
     )
 )
 
+@StrictQuery
 internal object BrowseIdFingerprint : Fingerprint(
     returnType = "L",
 

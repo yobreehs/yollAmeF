@@ -10,6 +10,7 @@ import app.morphe.extension.shared.settings.preference.ImportExportPreference
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
 import de.robv.android.xposed.XC_MethodReplacement
 import io.github.nexalloy.R
+import io.github.nexalloy.morphe.music.shared.MusicActivityOnCreateFingerprint
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
@@ -82,6 +83,12 @@ val SettingsHook = patch(
     // Remove other methods as they will break as the onCreate method is modified above.
     ::googleApiActivityNOTonCreate.dexMethodList.forEach {
         if (it.returnTypeName == "void") it.hookMethod(XC_MethodReplacement.DO_NOTHING)
+    }
+
+    MusicActivityOnCreateFingerprint.hookMethod {
+        before {
+            MusicActivityHook.onMainActivityCreate()
+        }
     }
 
     PreferenceScreen.close()

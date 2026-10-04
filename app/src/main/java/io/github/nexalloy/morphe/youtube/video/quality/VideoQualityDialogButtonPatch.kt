@@ -3,6 +3,7 @@ package io.github.nexalloy.morphe.youtube.video.quality
 import app.morphe.extension.youtube.videoplayer.VideoQualityDialogButton
 import io.github.nexalloy.R
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.noTitleUnsortedPreferenceCategory
 import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.addPlayerOverlayPreferences
 import io.github.nexalloy.morphe.youtube.layout.player.buttons.addPlayerBottomButton
 import io.github.nexalloy.morphe.youtube.layout.player.buttons.playerOverlayButtonsHook
@@ -22,7 +23,10 @@ val VideoQualityDialogButtonPatch = patch(
     )
 
     addPlayerOverlayPreferences(
-        SwitchPreference("morphe_video_quality_dialog_button", summary = true),
+        noTitleUnsortedPreferenceCategory(
+            SwitchPreference("morphe_video_quality_dialog_button", summary = true),
+            SwitchPreference("morphe_video_quality_dialog_button_resolution", summary = true)
+        )
     )
     addPlayerBottomButton(VideoQualityDialogButton::initializeButton)
 

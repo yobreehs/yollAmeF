@@ -31,6 +31,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScree
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
+import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
 import io.github.nexalloy.morphe.youtube.misc.engagement.EngagementPanelHook
@@ -74,6 +75,7 @@ val HideLayoutComponents = patch(
         HideHorizontalShelves,
         elementProtoParserHookPatch,
         TreeNodeElementHook,
+        textComponentPatch,
     )
 
     PreferenceScreen.PLAYER.addPreferences(
@@ -128,6 +130,7 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_comments_community_guidelines"),
                 SwitchPreference("morphe_hide_comments_contexts"),
                 SwitchPreference("morphe_hide_comments_create_a_short_button"),
+                SwitchPreference("morphe_hide_comments_dislike_button"),
                 SwitchPreference("morphe_hide_comments_emoji_button"),
                 SwitchPreference("morphe_hide_comments_filter_bar_options", summary = true),
                 SwitchPreference("morphe_hide_comments_gift_animation_and_cards"),
@@ -135,10 +138,13 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_comments_info_button"),
                 SwitchPreference("morphe_hide_comments_live_chat_donators_bar"),
                 SwitchPreference("morphe_hide_comments_live_chat_tooltips", summary = true),
-                SwitchPreference("morphe_hide_comments_preview_comment", summary = true),
+                SwitchPreference("morphe_hide_comments_menu_button", summary = true),
+//                SwitchPreference("morphe_hide_comments_preview_comment", summary = true),
+                SwitchPreference("morphe_minimal_comments_button", summary = true),
                 SwitchPreference("morphe_hide_comments_thanks_button"),
                 SwitchPreference("morphe_hide_comments_timestamp_button"),
                 SwitchPreference("morphe_hide_comments_top_fans_button"),
+                SwitchPreference("morphe_hide_comments_translate_button"),
 //                SwitchPreference("morphe_sanitize_comments_highlighted_search_links", summary = true)
             ),
             sorting = Sorting.UNSORTED
@@ -360,11 +366,13 @@ val HideLayoutComponents = patch(
 //        ),
 //        SwitchPreference("morphe_hide_floating_microphone_button", summary = true),
         SwitchPreference("morphe_hide_get_premium_button"),
+        SwitchPreference("morphe_hide_history_shelf", summary = true),
         SwitchPreference("morphe_hide_horizontal_shelves", summary = true),
         SwitchPreference("morphe_hide_hyped_label"),
         SwitchPreference("morphe_hide_image_shelf", summary = true),
         SwitchPreference("morphe_hide_invite_to_message_card", summary = true),
         SwitchPreference("morphe_hide_latest_videos_button", summary = true),
+        SwitchPreference("morphe_hide_live_streams", summary = true),
         SwitchPreference("morphe_hide_mix_playlists"),
         SwitchPreference("morphe_hide_movies_section"),
         SwitchPreference("morphe_hide_notifications_menu_header", summary = true),
@@ -373,6 +381,7 @@ val HideLayoutComponents = patch(
 //        SwitchPreference("morphe_hide_search_term_thumbnails", summary = true),
 //        SwitchPreference("morphe_hide_show_more_button", summary = true),
         SwitchPreference("morphe_hide_subscribed_channels_bar"),
+        SwitchPreference("morphe_hide_subscribed_channels_bar_names"),
         SwitchPreference("morphe_hide_surveys", summary = true),
         SwitchPreference("morphe_hide_ticket_shelf"),
 //        SwitchPreference(
@@ -453,6 +462,11 @@ val HideLayoutComponents = patch(
 
     // hide album cards
     // layout.album_card
+
+    // TODO hide comment preview
+
+    // hide page header buttons
+    hookElement(LayoutComponentsFilter::hidePageHeaderButtons)
 
     // hide comments carousel
     hookElement(CommentsFilter::onCommentsLoaded)

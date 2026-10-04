@@ -1,7 +1,7 @@
 package io.github.nexalloy.morphe.youtube.misc.navigation
 
-import android.app.Activity
 import android.graphics.drawable.Drawable
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -12,7 +12,9 @@ import app.morphe.extension.youtube.patches.VersionCheckPatch
 import app.morphe.extension.youtube.shared.NavigationBar
 import io.github.nexalloy.createProxy
 import io.github.nexalloy.enumValueOf
-import io.github.nexalloy.morphe.youtube.shared.mainActivityOnBackPressedFingerprint
+import io.github.nexalloy.morphe.youtube.misc.backgesture.addBackPressedHook
+import io.github.nexalloy.morphe.youtube.misc.backgesture.addPredictiveBackGestureHook
+import io.github.nexalloy.morphe.youtube.misc.backgesture.backGesturePatch
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import org.luckypray.dexkit.wrap.DexMethod
@@ -27,6 +29,7 @@ val hookNavigationButtonCreated: MutableList<(NavigationBar.NavigationButton, Vi
 val NavigationBarHook = patch(
     description = "Hooks the active navigation or search bar.",
 ) {
+    dependsOn(backGesturePatch)
 
     // Hook the current navigation bar enum value. Note, the 'You' tab does not have an enum value.
     ::initializeButtonsFingerprint.hookMethod(scopedHook(::getNavigationEnumMethod.member) {
@@ -77,11 +80,18 @@ val NavigationBarHook = patch(
         }
     })
 
+    // Hook onto navigation bar touches. Needed to detect a tap on the selected
+    // navigation button closes the search, as the button is not selected again.
+    PivotBarDispatchTouchEventFingerprint.hookMethod {
+        before {
+            NavigationBar.navigationBarTouched(it.args[0] as? MotionEvent)
+        }
+    }
+
     // Hook onto back button pressed.  Needed to fix race problem with
     // Litho filtering based on navigation tab before the tab is updated.
-    ::mainActivityOnBackPressedFingerprint.hookMethod {
-        before { NavigationBar.onBackPressed(it.thisObject as Activity) }
-    }
+    addBackPressedHook(NavigationBar::onBackPressed)
+    addPredictiveBackGestureHook(NavigationBar::onBackInvoked)
 
     // Hook the search bar.
     DexMethod("Landroid/view/LayoutInflater;->inflate(ILandroid/view/ViewGroup;)Landroid/view/View;").hookMethod {

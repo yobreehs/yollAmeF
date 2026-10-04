@@ -247,6 +247,12 @@ val InstructionData.writeRegister: Int?
         return register(0)
     }
 
+private val moveOpcodes: EnumSet<Opcode> = EnumSet.of(
+    Opcode.MOVE, Opcode.MOVE_FROM16, Opcode.MOVE_16,
+    Opcode.MOVE_WIDE, Opcode.MOVE_WIDE_FROM16, Opcode.MOVE_WIDE_16,
+    Opcode.MOVE_OBJECT, Opcode.MOVE_OBJECT_FROM16, Opcode.MOVE_OBJECT_16
+)
+
 /**
  * Find the instruction index used for a toString() StringBuilder write of a given String name.
  *
@@ -278,7 +284,8 @@ private fun MethodData.findInstructionIndexFromToString(fieldName: String, isFie
         // Should never happen.
         throw IllegalArgumentException("Could not find StringBuilder append usage in: $this")
     }
-    var fieldUsageRegister = this.instructions[fieldUsageIndex].register(1)
+    val fieldUsageInstruction = this.instructions[fieldUsageIndex]
+    var fieldUsageRegister = fieldUsageInstruction.registerOrNull(1) ?: fieldUsageInstruction.register(0)
 
     // Look backwards up the method to find the instruction that sets the register.
     var fieldSetIndex = indexOfFirstInstructionReversedOrThrow(fieldUsageIndex - 1) {
@@ -302,6 +309,20 @@ private fun MethodData.findInstructionIndexFromToString(fieldName: String, isFie
             fieldSetIndex--
         }
 
+        val fieldSetInstruction = instructions[fieldSetIndex]
+
+        // If the instruction is a register MOVE (e.g. move-object/16, move/16),
+        // trace backwards to find where the source register was set.
+        if (fieldSetInstruction.registerCount == 2 &&
+            Opcode.fromInt(fieldSetInstruction.opcode) in moveOpcodes
+        ) {
+            fieldUsageRegister = fieldSetInstruction.register(1)
+            fieldSetIndex = indexOfFirstInstructionReversedOrThrow(fieldSetIndex - 1) {
+                fieldUsageRegister == writeRegister
+            }
+            continue
+        }
+
         val fieldSetReference = instructions[fieldSetIndex]
 
         if (isField && fieldSetReference.fieldRef != null ||
@@ -320,7 +341,7 @@ private fun MethodData.findInstructionIndexFromToString(fieldName: String, isFie
             }
             checksLeft--
         } else {
-            throw IllegalArgumentException("Unknown reference: $fieldSetReference")
+            throw IllegalArgumentException("Unknown reference or instruction: $fieldSetInstruction")
         }
     }
 

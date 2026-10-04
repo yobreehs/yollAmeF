@@ -1,10 +1,12 @@
 package io.github.nexalloy.morphe.youtube.video.information
 
 import app.morphe.extension.shared.Logger
+import app.morphe.extension.shared.patches.ExoPlayerInterface
 import app.morphe.extension.youtube.patches.VideoInformation
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
+import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.bindProxy
 import io.github.nexalloy.createProxy
 import io.github.nexalloy.findFirstFieldByExactType
@@ -13,6 +15,7 @@ import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.litho.context.conversionContextPatch
 import io.github.nexalloy.morphe.shared.misc.textcomponent.hookSpannableString
 import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
+import io.github.nexalloy.morphe.shared.misc.videoinformation.playbackParametersSetterFingerprint
 import io.github.nexalloy.morphe.youtube.shared.InitializePlaybackSpeedValuesFingerprint
 import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
@@ -309,8 +312,16 @@ val VideoInformationPatch = patch(
 
     // TODO Set channel information.
 
+    addExoPlayerHooks()
 
-    // region ExoPlayerImpl.
+    onCreateHook.add { VideoInformation.initialize(it) }
+    videoSpeedChangedHook.add { VideoInformation.videoSpeedChanged(it) }
+    userSelectedPlaybackSpeedHook.add { VideoInformation.userSelectedPlaybackSpeed(it) }
+
+    // TODO Addon
+}
+
+internal fun PatchExecutor.addExoPlayerHooks() {
 
     val exoPlayerClass =
         classLoader.loadClass(::playbackParametersSetterFingerprint.dexMethod.className)
@@ -325,9 +336,11 @@ val VideoInformationPatch = patch(
     val pitchField = floatFields[1]
     ::playbackParametersSetterFingerprint.hookMethod {
         before {
+            val speed = speedField.get(it.args[0]) as Float
+            val pitch = pitchField.get(it.args[0]) as Float
             val newParam = playbackParametersClass.new(
-                speedField.get(it.args[0]),
-                VideoInformation.getPlaybackAudioPitch()
+                VideoInformation.overridePlaybackSpeed(speed),
+                VideoInformation.overridePlaybackPitch(speed, pitch)
             )
             it.args[0] = newParam
         }
@@ -335,9 +348,9 @@ val VideoInformationPatch = patch(
 
     exoPlayerClass.constructors.single().hookMethod {
         before {
-            VideoInformation.initializeExoPlayerImpl(
+            VideoInformation.initializeExoPlayer(
                 it.thisObject.createProxy { impl ->
-                    VideoInformation.ExoPlayerImpl { speed, pitch ->
+                    ExoPlayerInterface { speed, pitch ->
                         setPlaybackParametersMethod(
                             impl.get(),
                             playbackParametersClass.new(speed, pitch)
@@ -348,11 +361,4 @@ val VideoInformationPatch = patch(
         }
     }
 
-    // endregion
-
-    onCreateHook.add { VideoInformation.initialize(it) }
-    videoSpeedChangedHook.add { VideoInformation.videoSpeedChanged(it) }
-    userSelectedPlaybackSpeedHook.add { VideoInformation.userSelectedPlaybackSpeed(it) }
-
-    // TODO Addon
 }

@@ -110,6 +110,13 @@ val pivotBarButtonsViewSetSelectedSubFingerprint = findMethodDirect {
     pivotBarButtonsViewSetSelectedFingerprint().invokes.single { it.name == "setSelected" }
 }
 
+internal object PivotBarDispatchTouchEventFingerprint : Fingerprint(
+    definingClass = "Lcom/google/android/libraries/youtube/rendering/ui/pivotbar/PivotBar;",
+    name = "dispatchTouchEvent",
+    returnType = "Z",
+    parameters = listOf("Landroid/view/MotionEvent;")
+)
+
 val pivotBarConstructorFingerprint = fingerprint {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR)
     strings("com.google.android.apps.youtube.app.endpoint.flags")

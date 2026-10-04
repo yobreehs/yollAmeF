@@ -62,11 +62,6 @@ internal object EngagementPanelControllerFingerprint : Fingerprint(
 )
 
 
-val conversionContextFingerprintToString = fingerprint {
-    parameters()
-    strings("ConversionContext{")
-}
-
 val mainActivityConstructorFingerprint = fingerprint {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR)
     parameters()
@@ -77,14 +72,6 @@ val mainActivityConstructorFingerprint = fingerprint {
 
 val mainActivityClass = findClassDirect {
     mainActivityConstructorFingerprint().declaredClass!!
-}
-
-val mainActivityOnBackPressedFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("V")
-    parameters()
-    methodMatcher { name = "onBackPressed" }
-    classMatcher { className(".MainActivity", StringMatchType.EndsWith) }
 }
 
 internal object YouTubeActivityOnCreateFingerprint : Fingerprint(
