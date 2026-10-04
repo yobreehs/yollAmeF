@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="morphe_hide_end_screen_title">Скрыть эндескрин</string>
-    <string name="morphe_hide_end_screen_summary">Скрывать предложения видео (и иконки каналов) в конце видео</string>
+    <string name="morphe_hide_end_screen_title">Скрывать концовки</string>
+    <string name="morphe_hide_end_screen_summary">Скрывать предложения видео (и иконки каналов), появляющиеся в конце видео</string>
 </resources>

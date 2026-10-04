@@ -13,6 +13,7 @@ import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
 
@@ -40,7 +41,12 @@ val HideEndScreen = patch(
 ) {
     dependsOn(LithoFilter)
 
+    // Registered both in the "New features → Player" chapter and in the main "Player" section,
+    // so the toggle is easy to find regardless of where the user looks.
     addNewFeaturesPlayerPreferences(
+        SwitchPreference("morphe_hide_end_screen", summary = true),
+    )
+    PreferenceScreen.PLAYER.addPreferences(
         SwitchPreference("morphe_hide_end_screen", summary = true),
     )
 
