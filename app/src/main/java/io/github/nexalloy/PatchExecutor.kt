@@ -32,8 +32,23 @@ import org.luckypray.dexkit.wrap.DexMethod
 import java.lang.reflect.Constructor
 import java.lang.reflect.Member
 import java.lang.reflect.Method
+import java.lang.ref.WeakReference
 import kotlin.reflect.KProperty0
 import kotlin.system.measureTimeMillis
+
+/**
+ * References to alive activities, tracked for debugging (view hierarchy dump).
+ * Kept as weak references to avoid leaking activities.
+ */
+private val aliveActivities = java.util.Collections.synchronizedList(mutableListOf<WeakReference<Activity>>())
+
+/** Snapshots the currently alive activities, oldest first. */
+fun snapshotAliveActivities(): List<Activity> {
+    aliveActivities.removeAll { it.get() == null }
+    synchronized(aliveActivities) {
+        return aliveActivities.mapNotNull { it.get() }
+    }
+}
 
 typealias FindFunc = DexKitBridge.() -> Any
 typealias FindClassFunc = DexKitBridge.() -> ClassData
@@ -411,6 +426,7 @@ val ExtensionResourceHook = patch {
 
             override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
                 Logger.printDebug { "onActivityCreated $activity" }
+                synchronized(aliveActivities) { aliveActivities.add(WeakReference(activity)) }
                 if (!handleWebView) {
                     WebView(activity).destroy()
                     appContext.addModuleAssets()
@@ -422,6 +438,9 @@ val ExtensionResourceHook = patch {
 
             override fun onActivityDestroyed(activity: Activity) {
                 Logger.printDebug { "onActivityDestroyed $activity" }
+                synchronized(aliveActivities) {
+                    aliveActivities.removeAll { it.get() === activity }
+                }
             }
 
             override fun onActivityPaused(activity: Activity) {

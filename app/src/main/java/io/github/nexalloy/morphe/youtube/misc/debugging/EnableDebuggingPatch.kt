@@ -1,6 +1,8 @@
 package io.github.nexalloy.morphe.youtube.misc.debugging
 
+import io.github.nexalloy.morphe.shared.misc.debugging.DumpViewHierarchyPreference
 import io.github.nexalloy.morphe.shared.misc.debugging.enableDebuggingPatch
+import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_40_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_41_or_greater
@@ -16,6 +18,11 @@ val EnableDebugging = enableDebuggingPatch(
         SwitchPreference(
             "morphe_debug_protobuffer",
             summary = true
+        ),
+        NonInteractivePreference(
+            key = "morphe_debug_dump_view_hierarchy",
+            tag = DumpViewHierarchyPreference::class.java,
+            selectable = true,
         )
     )
 )
