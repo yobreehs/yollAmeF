@@ -215,6 +215,15 @@ object PreferenceScreen : BasePreferenceScreen() {
         sorting = Sorting.BY_KEY,
     )
 
+    val DEBUG = Screen(
+        key = "morphe_settings_screen_14_debug",
+        summaryKey = null,
+        icon = "@drawable/morphe_settings_screen_14_debug",
+        iconBold = "@drawable/morphe_settings_screen_14_debug_bold",
+        layout = "@layout/preference_with_icon",
+        sorting = Sorting.BY_KEY,
+    )
+
     override fun commit(screen: PreferenceScreenPreference) {
         preferences += screen
     }
