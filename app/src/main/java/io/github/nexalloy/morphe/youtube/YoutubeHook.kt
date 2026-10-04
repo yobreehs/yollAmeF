@@ -11,22 +11,31 @@ import io.github.nexalloy.morphe.shared.misc.CheckRecycleBitmapMediaSession
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatureFlagFingerprint
 import io.github.nexalloy.morphe.youtube.ad.HideAds
 import io.github.nexalloy.morphe.youtube.interaction.copyvideolink.CopyVideoLinkButtonPatch
+import io.github.nexalloy.morphe.youtube.interaction.channelsearch.channelSearch
 import io.github.nexalloy.morphe.youtube.interaction.downloads.Downloads
 import io.github.nexalloy.morphe.youtube.interaction.swipecontrols.SwipeControls
 import io.github.nexalloy.morphe.youtube.layout.buttons.action.HideVideoActionButtons
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
+import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.HidePlayerOverlayButtons
 import io.github.nexalloy.morphe.youtube.layout.captions.AutoCaptions
 import io.github.nexalloy.morphe.youtube.layout.hide.general.HideLayoutComponents
+import io.github.nexalloy.morphe.youtube.layout.hide.ambientmode.AmbientMode
+import io.github.nexalloy.morphe.youtube.layout.hide.player.autoplaypreview.HideAutoplayPreview
+import io.github.nexalloy.morphe.youtube.layout.hide.player.flyoutmenu.HidePlayerFlyoutMenu
 import io.github.nexalloy.morphe.youtube.layout.hide.shorts.HideShortsComponents
+import io.github.nexalloy.morphe.youtube.layout.miniplayer.Miniplayer
 import io.github.nexalloy.morphe.youtube.layout.shortsnoresume.DisableShortsResumingOnStartup
+import io.github.nexalloy.morphe.youtube.layout.playlistautoplay.DisablePlaylistAutoplay
 import io.github.nexalloy.morphe.youtube.layout.sponsorblock.SponsorBlock
 import io.github.nexalloy.morphe.youtube.layout.thumbnails.AlternativeThumbnailsPatch
 import io.github.nexalloy.morphe.youtube.layout.thumbnails.BypassImageRegionRestrictionsPatch
 import io.github.nexalloy.morphe.youtube.misc.backgroundplayback.BackgroundPlayback
 import io.github.nexalloy.morphe.youtube.misc.debugging.EnableDebugging
+import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
+import io.github.nexalloy.morphe.youtube.misc.litho.rendernext.DisableRenderNext
+import io.github.nexalloy.morphe.youtube.misc.newfeatures.NewFeatures
 import io.github.nexalloy.morphe.youtube.misc.privacy.SanitizeSharingLinks
 import io.github.nexalloy.morphe.youtube.misc.refreshrate.AppRefreshRate
-import io.github.nexalloy.morphe.youtube.misc.safemode.DisableSafeMode
 import io.github.nexalloy.morphe.youtube.misc.settings.SettingsHook
 import io.github.nexalloy.morphe.youtube.shared.YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE
 import io.github.nexalloy.morphe.youtube.video.audio.ForceOriginalAudio
@@ -78,6 +87,9 @@ val YouTubePatches = arrayOf(
     BackgroundPlayback,
     SanitizeSharingLinks,
     HideAds,
+    DisableRenderNext,
+    NewFeatures,
+    channelSearch,
     SponsorBlock,
     CopyVideoLinkButtonPatch,
     Downloads,
@@ -88,15 +100,20 @@ val YouTubePatches = arrayOf(
     VideoQuality,
     HideLayoutComponents,
     HideVideoActionButtons,
+    HidePlayerOverlayButtons,
+    Miniplayer,
     PlaybackSpeed,
     AutoCaptions,
     EnableDebugging,
     ForceOriginalAudio,
     DisableVideoCodecs,
     AppRefreshRate,
+    HideAutoplayPreview,
+    DisablePlaylistAutoplay,
+    HidePlayerFlyoutMenu,
+    AmbientMode,
     AlternativeThumbnailsPatch,
     BypassImageRegionRestrictionsPatch,
-    DisableSafeMode,
     CheckRecycleBitmapMediaSession,
     // make sure settingsHook at end to build preferences
     SettingsHook,

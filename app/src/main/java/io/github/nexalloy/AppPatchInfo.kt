@@ -1,7 +1,6 @@
 package io.github.nexalloy
 
 import io.github.nexalloy.hoodles.morphe.alltrails.AllTrailsPatches
-import io.github.nexalloy.morphe.alight.AlightMotionPatches
 import io.github.nexalloy.morphe.music.YTMusicPatches
 import io.github.nexalloy.morphe.reddit.RedditPatches
 import io.github.nexalloy.morphe.youtube.YouTubePatches
@@ -22,7 +21,6 @@ val appPatchConfigurations = listOf(
     AppPatchInfo("Threads", "com.instagram.barcelona", MetaPatches),
     AppPatchInfo("Strava", "com.strava", StravaPatches),
     AppPatchInfo("AllTrails", "com.alltrails.alltrails", AllTrailsPatches),
-    AppPatchInfo("Alight Motion", "com.alightcreative.motion", AlightMotionPatches),
 )
 
 val patchesByPackage = appPatchConfigurations.associate { it.packageName to it.patches }

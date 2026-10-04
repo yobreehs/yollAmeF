@@ -1,7 +1,7 @@
 package io.github.nexalloy.morphe.youtube.misc.navigation
 
-import android.app.Activity
 import android.graphics.drawable.Drawable
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -80,7 +80,22 @@ val NavigationBarHook = patch(
     // Hook onto back button pressed.  Needed to fix race problem with
     // Litho filtering based on navigation tab before the tab is updated.
     ::mainActivityOnBackPressedFingerprint.hookMethod {
-        before { NavigationBar.onBackPressed(it.thisObject as Activity) }
+        before { NavigationBar.onBackPressed() }
+    }
+
+    // Predictive back gesture (Android 13+), which does not call onBackPressed().
+    // Needed so the search-bar closing state is updated on devices using predictive back,
+    // otherwise Shorts are no longer hidden on the home feed after returning from a search.
+    if (PredictiveGesturesOnBackInvokedFingerprint.memberOrNull != null) {
+        PredictiveGesturesOnBackInvokedFingerprint.hookMethod {
+            before { NavigationBar.onBackInvoked() }
+        }
+    }
+
+    // Hook navigation bar touches, so a tap on an already selected tab
+    // (which closes an on-screen search) is detected.
+    PivotBarDispatchTouchEventFingerprint.hookMethod {
+        before { NavigationBar.navigationBarTouched(it.args[0] as MotionEvent) }
     }
 
     // Hook the search bar.

@@ -239,6 +239,17 @@ val writeOpcodes: EnumSet<Opcode> = EnumSet.of(
     XOR_INT_2ADDR, XOR_INT_LIT16, XOR_INT_LIT8, XOR_INT, XOR_LONG_2ADDR, XOR_LONG,
 )
 val InstructionData.opcodeEnum: Opcode get() = Opcode.fromInt(opcode)
+
+/**
+ * Register move opcodes. Needed to trace a value through register moves
+ * when locating a field from a `toString()` method.
+ */
+val moveOpcodes: EnumSet<Opcode> = EnumSet.of(
+    Opcode.MOVE, Opcode.MOVE_FROM16, Opcode.MOVE_16,
+    Opcode.MOVE_WIDE, Opcode.MOVE_WIDE_FROM16, Opcode.MOVE_WIDE_16,
+    Opcode.MOVE_OBJECT, Opcode.MOVE_OBJECT_FROM16, Opcode.MOVE_OBJECT_16
+)
+
 val InstructionData.writeRegister: Int?
     get() {
         if (opcodeEnum !in writeOpcodes) {
@@ -302,14 +313,24 @@ private fun MethodData.findInstructionIndexFromToString(fieldName: String, isFie
             fieldSetIndex--
         }
 
-        val fieldSetReference = instructions[fieldSetIndex]
+        val fieldSetInstruction = instructions[fieldSetIndex]
 
-        if (isField && fieldSetReference.fieldRef != null ||
-            !isField && fieldSetReference.methodRef != null
+        // If the instruction is a register move (e.g. move-object/16), trace the value
+        // backwards to the instruction that set the source register.
+        if (fieldSetInstruction.opcodeEnum in moveOpcodes) {
+            fieldUsageRegister = fieldSetInstruction.register(1)
+            fieldSetIndex = indexOfFirstInstructionReversedOrThrow(fieldSetIndex - 1) {
+                fieldUsageRegister == writeRegister
+            }
+            continue
+        }
+
+        if (isField && fieldSetInstruction.fieldRef != null ||
+            !isField && fieldSetInstruction.methodRef != null
         ) {
             // Valid index.
             return fieldSetIndex
-        } else if (fieldSetReference.methodRef?.returnTypeName == "java.lang.String"
+        } else if (fieldSetInstruction.methodRef?.returnTypeName == "java.lang.String"
             // Object.toString(), String.valueOf(object)
         ) {
             fieldUsageRegister = instructions[fieldSetIndex].register(0)
@@ -320,7 +341,7 @@ private fun MethodData.findInstructionIndexFromToString(fieldName: String, isFie
             }
             checksLeft--
         } else {
-            throw IllegalArgumentException("Unknown reference: $fieldSetReference")
+            throw IllegalArgumentException("Unknown reference: $fieldSetInstruction")
         }
     }
 

@@ -16,7 +16,6 @@
         <package android:name="com.instagram.barcelona" />
         <package android:name="com.strava" />
         <package android:name="com.alltrails.alltrails" />
-        <package android:name="com.alightcreative.motion" />
     </queries>
 
     <application
@@ -60,6 +59,6 @@
              and get selected by default when the module is enabled. -->
         <meta-data
             android:name="xposedscope"
-            android:value="com.google.android.youtube;com.google.android.apps.youtube.music;com.reddit.frontpage;com.google.android.apps.photos;com.microblink.photomath;com.instagram.android;com.instagram.barcelona;com.strava;com.alltrails.alltrails;com.alightcreative.motion" />
+            android:value="com.google.android.youtube;com.google.android.apps.youtube.music;com.reddit.frontpage;com.google.android.apps.photos;com.microblink.photomath;com.instagram.android;com.instagram.barcelona;com.strava;com.alltrails.alltrails" />
     </application>
 </manifest>

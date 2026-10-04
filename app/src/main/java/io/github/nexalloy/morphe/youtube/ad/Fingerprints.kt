@@ -64,8 +64,8 @@ internal object PlayerOverlayTimelyShelfFingerprint : Fingerprint(
     parameters = listOf("Ljava/lang/Object;"),
     filters = listOf(
         opcode(Opcode.CHECK_CAST),
-        fieldAccess(opcode = Opcode.IGET_OBJECT, type = "Ljava/lang/String;", location = MatchAfterImmediately()),
-        string("player_overlay_timely_shelf", location = MatchAfterImmediately()),
+        fieldAccess(opcode = Opcode.IGET_OBJECT, type = "Ljava/lang/String;", location = MatchAfterWithin(15)),
+        string("player_overlay_timely_shelf", location = MatchAfterWithin(5)),
         methodCall(smali = "Ljava/lang/String;->equals(Ljava/lang/Object;)Z", location = MatchAfterWithin(5)),
         opcode(Opcode.MOVE_RESULT, location = MatchAfterImmediately())
     )
