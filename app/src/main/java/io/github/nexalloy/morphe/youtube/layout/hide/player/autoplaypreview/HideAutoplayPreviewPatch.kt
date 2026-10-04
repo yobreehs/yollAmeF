@@ -5,7 +5,7 @@ import android.view.ViewStub
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.youtube.patches.HideAutoplayPreviewPatch as ExtensionHideAutoplayPreviewPatch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
+import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
 
@@ -21,7 +21,7 @@ val HideAutoplayPreview = patch(
     name = "Hide autoplay preview",
     description = "Adds an option to hide the autoplay preview at the end of videos.",
 ) {
-    PreferenceScreen.PLAYER.addPreferences(
+    addNewFeaturesPlayerPreferences(
         SwitchPreference("morphe_hide_autoplay_preview", summary = true),
     )
 

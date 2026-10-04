@@ -7,9 +7,10 @@ import app.morphe.extension.shared.Utils
 import app.morphe.extension.youtube.patches.HidePlayerOverlayButtonsPatch as ExtensionHidePlayerOverlayButtonsPatch
 import app.morphe.extension.youtube.settings.Settings
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.shared.misc.settings.preference.noTitleUnsortedPreferenceCategory
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
+import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
 
@@ -30,21 +31,25 @@ val HidePlayerOverlayButtons = patch(
     name = "Hide player overlay buttons",
     description = "Adds options to hide buttons in the video player overlay.",
 ) {
-    addPlayerOverlayPreferences(
-        noTitleUnsortedPreferenceCategory(
-            SwitchPreference("morphe_hide_autoplay_button"),
-            SwitchPreference("morphe_hide_captions_button"),
-            SwitchPreference("morphe_hide_cast_button"),
-            SwitchPreference("morphe_hide_collapse_button"),
-            SwitchPreference("morphe_hide_fullscreen_button"),
-            SwitchPreference("morphe_hide_player_control_buttons_background", summary = true),
-            SwitchPreference("morphe_hide_player_previous_next_buttons"),
-            SwitchPreference("morphe_hide_settings_button"),
-        ),
-        NonInteractivePreference(
-            key = "morphe_player_control_buttons_background_opacity",
-            tag = app.morphe.extension.shared.settings.preference.SeekBarPreference::class.java,
-            selectable = true,
+    addNewFeaturesPlayerPreferences(
+        PreferenceScreenPreference(
+            key = "morphe_overlay_buttons_screen",
+            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+            preferences = setOf(
+                SwitchPreference("morphe_hide_autoplay_button"),
+                SwitchPreference("morphe_hide_captions_button"),
+                SwitchPreference("morphe_hide_cast_button"),
+                SwitchPreference("morphe_hide_collapse_button"),
+                SwitchPreference("morphe_hide_fullscreen_button"),
+                SwitchPreference("morphe_hide_player_control_buttons_background", summary = true),
+                SwitchPreference("morphe_hide_player_previous_next_buttons"),
+                SwitchPreference("morphe_hide_settings_button"),
+                NonInteractivePreference(
+                    key = "morphe_player_control_buttons_background_opacity",
+                    tag = app.morphe.extension.shared.settings.preference.SeekBarPreference::class.java,
+                    selectable = true,
+                ),
+            ),
         ),
     )
 
