@@ -8,8 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import app.morphe.extension.shared.Logger
+import app.morphe.extension.shared.StringRef.str
 import app.morphe.extension.shared.Utils
-import app.morphe.extension.shared.settings.BaseSettings
 import io.github.nexalloy.snapshotAliveActivities
 
 /**
@@ -44,6 +44,7 @@ class DumpViewHierarchyPreference : Preference {
             val activities = snapshotAliveActivities()
             if (activities.isEmpty()) {
                 Logger.printDebug { "VD: no alive activities to dump" }
+                Utils.showToastShort(str("morphe_debug_view_dump_empty"))
                 return
             }
             activities.forEach { activity ->
@@ -62,6 +63,10 @@ class DumpViewHierarchyPreference : Preference {
                     Logger.printException({ "View dump failed for $activity" }, it)
                 }
             }
+            Utils.showToastShort(
+                str("morphe_debug_view_dump_done")
+                    .replace("{count}", activities.size.toString())
+            )
         }
 
         private fun appendView(view: View, depth: Int, sb: StringBuilder) {
