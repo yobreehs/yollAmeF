@@ -1,8 +1,8 @@
 [submodule "morphe-patches"]
 	path = morphe-patches
-	url = https://github.com/NexAlloy/morphe-patches
-	branch = nexalloy
+	url = https://github.com/yobreehs/morphe-patches
+	branch = femalloy-v1.45
 [submodule "morphe-patches-library"]
 	path = morphe-patches-library
-	url = https://github.com/NexAlloy/morphe-patches-library
-	branch = nexalloy
+	url = https://github.com/yobreehs/morphe-patches-library
+	branch = femalloy-v1.8.0-dev.1
