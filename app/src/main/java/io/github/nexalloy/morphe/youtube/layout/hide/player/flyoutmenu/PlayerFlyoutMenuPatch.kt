@@ -7,7 +7,7 @@ import io.github.nexalloy.morphe.shared.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
+import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
 import io.github.nexalloy.patch
 
 /**
@@ -19,9 +19,10 @@ val HidePlayerFlyoutMenu = patch(
     name = "Hide player flyout menu components",
     description = "Adds options to hide menu components that appear when pressing the gear icon in the video player.",
 ) {
-    PreferenceScreen.PLAYER.addPreferences(
+    addNewFeaturesPlayerPreferences(
         PreferenceScreenPreference(
             key = "morphe_hide_player_flyout",
+            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
             preferences = setOf(
                 SwitchPreference("morphe_hide_player_flyout_additional_settings", summary = true),
                 SwitchPreference("morphe_hide_player_flyout_ambient_mode", summary = true),
