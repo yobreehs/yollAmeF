@@ -16,6 +16,10 @@
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 -keepnames class * extends io.github.nexalloy.morphe.Fingerprint
 
+# FemAlloy: the HideEndScreen patch registers UI preferences, a litho filter and platform-class
+# hooks via constructor side effects; keep it intact in release builds regardless of R8's analysis.
+-keep class io.github.nexalloy.morphe.youtube.layout.hide.endscreen.** { *; }
+
 # FemAlloy: settings registered only by their constructor side effect look unused to R8,
 # and the -assumenosideeffects rule below then drops the registration entirely in release
 # builds, breaking Setting.getSettingFromPath(). The refresh-rate-type setting is declared
