@@ -18,4 +18,5 @@ local.properties
 
 *.jks
 *.keystore
-signing.propertiesproject.md
+signing.properties
+project.md
