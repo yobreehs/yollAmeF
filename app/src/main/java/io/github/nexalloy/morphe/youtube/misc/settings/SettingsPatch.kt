@@ -1,6 +1,8 @@
 package io.github.nexalloy.morphe.youtube.misc.settings
 
 import android.app.Activity
+import android.os.Build
+import android.view.WindowInsets
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.settings.preference.ImportExportPreference
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
@@ -53,6 +55,7 @@ val SettingsHook = patch(
             YouTubeActivityHook.initialize(activity)
             activity.theme.applyStyle(R.style.ListDividerNull, true)
             superOnCreate.invokeSpecial(param.thisObject, *param.args)
+            applySettingsInsets(activity)
         }
     })
 
@@ -214,5 +217,28 @@ object PreferenceScreen : BasePreferenceScreen() {
 
     override fun commit(screen: PreferenceScreenPreference) {
         preferences += screen
+    }
+}
+
+/**
+ * Android 15+ (YouTube 21.39) enforces edge-to-edge, so the injected settings activity content
+ * is drawn behind the system bars. The extension only applies insets to submenu dialogs, so the
+ * root screen is padded here instead.
+ */
+private fun applySettingsInsets(activity: Activity) {
+    runCatching {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return@runCatching
+        activity.window?.decorView?.post {
+            val content = activity.findViewById<android.view.View>(android.R.id.content)
+                ?: return@post
+            content.setOnApplyWindowInsetsListener { view, insets ->
+                val status = insets.getInsets(WindowInsets.Type.statusBars())
+                val nav = insets.getInsets(WindowInsets.Type.navigationBars())
+                val cutout = insets.getInsets(WindowInsets.Type.displayCutout())
+                view.setPadding(cutout.left, status.top, cutout.right, nav.bottom)
+                insets
+            }
+            content.requestApplyInsets()
+        }
     }
 }
