@@ -8,7 +8,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScree
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
-import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
+import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
 import io.github.nexalloy.patch
 
 /**
@@ -23,7 +23,7 @@ val Miniplayer = patch(
     name = "Miniplayer",
     description = "Adds options to change the in-app minimized player.",
 ) {
-    PreferenceScreen.PLAYER.addPreferences(
+    addNewFeaturesPlayerPreferences(
         PreferenceScreenPreference(
             key = "morphe_miniplayer_screen",
             sorting = Sorting.UNSORTED,
