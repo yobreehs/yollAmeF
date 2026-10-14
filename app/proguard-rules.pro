@@ -20,6 +20,13 @@
 # hooks via constructor side effects; keep it intact in release builds regardless of R8's analysis.
 -keep class io.github.nexalloy.morphe.youtube.layout.hide.endscreen.** { *; }
 
+# FemAlloy: keep the freshly added settings registered by constructor side effect so the
+# -assumenosideeffects rule below does not drop them (volume key steps, PiP seek buttons).
+-keepclassmembers class app.morphe.extension.youtube.settings.Settings {
+    public static final app.morphe.extension.shared.settings.IntegerSetting VOLUME_KEY_STEPS;
+    public static final app.morphe.extension.shared.settings.BooleanSetting PIP_SEEK_BUTTONS;
+}
+
 # FemAlloy: settings registered only by their constructor side effect look unused to R8,
 # and the -assumenosideeffects rule below then drops the registration entirely in release
 # builds, breaking Setting.getSettingFromPath(). The refresh-rate-type setting is declared

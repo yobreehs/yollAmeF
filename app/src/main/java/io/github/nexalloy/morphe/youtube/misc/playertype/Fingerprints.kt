@@ -19,7 +19,10 @@ object PlayerTypeFingerprint : Fingerprint(
     returnType = "V",
     custom = {
         addParamType { superClass { descriptor = "Ljava/lang/Enum;" } }
-        declaredClass { className(".YouTubePlayerOverlaysLayout", StringMatchType.EndsWith) }
+        // 21.41+ YouTubePlayerOverlaysLayout is no longer a player type listener
+        // (it moved to YouTubePlayerViewNotForReflection, which exists in older
+        // versions too and is used unconditionally like upstream).
+        declaredClass { className(".YouTubePlayerViewNotForReflection", StringMatchType.EndsWith) }
     }
 )
 

@@ -93,6 +93,11 @@ val SwipeControls = patch(
             tag = SwipeVolumeStepsPreference::class.java
         ),
         NonInteractivePreference(
+            key = "morphe_volume_key_steps",
+            tag = SeekBarPreference::class.java,
+            selectable = true,
+        ),
+        NonInteractivePreference(
             key = "morphe_swipe_speed_sensitivity",
             tag = SeekBarPreference::class.java,
             selectable = true,
