@@ -36,6 +36,8 @@ internal object AuthenticationChangeListenerFingerprint : Fingerprint(
         )
     ),
     accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.FINAL),
+    // 21.40+ ambiguous without the parameter type (multiple private void methods).
+    parameters = listOf("L"),
     returnType = "V",
     filters = listOf(
         methodCall(opcode = Opcode.INVOKE_VIRTUAL, parameters = emptyList(), returnType = "L")

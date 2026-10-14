@@ -26,7 +26,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.sheerboy.femalloy"
-        versionCode = 115
+        versionCode = 116
         versionName = "2.0.$versionCode"
         val patchVersion = Properties().apply {
             rootProject.file("morphe-patches/gradle.properties").inputStream().use { load(it) }

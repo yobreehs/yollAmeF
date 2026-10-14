@@ -20,10 +20,12 @@ import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.HidePlayerOverla
 import io.github.nexalloy.morphe.youtube.layout.captions.AutoCaptions
 import io.github.nexalloy.morphe.youtube.layout.hide.general.HideLayoutComponents
 import io.github.nexalloy.morphe.youtube.layout.hide.ambientmode.AmbientMode
+import io.github.nexalloy.morphe.youtube.layout.hide.endscreen.HideEndScreen
 import io.github.nexalloy.morphe.youtube.layout.hide.player.autoplaypreview.HideAutoplayPreview
 import io.github.nexalloy.morphe.youtube.layout.hide.player.flyoutmenu.HidePlayerFlyoutMenu
 import io.github.nexalloy.morphe.youtube.layout.hide.shorts.HideShortsComponents
 import io.github.nexalloy.morphe.youtube.layout.miniplayer.Miniplayer
+import io.github.nexalloy.morphe.youtube.layout.player.pip.PipSeekButtons
 import io.github.nexalloy.morphe.youtube.layout.shortsnoresume.DisableShortsResumingOnStartup
 import io.github.nexalloy.morphe.youtube.layout.playlistautoplay.DisablePlaylistAutoplay
 import io.github.nexalloy.morphe.youtube.layout.sponsorblock.SponsorBlock
@@ -108,7 +110,9 @@ val YouTubePatches = arrayOf(
     ForceOriginalAudio,
     DisableVideoCodecs,
     AppRefreshRate,
+    HideEndScreen,
     HideAutoplayPreview,
+    PipSeekButtons,
     DisablePlaylistAutoplay,
     HidePlayerFlyoutMenu,
     AmbientMode,
