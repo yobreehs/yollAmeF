@@ -91,6 +91,16 @@ internal val videoTitlesHookPatch = patch(
         }
     })
 
+    // The minimal miniplayer shows the title of the opened video without the video id.
+    val floatyTitleId = getResourceId(ResourceType.ID, "floaty_title")
+    MinimalMiniplayerTitleViewFingerprint.hookMethod(scopedHook(findViewById) {
+        after {
+            if (innerDepth == 0 && it.args[0] == floatyTitleId) {
+                RestoreOriginalTitlesPatch.restorePlayerTitle(it.result as? TextView)
+            }
+        }
+    })
+
     // The next video of the collapsed playlist panel does not include the video id.
     val nextVideoTitleId = getResourceId(ResourceType.ID, "next_video_title")
     ::nextVideoTitleViewMethods.dexMethodList.forEach { method ->

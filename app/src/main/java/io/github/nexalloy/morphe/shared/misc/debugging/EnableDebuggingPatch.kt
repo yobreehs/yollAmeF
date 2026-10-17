@@ -13,6 +13,7 @@ import io.github.nexalloy.patch
 import io.github.nexalloy.atLast
 
 fun enableDebuggingPatch(
+    hookIndexedBooleanFeatureFlag: PatchExecutor.() -> Boolean,
     hookStringFeatureFlag: PatchExecutor.() -> Boolean,
     hookLongFeatureFlag: PatchExecutor.() -> Boolean,
     hookDoubleFeatureFlag: PatchExecutor.() -> Boolean,
@@ -60,6 +61,17 @@ fun enableDebuggingPatch(
                 it.result as Boolean,
                 it.args.atLast(2) as Long
             )
+        }
+    }
+
+    if (hookIndexedBooleanFeatureFlag()) {
+        ::experimentalIndexedBooleanFeatureFlagFingerprint.hookMethod {
+            after {
+                it.result = EnableDebuggingPatch.isBooleanFeatureFlagEnabled(
+                    it.result as Boolean,
+                    it.args.atLast(2) as Long
+                )
+            }
         }
     }
 

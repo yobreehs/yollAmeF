@@ -8,9 +8,13 @@ import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findMethodDirect
+import io.github.nexalloy.morphe.findClassDirect
+import io.github.nexalloy.morphe.findFieldListDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
+import org.luckypray.dexkit.result.MethodData
+import org.luckypray.dexkit.result.FieldData
 
 /**
  * Command resolver of the share endpoint.
@@ -62,6 +66,47 @@ internal object ShareEndpointCommandFingerprint : Fingerprint(
         )
     )
 )
+
+/**
+ * Command resolver of the share entity service endpoint.
+ * Opens the share panel fragment, which sends the `share/get_share_panel` request.
+ */
+internal object ShareEntityEndpointCommandFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("L", "Ljava/util/Map;"),
+    filters = listOf(string("Command not in share entity endpoint proto."))
+)
+
+private fun endpointExtensionField(method: MethodData): FieldData? {
+    val staticFields = mutableListOf<FieldData>()
+    for (instruction in method.instructions) {
+        if (instruction.opcode == Opcode.SGET_OBJECT.ordinal) {
+            staticFields += instruction.fieldRef!!
+        }
+        if (instruction.opcode == Opcode.CHECK_CAST.ordinal) {
+            staticFields.lastOrNull { it.declaredClass == instruction.classRef }?.let { return it }
+        }
+    }
+    return null
+}
+
+val shareEndpointExtensionFields = findFieldListDirect {
+    listOfNotNull(
+        checkNotNull(endpointExtensionField(ShareEndpointCommandFingerprint())),
+        endpointExtensionField(ShareEntityEndpointCommandFingerprint())
+    )
+}
+
+val shareEndpointExtensionNumberMethod = findMethodDirect {
+    shareEndpointExtensionFields().first().type!!.methods.single {
+        it.paramCount == 0 && it.returnTypeName == "int"
+    }
+}
+
+val shareEntityEndpointType = findClassDirect {
+    val method = ShareEntityEndpointCommandFingerprint()
+    endpointExtensionField(method)?.declaredClass ?: method.paramTypes.first()
+}
 
 /**
  * Action sheet controller method that handles `ShowActionSheetCommand`.

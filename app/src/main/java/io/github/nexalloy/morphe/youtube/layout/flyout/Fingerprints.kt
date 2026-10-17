@@ -16,7 +16,6 @@ import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
-import io.github.nexalloy.morphe.newInstance
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.string
@@ -99,23 +98,6 @@ internal object FeedFlyoutBufferObjectFingerprint : Fingerprint(
         "com.google.android.libraries.youtube.innertube.endpoint.tag",
         "com.google.android.libraries.youtube.innertube.bundle",
         "com.google.android.libraries.youtube.logging.interaction_logger"
-    )
-)
-
-internal object OnClickLithoButtonBufferObjectFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    returnType = "V",
-    parameters = listOf("L"),
-    filters = listOf(
-        opcode(opcode = Opcode.NEW_INSTANCE),
-        opcode(opcode = Opcode.INVOKE_DIRECT, location = MatchAfterImmediately()),
-        newInstance(type = "Ljava/util/HashMap;", location = MatchAfterWithin(5)),
-        methodCall(
-            opcode = Opcode.INVOKE_DIRECT,
-            smali = "Ljava/util/HashMap;-><init>(Ljava/util/Map;)V",
-            location = MatchAfterWithin(5)
-        ),
-        string("command_status_callback", location = MatchAfterImmediately())
     )
 )
 

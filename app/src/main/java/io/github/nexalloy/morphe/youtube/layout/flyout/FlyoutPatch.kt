@@ -6,14 +6,11 @@ import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
 import app.morphe.extension.shared.ResourceUtils
-import app.morphe.extension.youtube.patches.components.ChannelPageFlyoutFilter
 import app.morphe.extension.youtube.patches.utils.FlyoutUtils
 import io.github.nexalloy.hookMethod
-import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
 import io.github.nexalloy.morphe.youtube.layout.hide.general.ContextualMenuItemBuilderFingerprint
 import io.github.nexalloy.morphe.youtube.layout.hide.general.contextualMenuItemTextViewField
-import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.youtube.misc.proto.elementProtoParserHookPatch
 import io.github.nexalloy.morphe.youtube.shared.hookVideoStarted
 import io.github.nexalloy.morphe.youtube.shared.startVideoInformerPatch
@@ -33,7 +30,6 @@ val flyoutPatch = patch(
     description = "Provides shared flyout menu hooks.",
 ) {
     dependsOn(
-        LithoFilter,
         startVideoInformerPatch,
         VideoInformationPatch,
         elementProtoParserHookPatch,
@@ -53,14 +49,6 @@ val flyoutPatch = patch(
             FlyoutUtils.extractFlyoutIdFromMap(wrapMap(map))
         }
     }
-
-    OnClickLithoButtonBufferObjectFingerprint.hookMethod(scopedHook(
-        DexMethod("Ljava/util/HashMap;-><init>(Ljava/util/Map;)V").toConstructor()
-    ) {
-        after {
-            FlyoutUtils.extractFlyoutIdFromLithoButton(wrapMap(it.thisObject as Map<*, *>))
-        }
-    })
 
     val innertubeMenuAnchorTag = ResourceUtils.getIdIdentifier("innertube_menu_anchor_tag")
     FullHistoryFlyoutBufferObjectFingerprint.hookMethod(scopedHook(
@@ -94,7 +82,6 @@ val flyoutPatch = patch(
     hookVideoStarted(FlyoutUtils::resetVideoMarkedAsForKids)
 
     hookElement(FlyoutUtils::onCommentsLoaded)
-    addLithoFilter(ChannelPageFlyoutFilter())
 
     // Track and initialize flyout menu buttons generically.
     val getSubMessageMethod = ::getSubMessageReference.method

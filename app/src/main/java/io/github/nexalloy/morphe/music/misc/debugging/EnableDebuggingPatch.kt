@@ -5,6 +5,7 @@ import io.github.nexalloy.morphe.shared.misc.debugging.enableDebuggingPatch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 
 val EnableDebugging = enableDebuggingPatch(
+    hookIndexedBooleanFeatureFlag = { false },
     // String feature flag does not appear to be present with YT Music.
     hookStringFeatureFlag = { false },
     hookLongFeatureFlag = { true },

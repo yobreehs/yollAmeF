@@ -6,10 +6,13 @@ import io.github.libxposed.api.XposedInterface
 import io.github.nexalloy.ExtensionResourceHook
 import io.github.nexalloy.addModuleAssets
 import io.github.nexalloy.atLast
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.injectHostClassLoaderToSelf
 import io.github.nexalloy.injectSelfClassLoaderToHost
 import io.github.nexalloy.morphe.shared.misc.CheckRecycleBitmapMediaSession
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatureFlagFingerprint
+import io.github.nexalloy.morphe.shared.misc.debugging.experimentalIndexedBooleanFeatureFlagFingerprint
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_42_or_greater
 import io.github.nexalloy.morphe.youtube.ad.HideAds
 import io.github.nexalloy.morphe.youtube.interaction.channelsearch.channelSearchPatch
 import io.github.nexalloy.morphe.youtube.interaction.copytext.copyTextPatch
@@ -68,13 +71,19 @@ fun insertLiteralOverride(id: Long, override: (Boolean) -> Boolean) {
 }
 
 val FeatureOverride = patch {
-    ::experimentalBooleanFeatureFlagFingerprint.hookMethod {
-        priority = XposedInterface.PRIORITY_DEFAULT - 1
-        after {
-            val id = it.args.atLast(2) as Long
-            val orig = it.result as Boolean
-            val match = overrides[id] ?: return@after
-            it.result = match(orig)
+    val methods = mutableListOf(::experimentalBooleanFeatureFlagFingerprint.method)
+    if (is_21_42_or_greater) {
+        methods += ::experimentalIndexedBooleanFeatureFlagFingerprint.method
+    }
+    methods.forEach { method ->
+        method.hookMethod {
+            priority = XposedInterface.PRIORITY_DEFAULT - 1
+            after {
+                val id = it.args.atLast(2) as Long
+                val orig = it.result as Boolean
+                val match = overrides[id] ?: return@after
+                it.result = match(orig)
+            }
         }
     }
 }

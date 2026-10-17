@@ -85,6 +85,13 @@ val NavigationBar = patch(
 
     // TODO Hide navigation bar
 
+    // The translucent navigation bar comes from three feature flags that not every account
+    // gets, so all of them are always turned on. The bar then looks the same on every account,
+    // and the opaque option below paints over the same translucent bar everywhere.
+    insertLiteralOverride(45630927L, true)
+    insertLiteralOverride(45632194L, true)
+    insertLiteralOverride(45631257L, true)
+
     // TODO Paint over the translucent status bar and navigation bar
 
     // Animated navigation tabs.
@@ -110,7 +117,8 @@ val NavigationBar = patch(
     }
 
     // TODO Navigation search and settings button
-    // TODO useTranslucentNavigation
+    // TODO The translucent theme hands the window a transparent color for the system navigation
+    // buttons, so an opaque one is swapped in there instead of turning off the feature flag.
     // TODO Disable the A/B layout with Subscriptions as a tab of Home.
 //    val toolbarPreferences = mutableSetOf(
 //        SwitchPreference("morphe_hide_toolbar_cast_button"),

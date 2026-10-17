@@ -6,6 +6,7 @@ import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.ResourceType
 import io.github.nexalloy.morphe.accessFlags
+import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findFieldFromToString
@@ -23,6 +24,42 @@ import io.github.nexalloy.morphe.returns
 import io.github.nexalloy.morphe.string
 
 internal const val FIXED_RESOLUTION_STRING = ", initialPlaybackVideoQualityFixedResolution="
+
+/**
+ * 'Video quality preferences' setting of YouTube settings
+ * (Auto, Higher picture quality, Data saver or Advanced).
+ */
+internal object VideoQualitySettingEnumFingerprint : Fingerprint(
+    name = "<clinit>",
+    filters = listOf(
+        string("VIDEO_QUALITY_SETTING_ADVANCED_MENU"),
+        fieldAccess( // VIDEO_QUALITY_SETTING_ADVANCED_MENU enum value.
+            opcode = Opcode.SPUT_OBJECT,
+            definingClass = "this",
+            location = MatchAfterWithin(5)
+        )
+    )
+)
+
+val advancedVideoQualitySettingField = findFieldDirect {
+    VideoQualitySettingEnumFingerprint.instructionMatches.last().instruction.fieldRef!!
+}
+
+/**
+ * Video quality setting used for a video ID, sent with the SABR requests.
+ */
+val getVideoQualitySettingMethod = findMethodDirect {
+    val type = VideoQualitySettingEnumFingerprint().declaredClass!!.descriptor
+    Fingerprint(
+        accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+        returnType = type,
+        parameters = listOf("Ljava/lang/String;"),
+        filters = listOf(
+            methodCall(definingClass = "Ljava/util/Map;", name = "get"),
+            checkCast(type)
+        )
+    )()
+}
 
 internal object PlaybackStartParametersToStringFingerprint : Fingerprint(
     name = "toString",

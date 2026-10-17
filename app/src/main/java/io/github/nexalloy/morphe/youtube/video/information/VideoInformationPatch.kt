@@ -3,8 +3,6 @@ package io.github.nexalloy.morphe.youtube.video.information
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.patches.ExoPlayerInterface
 import app.morphe.extension.youtube.patches.VideoInformation
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.bindProxy
@@ -18,12 +16,12 @@ import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
 import io.github.nexalloy.morphe.shared.misc.videoinformation.playbackParametersSetterFingerprint
 import io.github.nexalloy.morphe.youtube.shared.InitializePlaybackSpeedValuesFingerprint
 import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterFingerprint
-import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
 import io.github.nexalloy.morphe.youtube.video.playerresponse.Hook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.PlayerResponseMethodHook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.addPlayerResponseMethodHook
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponseVideoId
+import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponsePlaylistId
 import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
 import io.github.nexalloy.new
 import io.github.nexalloy.patch
@@ -101,6 +99,19 @@ class PlaybackSpeedMenu(
     }
 }
 
+internal class VideoQualityProxy(val quality: Any) : VideoInformation.VideoQualityInterface {
+    private val qualityNameField = quality.javaClass.findFirstFieldByExactType(String::class.java)
+    private val resolutionField = quality.javaClass.findFirstFieldByExactType(Int::class.java)
+
+    override fun patch_getQualityName(): String = qualityNameField.get(quality) as String
+    override fun patch_getResolution(): Int = VideoInformation.fixVideoQualityResolution(
+        patch_getQualityName(), resolutionField.getInt(quality)
+    )
+    override fun toString(): String = quality.toString()
+    override fun equals(other: Any?): Boolean = other is VideoQualityProxy && quality == other.quality
+    override fun hashCode(): Int = quality.hashCode()
+}
+
 val VideoInformationPatch = patch(
     description = "Hooks YouTube to get information about the current playing video.",
 ) {
@@ -174,8 +185,7 @@ val VideoInformationPatch = patch(
      * Inject call for video ids
      */
     videoIdHooks.add { VideoInformation.setVideoId(it) }
-    // rvxp: currently this is only used for ReloadVideoButtonPatch
-//    hookPlayerResponsePlaylistId(VideoInformation::setPlayerResponsePlaylistId)
+    hookPlayerResponsePlaylistId(VideoInformation::setPlayerResponsePlaylistId)
     hookPlayerResponseVideoId(VideoInformation::setPlayerResponseVideoId)
 
     // Call before any other video id hooks,
@@ -258,36 +268,6 @@ val VideoInformationPatch = patch(
     // endregion.
 
     // videoQuality
-    val videoQualityClass = ::VideoQualityClass.clazz
-    val qualityNameField = videoQualityClass.findFirstFieldByExactType(String::class.java)
-    val resolutionField = videoQualityClass.findFirstFieldByExactType(Int::class.java)
-
-    val getQualityName = { quality: Any -> qualityNameField.get(quality) as String }
-    val getResolution = { quality: Any -> resolutionField.get(quality) as Int }
-
-    // Fix bad data used by YouTube.
-    XposedBridge.hookAllConstructors(
-        videoQualityClass, object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
-                val quality = param.thisObject
-                val newResolution = VideoInformation.fixVideoQualityResolution(
-                    getQualityName(quality), getResolution(quality)
-                )
-                resolutionField.set(quality, newResolution)
-            }
-        })
-
-    // Detect video quality changes and override the current quality.
-    class VideoQualityProxy(val quality: Any) : VideoInformation.VideoQualityInterface {
-        override fun patch_getQualityName(): String = getQualityName(quality)
-        override fun patch_getResolution(): Int = getResolution(quality)
-        override fun toString(): String = quality.toString()
-        override fun equals(other: Any?): Boolean =
-            other is VideoQualityProxy && quality == other.quality
-
-        override fun hashCode(): Int = quality.hashCode()
-    }
-
     // Detect video quality changes and override the current quality.
     ::videoQualitySetterFingerprint.hookMethod {
         val onItemClickListenerClass = ::onItemClickListenerClassReference.field

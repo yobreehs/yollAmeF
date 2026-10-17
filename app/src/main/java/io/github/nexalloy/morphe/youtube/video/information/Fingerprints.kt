@@ -48,14 +48,39 @@ val setPlaybackSpeedMethodReference = findMethodDirect {
 val PlayerControllerClass = findClassDirect { setPlaybackSpeedMethodReference().declaredClass!! }
 
 internal object PlayerControllerSetTimeReferenceFingerprint : Fingerprint(
-    filters = OpcodesFilter.opcodesToFilters(
-        Opcode.INVOKE_DIRECT_RANGE,
-        Opcode.IGET_OBJECT
-    ) + string("Media progress reported outside media playback: ", comparison = StringComparisonType.CONTAINS)
+    filters = listOf(
+        methodCall(
+            opcode = Opcode.INVOKE_DIRECT_RANGE,
+            name = "<init>",
+            parameters = listOf("J", "J", "J", "J", "J", "J", "J", "Z", "Ljava/lang/String;")
+        ),
+        string("Media progress reported outside media playback: ", comparison = StringComparisonType.CONTAINS)
+    )
 )
 
 val timeMethod = findMethodDirect {
-    PlayerControllerSetTimeReferenceFingerprint().invokes.single { it.name == "<init>" }
+    PlayerControllerSetTimeReferenceFingerprint.instructionMatches.first().instruction.methodRef!!
+}
+
+internal object PlayerStatusEnumFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.STATIC, AccessFlags.CONSTRUCTOR),
+    strings = listOf(
+        "NEW", "PLAYBACK_PENDING", "PLAYBACK_LOADED", "PLAYBACK_INTERRUPTED",
+        "INTERSTITIAL_REQUESTED", "INTERSTITIAL_PLAYING", "VIDEO_PLAYING", "ENDED"
+    )
+)
+
+val playerStatusMethod = findMethodDirect {
+    Fingerprint(
+        classFingerprint = PlayerInitFingerprint,
+        accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+        returnType = "V",
+        parameters = listOf(PlayerStatusEnumFingerprint().declaredClass!!.descriptor),
+        filters = listOf(
+            opcode(Opcode.SGET_OBJECT),
+            methodCall(definingClass = "Lj$/time/Instant;", name = "plus")
+        )
+    )()
 }
 
 internal object PlayerInitFingerprint : Fingerprint(
