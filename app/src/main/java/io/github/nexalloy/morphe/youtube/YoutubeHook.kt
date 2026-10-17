@@ -11,6 +11,7 @@ import io.github.nexalloy.injectSelfClassLoaderToHost
 import io.github.nexalloy.morphe.shared.misc.CheckRecycleBitmapMediaSession
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatureFlagFingerprint
 import io.github.nexalloy.morphe.youtube.ad.HideAds
+import io.github.nexalloy.morphe.youtube.interaction.channelsearch.channelSearchPatch
 import io.github.nexalloy.morphe.youtube.interaction.copyvideolink.CopyVideoLinkButtonPatch
 import io.github.nexalloy.morphe.youtube.interaction.downloads.Downloads
 import io.github.nexalloy.morphe.youtube.interaction.swipecontrols.SwipeControls
@@ -96,6 +97,7 @@ val YouTubePatches = arrayOf(
     BypassImageRegionRestrictionsPatch,
     CheckRecycleBitmapMediaSession,
     changeStartPagePatch,
+    channelSearchPatch,
     // make sure settingsHook at end to build preferences
     SettingsHook,
     FeatureOverride
