@@ -154,6 +154,17 @@ val enumMethodCall = findMethodDirect {
     FeedFlyoutButtonsInitializerFingerprint.instructionMatches[7].instruction.methodRef!!
 }
 
+val feedFlyoutButtonRunnableField = findFieldDirect {
+    FeedFlyoutButtonsInitializerFingerprint.instructionMatches.last().instruction.fieldRef!!
+}
+
+val feedFlyoutMenuItemOptionalMethod = findMethodDirect {
+    val method = FeedFlyoutButtonsInitializerFingerprint()
+    method.instructions.last {
+        it.methodRef?.name == "of" && it.methodRef?.returnType == method.returnType
+    }.methodRef!!
+}
+
 internal object FeedFlyoutButtonsInitializerFingerprint : Fingerprint(
     parameters = listOf("L"),
     filters = listOf(
@@ -183,7 +194,6 @@ internal object FeedFlyoutButtonsInitializerFingerprint : Fingerprint(
     )
 )
 
-@SkipTest
 @RequireAppVersion(maxVersion = "21.05.000")
 internal object FeedFlyoutButtonsInitializerOnItemClickFingerprint : Fingerprint(
     classFingerprint = FeedFlyoutButtonsInitializerFingerprint,

@@ -105,6 +105,26 @@ val contextualMenuItemTextFingerprint = findMethodDirect {
     ContextualMenuItemBuilderFingerprint.instructionMatches[0].instruction.methodRef!!
 }
 
+internal object ContextualMenuItemBuilderOnClickFingerprint : Fingerprint(
+    classFingerprint = ContextualMenuItemBuilderFingerprint,
+    name = "onClick",
+    parameters = listOf("Landroid/view/View;"),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = "this",
+            type = "Ljava/lang/Object;"
+        ),
+        opcode(Opcode.CHECK_CAST, location = MatchAfterImmediately()),
+        opcode(Opcode.INVOKE_STATIC, location = MatchAfterImmediately()),
+        opcode(Opcode.MOVE_RESULT_OBJECT, location = MatchAfterImmediately())
+    )
+)
+
+val contextualMenuItemMessageField = findFieldDirect {
+    ContextualMenuItemBuilderOnClickFingerprint.instructionMatches.first().instruction.fieldRef!!
+}
+
 /**
  * A row of an app bar menu.
  */

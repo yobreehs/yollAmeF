@@ -20,6 +20,7 @@ import io.github.nexalloy.morphe.youtube.layout.buttons.action.HideVideoActionBu
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
 import io.github.nexalloy.morphe.youtube.layout.captions.AutoCaptions
 import io.github.nexalloy.morphe.youtube.layout.dearrow.deArrowPatch
+import io.github.nexalloy.morphe.youtube.layout.flyout.addToQueuePatch
 import io.github.nexalloy.morphe.youtube.layout.hide.general.HideLayoutComponents
 import io.github.nexalloy.morphe.youtube.layout.hide.shorts.HideShortsComponents
 import io.github.nexalloy.morphe.youtube.layout.returnyoutubedislike.returnYouTubeDislikePatch
@@ -101,6 +102,7 @@ val YouTubePatches = arrayOf(
     deArrowPatch,
     openSystemShareSheetPatch,
     seekbarPatch,
+    addToQueuePatch,
     BypassImageRegionRestrictionsPatch,
     CheckRecycleBitmapMediaSession,
     changeStartPagePatch,
