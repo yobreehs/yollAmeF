@@ -159,9 +159,12 @@ val feedFlyoutButtonRunnableField = findFieldDirect {
 }
 
 val feedFlyoutMenuItemOptionalMethod = findMethodDirect {
-    val method = FeedFlyoutButtonsInitializerFingerprint()
-    method.instructions.last {
-        it.methodRef?.name == "of" && it.methodRef?.returnType == method.returnType
+    val match = FeedFlyoutButtonsInitializerFingerprint.match()
+    val runnableIndex = match.instructionMatches.last().index
+    match.method.instructions.drop(runnableIndex + 1).single {
+        it.opcode in listOf(Opcode.INVOKE_STATIC.ordinal, Opcode.INVOKE_STATIC_RANGE.ordinal) &&
+                it.methodRef?.returnType == match.method.returnType &&
+                it.methodRef?.paramTypeNames == listOf("java.lang.Object")
     }.methodRef!!
 }
 

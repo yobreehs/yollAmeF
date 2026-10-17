@@ -12,24 +12,23 @@ import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
-import io.github.nexalloy.morphe.anyInstruction
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.parameters
-import io.github.nexalloy.morphe.string
 
 internal object MiniAppOpenYtContentCommandEndpointFingerprint : Fingerprint(
     classFingerprint = Fingerprint(
         // Matches the same method but different app versions have different strings in different ordering.
-        filters = listOf(
-            anyInstruction(
-                string("InvalidProtocolBufferException while decoding MiniAppMetadata for MiniAppOpenYTContentCommand: "),
-                // 21.15+
-                string("InvalidProtocolBufferException while decoding MiniAppWebToNativeParams for MiniAppOpenYTContentCommand: ")
-            )
-        ),
-        custom = { addUsingString(" for MiniAppOpenYTContentCommand: ") }
+        custom = {
+            addAnyOf {
+                addEqString("InvalidProtocolBufferException while decoding MiniAppMetadata for MiniAppOpenYTContentCommand: ")
+            }
+            // 21.15+
+            addAnyOf {
+                addEqString("InvalidProtocolBufferException while decoding MiniAppWebToNativeParams for MiniAppOpenYTContentCommand: ")
+            }
+        }
     ),
     returnType = "V",
     filters = listOf(

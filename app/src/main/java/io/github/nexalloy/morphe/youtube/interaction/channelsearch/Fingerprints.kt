@@ -177,11 +177,10 @@ internal object SearchSubmitFingerprint2 : Fingerprint(
         "Ljava/lang/String;",
         "Ljava/lang/String;",
         "Ljava/lang/String;",
-        "Ljava/lang/String;",
-        "Z"
+        "Ljava/lang/String;"
     ),
     filters = listOf(
-        methodCall( // 21.31+
+        methodCall( // 21.30 and older.
             parameters = listOf(
                 "Ljava/lang/String;",
                 "[B",
@@ -192,8 +191,7 @@ internal object SearchSubmitFingerprint2 : Fingerprint(
                 "Ljava/lang/String;",
                 "Ljava/lang/String;",
                 "Ljava/lang/String;",
-                "Ljava/lang/String;",
-                "Z"
+                "Ljava/lang/String;"
             ),
             returnType = "V"
         )
