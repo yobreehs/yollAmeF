@@ -14,6 +14,7 @@ import io.github.nexalloy.morphe.youtube.ad.HideAds
 import io.github.nexalloy.morphe.youtube.interaction.channelsearch.channelSearchPatch
 import io.github.nexalloy.morphe.youtube.interaction.copyvideolink.CopyVideoLinkButtonPatch
 import io.github.nexalloy.morphe.youtube.interaction.downloads.Downloads
+import io.github.nexalloy.morphe.youtube.interaction.seekbar.seekbarPatch
 import io.github.nexalloy.morphe.youtube.interaction.swipecontrols.SwipeControls
 import io.github.nexalloy.morphe.youtube.layout.buttons.action.HideVideoActionButtons
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
@@ -99,6 +100,7 @@ val YouTubePatches = arrayOf(
     DisableVideoCodecs,
     deArrowPatch,
     openSystemShareSheetPatch,
+    seekbarPatch,
     BypassImageRegionRestrictionsPatch,
     CheckRecycleBitmapMediaSession,
     changeStartPagePatch,

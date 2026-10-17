@@ -1,11 +1,30 @@
 package io.github.nexalloy.morphe.shared
 
+import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.StringComparisonType
+import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.string
+
+internal object FormatStreamModelToStringFingerprint : Fingerprint(
+    name = "toString",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Ljava/lang/String;",
+    filters = listOf(
+        string(" isDefaultAudioTrack="),
+        string(" audioTrackId="),
+        string(" audioTrackDisplayName="),
+        string(" width="),
+        string(" height="),
+        // formatStreamModelFormatField.
+        fieldAccess(opcode = Opcode.IGET_OBJECT, definingClass = "this", type = "L"),
+        string("FormatStream(itag="),
+        string(" mimeType=")
+    )
+)
 
 internal object MediaSessionSetMetadataFingerprint : Fingerprint(
     filters = listOf(
