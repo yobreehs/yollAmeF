@@ -27,27 +27,38 @@
 ## Patches
 
 ### YouTube
+
 - Remove ads
 - SponsorBlock
+- Return YouTube Dislike
+- DeArrow (alternative titles and thumbnails)
 - Remove background playback restrictions
-- Remove share links tracking query parameter
-- Hide and change navigation buttons
+- AI channel filtering and reporting (AiSList)
+- Add to queue
 - Swipe controls
+- Seekbar
+- Remove share links tracking query parameter
+- Open system share sheet
+- Hide and change navigation buttons
 - Remember video quality changes
 - Show video quality button
 - Show advanced video quality menu
 - Copy video url video player button
+- Copy video titles and comments
 - Open external downloader app
 - Custom playback speed
 - Remember playback speed
 - Playback speed dialog button
 - Hide layout components
+- Hide feed flyout menu items
 - Hide video action buttons
 - Disable Shorts resuming on startup
 - Disable video codecs
 - Disable auto captions
-- Alternative thumbnails
 - Bypass image region restrictions
+- Change start page
+- Channel search
+- Channel whitelist
 
 ### YouTube Music
 - Remove music video ads
