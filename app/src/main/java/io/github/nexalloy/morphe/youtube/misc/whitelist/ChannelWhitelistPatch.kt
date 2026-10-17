@@ -1,6 +1,8 @@
 package io.github.nexalloy.morphe.youtube.misc.whitelist
 
 import app.morphe.extension.youtube.settings.preference.ChannelWhitelistPreference
+import app.morphe.extension.youtube.whitelist.ChannelWhitelist
+import io.github.nexalloy.morphe.setExtensionIsPatchIncluded
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.ad.HideAds
@@ -41,4 +43,6 @@ val channelWhitelistPatch = patch(
         SwitchPreference("morphe_ads_channel_whitelist_flyout_menu", summary = true),
         SwitchPreference("morphe_playback_speed_channel_whitelist_flyout_menu", summary = true)
     )
+
+    setExtensionIsPatchIncluded(ChannelWhitelist::class.java)
 }

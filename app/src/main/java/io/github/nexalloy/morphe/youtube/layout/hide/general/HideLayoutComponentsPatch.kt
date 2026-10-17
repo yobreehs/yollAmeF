@@ -6,9 +6,7 @@ import android.view.View
 import app.morphe.extension.shared.ResourceUtils.getDimenIdentifier
 import app.morphe.extension.shared.ResourceUtils.getIdIdentifier
 import app.morphe.extension.shared.ResourceUtils.getLayoutIdentifier
-import app.morphe.extension.shared.settings.preference.AiSListAttributionPreference
 import app.morphe.extension.shared.settings.preference.BulletPointPreference
-import app.morphe.extension.youtube.patches.components.AiSListFilter
 import app.morphe.extension.youtube.patches.components.CommentsFilter
 import app.morphe.extension.youtube.patches.components.CustomFilter
 import app.morphe.extension.youtube.patches.components.DescriptionComponentsFilter
@@ -16,13 +14,13 @@ import app.morphe.extension.youtube.patches.components.ExploreMenuFilter
 import app.morphe.extension.youtube.patches.components.HorizontalShelvesFilter
 import app.morphe.extension.youtube.patches.components.KeywordContentFilter
 import app.morphe.extension.youtube.patches.components.LayoutComponentsFilter
-import app.morphe.extension.youtube.settings.preference.AiSListStatsPreferenceCategory
 import app.morphe.extension.youtube.settings.preference.HTMLPreference
 import app.morphe.extension.youtube.settings.preference.KeywordContentStatsPreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.litho.filter.emptyComponentClass
 import io.github.nexalloy.morphe.shared.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
+import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
@@ -41,9 +39,12 @@ import io.github.nexalloy.morphe.youtube.misc.litho.observer.LayoutReloadObserve
 import io.github.nexalloy.morphe.youtube.misc.navigation.NavigationBarHook
 import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
+import io.github.nexalloy.morphe.youtube.misc.aislist.aiSListPatch
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_26_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_31_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_07_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_11_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_26_or_greater
 import io.github.nexalloy.morphe.youtube.misc.proto.elementProtoParserHookPatch
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.new
@@ -68,6 +69,7 @@ val HideLayoutComponents = patch(
     description = "Adds options to hide general layout components.",
 ) {
     dependsOn(
+        aiSListPatch,
         LithoFilter,
         EngagementPanelHook,
         NavigationBarHook,
@@ -149,6 +151,7 @@ val HideLayoutComponents = patch(
             ),
             sorting = Sorting.UNSORTED
         ),
+        SwitchPreference("morphe_hide_ask_gemini_button", summary = true),
         SwitchPreference("morphe_hide_channel_bar"),
         SwitchPreference("morphe_hide_channel_watermark"),
         SwitchPreference("morphe_hide_chapters_timeline_button"),
@@ -162,6 +165,7 @@ val HideLayoutComponents = patch(
 //        SwitchPreference("morphe_hide_snackbar"),
         SwitchPreference("morphe_hide_subscribers_community_guidelines"),
         SwitchPreference("morphe_hide_sync_button"),
+//        SwitchPreference("morphe_hide_tap_and_hold_gradient", summary = true),
         SwitchPreference("morphe_hide_timed_reactions", summary = true),
         SwitchPreference("morphe_hide_video_title", summary = true),
 //        SwitchPreference("morphe_sanitize_video_subtitle", summary = true)
@@ -220,89 +224,17 @@ val HideLayoutComponents = patch(
                     preferences = emptySet(),
                     tag = KeywordContentStatsPreferenceCategory::class.java
                 ),
-                PreferenceCategory(
+                screenInfoPreferenceCategory(
                     key = "morphe_hide_keyword_content_about_category",
-                    titleKey = "morphe_hide_about_category_title",
-                    sorting = Sorting.UNSORTED,
                     preferences = setOf(
                         NonInteractivePreference(
                             key = "morphe_hide_keyword_content_about",
-                            titleKey = "morphe_hide_keyword_content_screen_title",
+                            titleKey = null,
                             tag = BulletPointPreference::class.java
                         ),
                         NonInteractivePreference(
                             key = "morphe_hide_keyword_content_about_whole_words",
                             tag = HTMLPreference::class.java
-                        )
-                    )
-                )
-            )
-        ),
-        PreferenceScreenPreference(
-            key = "morphe_hide_aislist_screen",
-            sorting = Sorting.UNSORTED,
-            preferences = setOf(
-                PreferenceCategory(
-                    key = "morphe_hide_aislist_blocklist_category",
-                    sorting = Sorting.UNSORTED,
-                    preferences = setOf(
-                        SwitchPreference(
-                            key = "morphe_hide_aislist_blocklist_home",
-                            titleKey = "morphe_hide_aislist_hide_home_title"
-                        ),
-                        SwitchPreference(
-                            key = "morphe_hide_aislist_blocklist_search",
-                            titleKey = "morphe_hide_aislist_hide_search_title"
-                        )
-
-                    )
-                ),
-                PreferenceCategory(
-                    key = "morphe_hide_aislist_warnlist_category",
-                    sorting = Sorting.UNSORTED,
-                    preferences = setOf(
-                        SwitchPreference(
-                            key = "morphe_hide_aislist_warnlist_home",
-                            titleKey = "morphe_hide_aislist_hide_home_title"
-                        ),
-                        SwitchPreference(
-                            key = "morphe_hide_aislist_warnlist_search",
-                            titleKey = "morphe_hide_aislist_hide_search_title"
-                        )
-                    )
-                ),
-//                PreferenceCategory(
-//                    key = "morphe_aislist_submit_category",
-//                    sorting = Sorting.UNSORTED,
-//                    preferences = setOf(
-//                        SwitchPreference("morphe_aislist_submit_flyout_menu", summary = true),
-//                        TextPreference(
-//                            key = "morphe_aislist_submit_username",
-//                            inputType = InputType.TEXT
-//                        )
-//                    )
-//                ),
-                PreferenceCategory(
-                    key = "morphe_hide_aislist_stats_category",
-                    titleKey = "morphe_hide_stats_category_title",
-                    sorting = Sorting.UNSORTED,
-                    preferences = emptySet(),
-                    tag = AiSListStatsPreferenceCategory::class.java
-                ),
-                PreferenceCategory(
-                    key = "morphe_hide_aislist_about_category",
-                    titleKey = "morphe_hide_about_category_title",
-                    sorting = Sorting.UNSORTED,
-                    preferences = setOf(
-                        NonInteractivePreference(
-                            key = "morphe_hide_aislist_about",
-                            titleKey = "morphe_hide_aislist_screen_title",
-                            tag = BulletPointPreference::class.java
-                        ),
-                        NonInteractivePreference(
-                            key = "morphe_hide_aislist_attribution",
-                            tag = AiSListAttributionPreference::class.java,
-                            selectable = true
                         )
                     )
                 )
@@ -341,7 +273,6 @@ val HideLayoutComponents = patch(
         ),
         SwitchPreference("morphe_hide_album_cards", summary = true),
         SwitchPreference("morphe_hide_artist_cards", summary = true),
-        SwitchPreference("morphe_hide_auto_dubbed_label"),
         SwitchPreference("morphe_hide_channel_buttons", summary = true),
         SwitchPreference("morphe_hide_community_posts"),
         SwitchPreference("morphe_hide_compact_banner", summary = true),
@@ -372,7 +303,6 @@ val HideLayoutComponents = patch(
         SwitchPreference("morphe_hide_get_premium_button"),
         SwitchPreference("morphe_hide_history_shelf"),
         SwitchPreference("morphe_hide_horizontal_shelves", summary = true),
-        SwitchPreference("morphe_hide_hyped_label"),
         SwitchPreference("morphe_hide_image_shelf", summary = true),
         SwitchPreference("morphe_hide_handle", summary = true),
         SwitchPreference("morphe_hide_help_feedback_menu", summary = true),
@@ -396,7 +326,7 @@ val HideLayoutComponents = patch(
 //            tag = app.morphe.extension.shared.settings.preference.BulletPointSwitchPreference::class.java,
 //        ),
         SwitchPreference("morphe_hide_video_thumbnail"),
-        SwitchPreference("morphe_hide_video_recommendation_labels", summary = true),
+        SwitchPreference("morphe_hide_video_labels", summary = true),
 //        SwitchPreference(
 //            "morphe_hide_view_count",
 //            summary = true,
@@ -418,6 +348,7 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_custom_filter"),
                 TextPreference(
                     "morphe_custom_filter_strings",
+                    titleKey = "morphe_custom_filter_screen_title",
                     inputType = InputType.TEXT_MULTI_LINE
                 ),
             ),
@@ -431,7 +362,6 @@ val HideLayoutComponents = patch(
     }
     addLithoFilter(CommentsFilter())
     addLithoFilter(KeywordContentFilter())
-    addLithoFilter(AiSListFilter())
     addLithoFilter(CustomFilter())
 //    TODO InclusiveSpanPatch TextComponentPatch
 //    addSpanFilter(SanitizeVideoSubtitleFilter())
@@ -485,6 +415,20 @@ val HideLayoutComponents = patch(
 
     // hide live chat donators bar
     // layout.live_chat_ticker_item
+
+    // TODO hide tap and hold gradient
+
+    // region fix live chat text field behind the navigation bar
+
+    // https://github.com/MorpheApp/morphe-patches/issues/3453
+    // The flag is read by different layouts, and each must use the same value,
+    // otherwise other panels such as the comments show the bottom padding twice.
+    // Flag was removed in 21.26+.
+    if (is_21_11_or_greater && !is_21_26_or_greater) {
+        insertLiteralOverride(45744676, false)
+    }
+
+    // endregion
 
     // TODO hide floating microphone
 
@@ -580,7 +524,7 @@ val HideLayoutComponents = patch(
 
     // endregion
 
-    // region hide help & feedback in menus
+    // region hide help & feedback menu
 
     ListMenuItemViewOnMeasureFingerprint.hookMethod {
         before {

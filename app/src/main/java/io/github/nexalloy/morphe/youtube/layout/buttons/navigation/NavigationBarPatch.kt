@@ -3,6 +3,7 @@ package io.github.nexalloy.morphe.youtube.layout.buttons.navigation
 import android.widget.TextView
 import app.morphe.extension.youtube.patches.NavigationBarPatch
 import io.github.nexalloy.morphe.setExtensionIsPatchIncluded
+import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
@@ -45,6 +46,7 @@ val NavigationBar = patch(
 //        SwitchPreference("morphe_hide_navigation_bar"),
 //        SwitchPreference("morphe_narrow_navigation_buttons", summary = true),
         SwitchPreference("morphe_hide_navigation_button_labels"),
+//        SwitchPreference("morphe_disable_icon_only_navigation_buttons", summary = true),
         SwitchPreference("morphe_hide_navigation_new_content_dot"),
         SwitchPreference("morphe_navigation_bar_animations", summary = true),
 //        SwitchPreference("morphe_disable_translucent_navigation", summary = true)
@@ -110,5 +112,26 @@ val NavigationBar = patch(
     // TODO Navigation search and settings button
     // TODO useTranslucentNavigation
     // TODO Disable the A/B layout with Subscriptions as a tab of Home.
+//    val toolbarPreferences = mutableSetOf(
+//        SwitchPreference("morphe_hide_toolbar_cast_button"),
+//        SwitchPreference("morphe_hide_toolbar_chat_button"),
+//        SwitchPreference("morphe_hide_toolbar_create_button", titleKey = "morphe_hide_create_button_title"),
+//        SwitchPreference("morphe_hide_toolbar_microphone_button"),
+//        SwitchPreference("morphe_hide_toolbar_notification_button", titleKey = "morphe_hide_notifications_button_title"),
+//        SwitchPreference("morphe_hide_toolbar_search_button"),
+//        SwitchPreference("morphe_show_toolbar_settings_button", titleKey = "morphe_show_settings_button_title"),
+//        ListPreference("morphe_show_toolbar_settings_button_index", titleKey = "morphe_show_settings_button_index_title"),
+//        SwitchPreference("morphe_show_toolbar_settings_button_type", titleKey = "morphe_show_settings_button_type_title", summary = true)
+//    )
+//
+//    PreferenceScreen.GENERAL.addPreferences(
+//        PreferenceScreenPreference(
+//            key = "morphe_toolbar_buttons_screen",
+//            sorting = Sorting.UNSORTED,
+//            preferences = toolbarPreferences
+//        )
+//    )
+    // TODO Disable the A/B layout with navigation buttons without labels.
+    // TODO Toolbar create button upload
     // TODO upper navigation toolbar
 }

@@ -732,12 +732,13 @@ class FieldAccessFilter internal constructor(
     override fun addQuery() {
 
         val declaredClassName = this@FieldAccessFilter.definingClass?.let(::getTypeNameCompat)
+        val typeName = this@FieldAccessFilter.type?.let(::getTypeNameCompat)
 
-        (declaredClassName ?: name ?: type)?.let { _ ->
+        (declaredClassName ?: name ?: typeName)?.let { _ ->
             matcher.addUsingField {
                 declaredClassName?.let { declaredClass(it) }
                 this@FieldAccessFilter.name?.let { name(it) }
-                this@FieldAccessFilter.type?.let(::getTypeNameCompat)?.let { type(it) }
+                typeName?.let { type(it) }
             }
         }
     }

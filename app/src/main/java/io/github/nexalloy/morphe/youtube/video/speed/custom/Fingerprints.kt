@@ -3,6 +3,8 @@ package io.github.nexalloy.morphe.youtube.video.speed.custom
 import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.OpcodesFilter
+import io.github.nexalloy.morphe.string
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
@@ -43,3 +45,42 @@ val clampFloatFingerprint = findMethodDirect {
         }
     }.single()
 }
+
+/**
+ * Checks if the audio offload supports changing the playback speed.
+ */
+internal object AudioOffloadVariableRateSupportedFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Z",
+    parameters = listOf(),
+    filters = listOf(
+        string("offloadVariableRateSupported")
+    )
+)
+
+/**
+ * Checks if the audio offload is enabled.
+ */
+internal object AudioOffloadEnabledFingerprint : Fingerprint(
+    classFingerprint = AudioOffloadVariableRateSupportedFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Z",
+    parameters = listOf(),
+    filters = OpcodesFilter.opcodesToFilters(
+        Opcode.INVOKE_VIRTUAL,
+        Opcode.MOVE_RESULT_OBJECT,
+        Opcode.IGET_BOOLEAN,
+        Opcode.CONST_4,
+        Opcode.IF_NEZ,
+        Opcode.IGET_BOOLEAN,
+        Opcode.CONST_4,
+        Opcode.IF_NEZ,
+        Opcode.INVOKE_VIRTUAL,
+        Opcode.MOVE_RESULT_OBJECT,
+        Opcode.IGET_BOOLEAN,
+        Opcode.IF_NEZ,
+        Opcode.RETURN,
+        Opcode.RETURN,
+        Opcode.RETURN
+    )
+)

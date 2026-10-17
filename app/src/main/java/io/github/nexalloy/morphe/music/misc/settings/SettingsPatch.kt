@@ -3,6 +3,7 @@ package io.github.nexalloy.morphe.music.misc.settings
 import android.app.Activity
 import android.os.Bundle
 import app.morphe.extension.music.settings.MusicActivityHook
+import app.morphe.extension.music.settings.preference.AppLanguagePreference
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
@@ -55,6 +56,12 @@ val SettingsHook = patch(
     )
 
     PreferenceScreen.MISC.addPreferences(
+        NonInteractivePreference(
+            key = "morphe_music_app_language",
+            summaryKey = null,
+            tag = AppLanguagePreference::class.java,
+            selectable = true
+        ),
         TextPreference(
             key = null,
             titleKey = "morphe_pref_import_export_title",

@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.youtube.layout.flyout
 
+import io.github.nexalloy.FindClassFunc
 import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.SkipTest
 import io.github.nexalloy.morphe.AccessFlags
@@ -19,6 +20,7 @@ import io.github.nexalloy.morphe.newInstance
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.string
+import io.github.nexalloy.morphe.youtube.layout.hide.general.ContextualMenuItemBuilderFingerprint
 
 val ProtocolBufferField = findFieldDirect {
     InteractiveStickerRendererGetEditViewFingerprint.instructionMatches.last().instruction.fieldRef!!
@@ -32,8 +34,15 @@ val FlyoutMenuVideoIdClass = findClassDirect {
     FlyoutMenuItemMessageFingerprint.instructionMatches[1].instruction.classRef!!
 }
 
-val FlyoutMenuVideoIdField = findFieldDirect {
-    val messageType = FlyoutMenuVideoIdClass()
+val PlaylistFlyoutMenuVideoIdClass = findClassDirect {
+    SingularGeneratedExtensionFingerprint.instructionMatches[1].instruction.fieldRef!!.type
+}
+
+val FlyoutMenuVideoIdField = videoIdField(FlyoutMenuVideoIdClass)
+val PlaylistFlyoutMenuVideoIdField = videoIdField(PlaylistFlyoutMenuVideoIdClass)
+
+private fun videoIdField(messageClass: FindClassFunc) = findFieldDirect {
+    val messageType = messageClass()
 
     // videoId is the only string field in the class initialized to an empty string.
     Fingerprint(
@@ -129,7 +138,15 @@ val getSubMessageReference = findMethodDirect {
     FeedFlyoutButtonsInitializerFingerprint.instructionMatches.first().instruction.methodRef!!
 }
 
-val enumIntField =findFieldDirect {
+val feedFlyoutButtonTextMethod = findMethodDirect {
+    FeedFlyoutButtonsInitializerFingerprint.instructionMatches[2].instruction.methodRef!!
+}
+
+val contextualMenuItemStyleMethod = findMethodDirect {
+    ContextualMenuItemBuilderFingerprint.instructionMatches[5].instruction.methodRef!!
+}
+
+val enumIntField = findFieldDirect {
     FeedFlyoutButtonsInitializerFingerprint.instructionMatches[6].instruction.fieldRef!!
 }
 

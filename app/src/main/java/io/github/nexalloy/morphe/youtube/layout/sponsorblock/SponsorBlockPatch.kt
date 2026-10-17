@@ -43,6 +43,7 @@ import io.github.nexalloy.morphe.youtube.video.information.onCreateHook
 import io.github.nexalloy.morphe.youtube.video.information.videoTimeHooks
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
+import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import org.luckypray.dexkit.wrap.DexMethod
@@ -157,12 +158,12 @@ val SponsorBlock = patch(
             preferences = emptySet(), // Preferences are added by custom class at runtime.
             tag = SponsorBlockStatsPreferenceCategory::class.java
         ),
-        PreferenceCategory(
+        screenInfoPreferenceCategory(
             key = "morphe_sb_about",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
             preferences = setOf(
                 NonInteractivePreference(
                     key = "morphe_sb_about_api",
+                    titleKey = null,
                     tag = SponsorBlockAboutPreference::class.java,
                     selectable = true,
                 )

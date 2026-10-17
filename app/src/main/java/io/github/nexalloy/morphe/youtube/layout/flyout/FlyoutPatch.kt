@@ -1,18 +1,22 @@
 package io.github.nexalloy.morphe.youtube.layout.flyout
 
 import android.app.Dialog
+import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
+import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.youtube.patches.components.ChannelPageFlyoutFilter
 import app.morphe.extension.youtube.patches.utils.FlyoutUtils
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
-import io.github.nexalloy.morphe.youtube.layout.captions.StartVideoInformerFingerprint
 import io.github.nexalloy.morphe.youtube.layout.hide.general.ContextualMenuItemBuilderFingerprint
-import io.github.nexalloy.morphe.youtube.layout.hide.general.contextualMenuItemTextFingerprint
 import io.github.nexalloy.morphe.youtube.layout.hide.general.contextualMenuItemTextViewField
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.youtube.misc.proto.elementProtoParserHookPatch
+import io.github.nexalloy.morphe.youtube.shared.hookVideoStarted
+import io.github.nexalloy.morphe.youtube.shared.startVideoInformerPatch
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
@@ -23,13 +27,14 @@ lateinit var protocolBufferField: Field
 lateinit var protocolBufferFieldClass: Class<*>
 lateinit var flyoutMenuVideoIdField: Field
 lateinit var flyoutMenuVideoIdClass: Class<*>
+private lateinit var playlistFlyoutMenuVideoIdField: Field
 
-/* unused */
 val flyoutPatch = patch(
     description = "Provides shared flyout menu hooks.",
 ) {
     dependsOn(
         LithoFilter,
+        startVideoInformerPatch,
         VideoInformationPatch,
         elementProtoParserHookPatch,
     )
@@ -39,12 +44,34 @@ val flyoutPatch = patch(
     flyoutMenuVideoIdField = ::FlyoutMenuVideoIdField.field
     flyoutMenuVideoIdClass = ::FlyoutMenuVideoIdClass.clazz
 
+    // Playlists in 'You' tab. Doesn't seem required for 21.x but is required for 20.21
+    playlistFlyoutMenuVideoIdField = ::PlaylistFlyoutMenuVideoIdField.field
+
     FeedFlyoutBufferObjectFingerprint.hookMethod {
         before {
             val map = it.args[1] as Map<*, *>
             FlyoutUtils.extractFlyoutIdFromMap(wrapMap(map))
         }
     }
+
+    OnClickLithoButtonBufferObjectFingerprint.hookMethod(scopedHook(
+        DexMethod("Ljava/util/HashMap;-><init>(Ljava/util/Map;)V").toConstructor()
+    ) {
+        after {
+            FlyoutUtils.extractFlyoutIdFromLithoButton(wrapMap(it.thisObject as Map<*, *>))
+        }
+    })
+
+    val innertubeMenuAnchorTag = ResourceUtils.getIdIdentifier("innertube_menu_anchor_tag")
+    FullHistoryFlyoutBufferObjectFingerprint.hookMethod(scopedHook(
+        DexMethod("Landroid/view/View;->getTag(I)Ljava/lang/Object;").toMethod()
+    ) {
+        after {
+            if (it.args[0] == innertubeMenuAnchorTag) {
+                FlyoutUtils.extractFlyoutIdFromObject(wrap(it.result))
+            }
+        }
+    })
 
     FeedBottomSheetFlyoutFingerprint.hookMethod {
         after {
@@ -64,11 +91,7 @@ val flyoutPatch = patch(
         )
     }
 
-    StartVideoInformerFingerprint.hookMethod {
-        before {
-            FlyoutUtils.resetVideoMarkedAsForKids()
-        }
-    }
+    hookVideoStarted(FlyoutUtils::resetVideoMarkedAsForKids)
 
     hookElement(FlyoutUtils::onCommentsLoaded)
     addLithoFilter(ChannelPageFlyoutFilter())
@@ -78,23 +101,39 @@ val flyoutPatch = patch(
     val enumIntField = ::enumIntField.field
     val enumMethodCall = ::enumMethodCall.method
 
-    FeedFlyoutButtonsInitializerFingerprint.hookMethod(scopedHook(::getSubMessageReference.method) {
+    FeedFlyoutButtonsInitializerFingerprint.hookMethod(scopedHook(::feedFlyoutButtonTextMethod.method) {
         after {
-            val enumValue = enumMethodCall(null, enumIntField.get(it.result))
-            FlyoutUtils.setCurrentButtonInfo(enumValue as Enum<*>, it.result)
+            val buttonInfo = getSubMessageMethod(null, it.args[0])
+            val enumValue = enumMethodCall(null, enumIntField.get(buttonInfo))
+            FlyoutUtils.setCurrentButtonInfo(enumValue as? Enum<*>, buttonInfo)
         }
     })
 
-    ContextualMenuItemBuilderFingerprint.hookMethod(scopedHook(::contextualMenuItemTextFingerprint.member) {
+    ContextualMenuItemBuilderFingerprint.hookMethod(scopedHook(::contextualMenuItemStyleMethod.method) {
         val textViewField = ::contextualMenuItemTextViewField.field
-        after {
+        before {
             val textView = textViewField.get(outerParam.thisObject) as TextView?
 
             val messageLite = it.args[0]
-            val enumValue = enumMethodCall(null, enumIntField.get(getSubMessageMethod(messageLite)))
-            FlyoutUtils.setCurrentButtonInfo(enumValue as Enum<*>, textView)
+            val enumValue = enumMethodCall(null, enumIntField.get(getSubMessageMethod(null, messageLite)))
+            FlyoutUtils.setCurrentButtonInfo(enumValue as? Enum<*>, textView)
         }
     })
+
+    FlyoutUtils::class.java.getDeclaredMethod(
+        "getFlyoutMenuInfo", Any::class.java, Int::class.javaPrimitiveType
+    ).hookMethod {
+        after {
+            if (it.result == null) {
+                val popupWindow = it.args[0] as? PopupWindow
+                val root = popupWindow?.contentView as? FrameLayout
+                val menuContainer = root?.getChildAt(0) as? LinearLayout
+                if (menuContainer != null) {
+                    it.result = FlyoutUtils.FlyoutMenuInfo(menuContainer, it.args[1] as Int, popupWindow)
+                }
+            }
+        }
+    }
 }
 
 private fun wrapMap(map: Map<*, *>): Map<*, *> {
@@ -111,6 +150,8 @@ private fun wrap(obj: Any?): Any? {
 
     return if (flyoutMenuVideoIdClass.isAssignableFrom(obj::class.java)) {
         FlyoutUtils.FlyoutMenuVideoIdInterface { flyoutMenuVideoIdField.get(obj) as String? }
+    } else if (playlistFlyoutMenuVideoIdField.declaringClass.isInstance(obj)) {
+        FlyoutUtils.FlyoutMenuVideoIdInterface { playlistFlyoutMenuVideoIdField.get(obj) as String? }
     } else if (protocolBufferFieldClass.isAssignableFrom(obj::class.java)) {
         FlyoutUtils.ProtocolBufferFieldInterface { protocolBufferField.get(obj) as ByteArray? }
     } else {

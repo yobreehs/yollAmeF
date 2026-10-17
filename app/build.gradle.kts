@@ -281,6 +281,7 @@ abstract class CopyResourcesTask @Inject constructor() : DefaultTask() {
         outputDir.deleteRecursively()
 
         val resourcePaths = mapOf(
+            "channelsearch/drawable" to null,
             "qualitybutton/drawable" to null,
             "settings/drawable" to null,
             "settings/menu" to null,

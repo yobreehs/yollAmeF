@@ -9,6 +9,7 @@ import app.morphe.extension.shared.Utils
 import app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch
 import io.github.nexalloy.HookDsl
 import io.github.nexalloy.IHookCallback
+import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
@@ -21,6 +22,7 @@ import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_36_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_41_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
+import io.github.nexalloy.scopedHook
 import org.luckypray.dexkit.wrap.DexMethod
 
 class ControlInitializer(
@@ -47,7 +49,7 @@ fun addLegacyBottomControl(layout: Int) {
 
 private var newPlayerControlsOverride = false
 
-internal fun disableNewPlayerControlsFeatureFlag() {
+internal fun PatchExecutor.disableNewPlayerControlsFeatureFlag() {
     if (newPlayerControlsOverride) return
     newPlayerControlsOverride = true
 
@@ -56,7 +58,20 @@ internal fun disableNewPlayerControlsFeatureFlag() {
     }
 
     if (is_21_04_or_greater && !is_21_41_or_greater) {
-        insertLiteralOverride(45752335L)
+        insertLiteralOverride(45752335L, LegacyPlayerControlsPatch::disableNewPlayerOverlays)
+
+        if (is_21_36_or_greater) {
+            // With the flag off the autonav end screen is laid out over the miniplayer
+            // as if it was the full player, so it is given the value the app has.
+            val flagMethod = NewPlayerOverlaysFeatureFlagFingerprint.member
+            ::autonavEndscreenFlagCallers.dexMethodList.forEach { method ->
+                method.hookMethod(scopedHook(flagMethod) {
+                    after {
+                        it.result = LegacyPlayerControlsPatch.getOriginalNewPlayerOverlays(it.result as Boolean)
+                    }
+                })
+            }
+        }
     }
 }
 

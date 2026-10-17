@@ -100,5 +100,13 @@ val CustomPlaybackSpeed = patch(
 
     // TODO Custom tap and hold 2x speed.
 
-}
+    // region Disable audio offload if audio pitch controls are enabled.
 
+    // With audio offload, the device hardware decodes the audio
+    // and usually does not support changing the pitch, so the selected pitch is ignored.
+    AudioOffloadEnabledFingerprint.hookMethod {
+        after { it.result = CustomPlaybackSpeedPatch.disableAudioOffload(it.result as Boolean) }
+    }
+
+    // endregion
+}

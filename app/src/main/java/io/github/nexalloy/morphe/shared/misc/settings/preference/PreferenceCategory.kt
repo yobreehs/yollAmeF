@@ -7,6 +7,7 @@ import android.preference.Preference
 import android.preference.PreferenceCategory
 import android.preference.PreferenceGroup
 import android.preference.PreferenceManager
+import app.morphe.extension.shared.settings.preference.ScreenInfoCategory
 import app.morphe.extension.shared.settings.preference.NoTitlePreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 
@@ -51,3 +52,18 @@ internal fun noTitleUnsortedPreferenceCategory(
     preferences = preferences
 )
 
+
+/**
+ * Preferences shown in a dialog from the info button of the screen toolbar.
+ * Must be a direct child of the screen.
+ */
+internal fun screenInfoPreferenceCategory(
+    key: String,
+    preferences: Set<BasePreference>
+) = PreferenceCategory(
+    key = key,
+    titleKey = null,
+    sorting = Sorting.UNSORTED,
+    tag = ScreenInfoCategory::class.java,
+    preferences = preferences
+)

@@ -29,6 +29,7 @@ import io.github.nexalloy.morphe.youtube.misc.backgroundplayback.BackgroundPlayb
 import io.github.nexalloy.morphe.youtube.misc.debugging.EnableDebugging
 import io.github.nexalloy.morphe.youtube.misc.privacy.SanitizeSharingLinks
 import io.github.nexalloy.morphe.youtube.misc.settings.SettingsHook
+import io.github.nexalloy.morphe.youtube.misc.whitelist.channelWhitelistPatch
 import io.github.nexalloy.morphe.youtube.shared.YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE
 import io.github.nexalloy.morphe.youtube.video.audio.ForceOriginalAudio
 import io.github.nexalloy.morphe.youtube.video.codecs.DisableVideoCodecs
@@ -98,6 +99,7 @@ val YouTubePatches = arrayOf(
     CheckRecycleBitmapMediaSession,
     changeStartPagePatch,
     channelSearchPatch,
+    channelWhitelistPatch,
     // make sure settingsHook at end to build preferences
     SettingsHook,
     FeatureOverride

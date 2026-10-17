@@ -6,6 +6,7 @@ import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.InstructionLocation.MatchFirst
 import io.github.nexalloy.morphe.Opcode
+import io.github.nexalloy.morphe.OpcodesFilter
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodDirect
@@ -194,6 +195,16 @@ internal object WatchNextResponseParserFingerprint : Fingerprint(
         ),
         literal(46659098L),
     )
+)
+
+internal object StartVideoInformerFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    filters = OpcodesFilter.opcodesToFilters(
+        Opcode.INVOKE_INTERFACE,
+        Opcode.RETURN_VOID,
+    ),
+    strings = listOf("pc"),
 )
 
 internal object InitializePlaybackSpeedValuesFingerprint : Fingerprint(
