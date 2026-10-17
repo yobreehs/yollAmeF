@@ -21,6 +21,7 @@ import io.github.nexalloy.morphe.youtube.layout.captions.AutoCaptions
 import io.github.nexalloy.morphe.youtube.layout.dearrow.deArrowPatch
 import io.github.nexalloy.morphe.youtube.layout.hide.general.HideLayoutComponents
 import io.github.nexalloy.morphe.youtube.layout.hide.shorts.HideShortsComponents
+import io.github.nexalloy.morphe.youtube.layout.returnyoutubedislike.returnYouTubeDislikePatch
 import io.github.nexalloy.morphe.youtube.layout.shortsnoresume.DisableShortsResumingOnStartup
 import io.github.nexalloy.morphe.youtube.layout.sponsorblock.SponsorBlock
 import io.github.nexalloy.morphe.youtube.layout.startpage.changeStartPagePatch
@@ -80,6 +81,7 @@ val YouTubePatches = arrayOf(
     SanitizeSharingLinks,
     HideAds,
     SponsorBlock,
+    returnYouTubeDislikePatch,
     CopyVideoLinkButtonPatch,
     Downloads,
     HideShortsComponents,

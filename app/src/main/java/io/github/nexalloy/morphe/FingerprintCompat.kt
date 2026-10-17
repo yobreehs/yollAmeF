@@ -2,6 +2,7 @@ package io.github.nexalloy.morphe
 
 import io.github.nexalloy.FindClassFunc
 import io.github.nexalloy.FindFieldFunc
+import io.github.nexalloy.FindFieldListFunc
 import io.github.nexalloy.FindMethodFunc
 import io.github.nexalloy.FindMethodListFunc
 import org.luckypray.dexkit.DexAccessFlags
@@ -569,3 +570,4 @@ fun findMethodDirect(block: FindMethodFunc) = block
 fun findMethodListDirect(block: FindMethodListFunc) = block
 fun findClassDirect(block: FindClassFunc) = block
 fun findFieldDirect(block: FindFieldFunc) = block
+fun findFieldListDirect(block: FindFieldListFunc) = block

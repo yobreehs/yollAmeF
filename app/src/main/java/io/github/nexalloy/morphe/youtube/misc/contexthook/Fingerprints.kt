@@ -84,7 +84,6 @@ val clientInfoField = findFieldDirect {
     BuildDummyClientContextBodyFingerprint.instructionMatches.last().instruction.fieldRef!!
 }
 
-@get:SkipTest /* unused */
 val clientVersionField = findFieldDirect {
     BuildDummyClientContextBodyFingerprint.instructionMatches[2].instruction.fieldRef!!
 }

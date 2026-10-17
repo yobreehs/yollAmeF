@@ -49,7 +49,7 @@ val clientContextHookPatch = patch(
         ::messageLiteBuilderMethod.method else
         ::messageLiteBuilderMethodLegacy.method
 
-//    clientVersionFieldRef = ::clientVersionField.field
+    clientVersionFieldRef = ::clientVersionField.field
     osNameFieldRef = ::osNameField.field
 //    clientFormFactorFieldRef = ::clientFormFactorField.field
 
@@ -74,13 +74,17 @@ val clientContextHookPatch = patch(
     }
 }
 
-//lateinit var clientVersionFieldRef: Field
+lateinit var clientVersionFieldRef: Field
 lateinit var osNameFieldRef: Field
 //lateinit var clientFormFactorFieldRef: Field
 
 // TODO addClientFormFactorHook
 
-// TODO addClientVersionHook
+fun addClientVersionHook(endPoint: Endpoint, hook: (String?) -> String) {
+    endPoint.hooks.add { clientInfo ->
+        clientVersionFieldRef.set(clientInfo, hook(clientVersionFieldRef.get(clientInfo) as String?))
+    }
+}
 
 fun addOSNameHook(endPoint: Endpoint, hook: (String?) -> String) {
     endPoint.hooks.add { clientInfo ->
