@@ -135,6 +135,11 @@ kotlin {
 }
 tasks.withType<Test> {
     useJUnitPlatform()
+    val fingerprintReport = layout.buildDirectory.file("reports/fingerprints/$name.json")
+    systemProperty("fingerprints.report", fingerprintReport.get().asFile.absolutePath)
+    inputs.files(fileTree("binaries")).withPropertyName("fingerprintApks")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(fingerprintReport)
 }
 
 dependencies {

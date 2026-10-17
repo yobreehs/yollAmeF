@@ -23,8 +23,12 @@ class FilePathArgumentsProvider : ArgumentsProvider {
             throw IllegalStateException("APKs folder not found: $testInputPath")
         }
 
-        return Files.walk(testInputPath).filter { path ->
+        val paths = Files.walk(testInputPath).use { files ->
+            files.filter { path ->
                 Files.isRegularFile(path) && path.normalize().none { it.name.startsWith(".") }
-            }.map { Arguments.of(it) }
+            }.toList()
+        }
+        FingerprintTestReport.start(paths)
+        return paths.stream().map { Arguments.of(it) }
     }
 }
