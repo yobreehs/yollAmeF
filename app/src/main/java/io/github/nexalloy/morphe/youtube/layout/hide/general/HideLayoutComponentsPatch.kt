@@ -3,6 +3,7 @@
 package io.github.nexalloy.morphe.youtube.layout.hide.general
 
 import android.view.View
+import android.widget.TextView
 import app.morphe.extension.shared.ResourceUtils.getDimenIdentifier
 import app.morphe.extension.shared.ResourceUtils.getIdIdentifier
 import app.morphe.extension.shared.ResourceUtils.getLayoutIdentifier
@@ -16,11 +17,13 @@ import app.morphe.extension.youtube.patches.components.KeywordContentFilter
 import app.morphe.extension.youtube.patches.components.LayoutComponentsFilter
 import app.morphe.extension.youtube.settings.preference.HTMLPreference
 import app.morphe.extension.youtube.settings.preference.KeywordContentStatsPreferenceCategory
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.litho.filter.emptyComponentClass
 import io.github.nexalloy.morphe.shared.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
 import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
+import io.github.nexalloy.morphe.shared.misc.settings.preference.noTitleUnsortedPreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
@@ -285,13 +288,13 @@ val HideLayoutComponents = patch(
                 entryValuesKey = "morphe_hide_expandable_card_legacy_entry_values"
             )
         },
-//        noTitleUnsortedPreferenceCategory(
-//            SwitchPreference("morphe_hide_feed_flyout_menu"),
-//            TextPreference(
-//                "morphe_hide_feed_flyout_menu_filter_strings",
-//                inputType = InputType.TEXT_MULTI_LINE
-//            )
-//        ),
+        noTitleUnsortedPreferenceCategory(
+            SwitchPreference("morphe_hide_feed_flyout_menu"),
+            TextPreference(
+                "morphe_hide_feed_flyout_menu_filter_strings",
+                inputType = InputType.TEXT_MULTI_LINE
+            )
+        ),
 //        noTitleUnsortedPreferenceCategory(
 //            SwitchPreference("morphe_hide_account_menu"),
 //            TextPreference(
@@ -457,24 +460,30 @@ val HideLayoutComponents = patch(
 
     // TODO hide you may like section
 
-    // region TODO hide flyout menu
-/*
+    // region hide flyout menu items
 
-    BottomSheetMenuItemBuilderFingerprint.hookMethod(scopedHook(::bottomSheetMenuItemTextFingerprint.member) {
-        after {
-            it.result = LayoutComponentsFilter.hideFlyoutMenu(it.result as CharSequence?)
-        }
-    })
+    val bottomSheetMenuItemText = ::bottomSheetMenuItemTextFingerprint.method
+    ::bottomSheetMenuItemBuilders.dexMethodList.forEach { builder ->
+        builder.hookMethod(scopedHook(bottomSheetMenuItemText) {
+            after {
+                if (innerDepth == 0) {
+                    it.result = LayoutComponentsFilter.hideFlyoutMenu(it.result as CharSequence?)
+                }
+            }
+        })
+    }
 
-    ContextualMenuItemBuilderFingerprint.hookMethod(scopedHook(::contextualMenuItemTextFingerprint.member) {
+    ContextualMenuItemBuilderFingerprint.hookMethod(scopedHook(
+        DexMethod("Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V").toMethod()
+    ) {
         val textViewField = ::contextualMenuItemTextViewField.field
         after {
-            val textView = textViewField.get(outerParam.thisObject) as TextView?
-            val text = it.result as CharSequence?
-            it.result = LayoutComponentsFilter.hideFlyoutMenu(textView, text)
+            val textView = it.thisObject as TextView
+            if (textView === textViewField.get(outerParam.thisObject)) {
+                LayoutComponentsFilter.hideFlyoutMenu(textView, it.args[0] as CharSequence?)
+            }
         }
     })
-*/
 
     // endregion
 

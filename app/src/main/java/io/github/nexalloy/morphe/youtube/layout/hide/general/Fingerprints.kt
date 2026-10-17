@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.youtube.layout.hide.general
 
+import io.github.nexalloy.SkipTest
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation
@@ -12,6 +13,7 @@ import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
+import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
@@ -46,7 +48,7 @@ internal val showWatermarkSubFingerprint = findMethodDirect {
     }.single()
 }
 
-/*
+@SkipTest
 internal object BottomSheetMenuItemBuilderFingerprint : Fingerprint(
     returnType = "L",
     parameters = listOf("L"),
@@ -61,11 +63,15 @@ internal object BottomSheetMenuItemBuilderFingerprint : Fingerprint(
     )
 )
 
-val bottomSheetMenuItemTextFingerprint = findMethodDirect {
-    BottomSheetMenuItemBuilderFingerprint.instructionMatches[0].instruction.methodRef!!
+val bottomSheetMenuItemBuilders = findMethodListDirect {
+    BottomSheetMenuItemBuilderFingerprint.matchAll().map { it.method }
 }
 
-*/
+val bottomSheetMenuItemTextFingerprint = findMethodDirect {
+    BottomSheetMenuItemBuilderFingerprint.matchAll().map {
+        it.instructionMatches[0].instruction.methodRef!!
+    }.distinct().single()
+}
 
 internal object ContextualMenuItemBuilderFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL, AccessFlags.SYNTHETIC),
