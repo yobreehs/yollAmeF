@@ -45,14 +45,18 @@ Look for the corresponding registration entry point before adding new behavior.
 Recent upstream APIs such as `Fingerprint`, `AccessFlags`, `Opcode`, `ResourceType`, `methodCall`, `fieldAccess`, and `resourceLiteral` already have local compatibility implementations.
 Prefer preserving method signatures, string comparison modes, filter order, `MatchAfterImmediately` / `MatchAfterWithin`, and version conditions while replacing the corresponding imports. Adapt `custom` callback forms to the local API.
 
-Local DexKit candidate queries and full instruction matching are separate stages. If candidates are not unique and filter order and distance constraints are needed to resolve ambiguity, check whether `@StrictQuery` is required. When consumers use matched instructions, also check the actual `match()` / `instructionMatches` results. Finding a single method does not prove that the required injection point matched.
+Local DexKit candidate queries and full instruction matching are separate stages. `Fingerprint()` / `run()` checks query-result uniqueness; `@StrictQuery` applies instruction matching only when there are multiple candidates. Use `match()` / `instructionMatches` to validate instruction order, distance, and the actual injection point even when the query returns one method.
 
 Generic types such as `"L"` may contribute no concrete constraint to a DexKit query. After conversion through `getTypeNameCompat`, add a field query only if at least one usable field constraint remains; an empty field matcher fails during query construction. Retain generic type, opcode, and location checks in instruction matching.
 
-`classFingerprint` can search for a unique child method across multiple candidate classes from a parent fingerprint. Check the final result of the parent/child matching chain before deciding whether to rewrite the parent fingerprint. If the compatibility layer truly lacks a capability needed by this upstream change, extend the shared implementation and check other consumers.
+`classFingerprint` obtains parent classes through `queryAll()`, bypassing the parent's full instruction matching and `@StrictQuery` refinement. It can still find a unique child across multiple parent classes; check the final chain before changing the parent. If unrelated parent classes introduce ambiguous children, put the distinguishing parent conditions into its DexKit query. If the compatibility layer truly lacks a capability needed by this upstream change, extend the shared implementation and check other consumers.
+
+`AnyInstruction.addQuery()` currently adds no DexKit constraint. For an OR of exact strings used to identify a method or parent class, translate each alternative into a separate `custom` / `addAnyOf` branch containing `addEqString`. Preserve the full strings and comparison mode; a shared substring can also occur in unrelated command handlers. Retain instruction filters when their position matters.
 
 When upstream obtains references through `instructionMatches`, use the matched instructions' `methodRef`, `fieldRef`, and `classRef` locally, then expose independent finders through `findMethodDirect`, `findFieldDirect`, and `findClassDirect`.
 Access runtime members in the patch through `::finder.method`, `.field`, `.clazz`, and related properties.
+
+For calls to bundled libraries whose names or implementations change between APKs, locate the call relative to a matched instruction and constrain its invoke opcode, parameter types, and return type. Check both ordinary and range invoke forms when applicable, and require a unique result within that region. Verify the value reaches the same upstream injection point before choosing the runtime hook; a familiar library method name alone is insufficient.
 
 When inspecting an APK with `dexsql`, a descriptor can appear in several DEX files as a definition or reference. If decoding is ambiguous, select the `file_id` containing the method body and pass `--file-id`; a reference alone does not show the implementation.
 
@@ -62,7 +66,7 @@ For multiple targets, use `findMethodListDirect { }` + `Fingerprint.matchAll` + 
 
 Upstream Morphe's `Fingerprint.method` takes only the first match, whereas this project's `Fingerprint.run` checks uniqueness. This can expose multiple results in ambiguous upstream fingerprints. If such a fingerprint is only an intermediate step in a matching chain and the next step is unaffected (the dependent fingerprint yields the same result for any parent match), use `matchAll().last()` to handle it and add a comment explaining why.
 
-When `anyInstruction` contains conditions beyond the `string()` filter, determine which divergent versions its branches target from the fingerprint's consumers or comments, then rewrite it as multiple Fingerprints.
+When `anyInstruction` contains conditions beyond the `string()` filter, inspect its branches and consumers, then rewrite it as multiple Fingerprints. Compare each branch's enclosing method signature and called-method signature with upstream independently; copying one branch and leaving both signatures identical silently drops compatibility. Validate the final finder that selects the branches, even when its helper fingerprints use `@SkipTest`.
 
 ## 5. Use the shared override interface for feature flags
 
@@ -73,6 +77,8 @@ Preserve the original version conditions and the extension's handling of the ori
 ## 6. Maintain runtime version branches and test annotations together
 
 Version adaptation usually involves three parts: adding or updating version comparison results and their initialization; choosing the corresponding fingerprint in the patch body; and adding `@RequireAppVersion` / `@get:RequireAppVersion` to fingerprints or finder getters. Preserve supported older version paths and select match conditions and hook targets by version.
+
+Distinguish explicit upstream version guards from comments describing signature variants. Preserve explicit guards. When upstream accepts multiple structural alternatives without a version guard, retain that acceptance through matching or a fallback finder. Check the available APKs before deriving a hard version boundary from a comment; a signature may already exist in earlier releases. Keep the upstream comments synchronized while basing runtime selection and test applicability on the supported behavior.
 
 `@RequireAppVersion` is read by fingerprint tests and does not automatically guard runtime hooks. The current `UnitTestAnnotations.kt` treats both min and max boundaries as inclusive; check the implementation when specifying test ranges. `@SkipTest` is for helper fingerprints that are not used directly or intentionally match multiple targets and are covered by another finder. The final finder actually used should still be validated.
 If the last version targeted by a fingerprint is `x.y.z`, `@RequireAppVersion` can use `x.y+1.000` as `maxVersion`, because YouTube does not release versions where `z` is zero.
