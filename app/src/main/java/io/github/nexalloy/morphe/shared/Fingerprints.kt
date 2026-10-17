@@ -7,6 +7,16 @@ import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.string
 
+internal object MediaSessionSetMetadataFingerprint : Fingerprint(
+    filters = listOf(
+        methodCall(
+            definingClass = "Landroid/media/session/MediaSession;",
+            name = "setMetadata",
+            parameters = listOf("Landroid/media/MediaMetadata;")
+        )
+    )
+)
+
 internal object SpannableStringBuilderFingerprint : Fingerprint(
     returnType = "Ljava/lang/CharSequence;",
     filters = listOf(

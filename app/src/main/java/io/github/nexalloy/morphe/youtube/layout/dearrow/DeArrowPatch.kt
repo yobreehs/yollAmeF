@@ -2,19 +2,23 @@ package io.github.nexalloy.morphe.youtube.layout.dearrow
 
 import app.morphe.extension.youtube.patches.dearrow.DeArrowPatch
 import app.morphe.extension.youtube.settings.preference.DeArrowAboutPreference
+import io.github.nexalloy.morphe.setExtensionIsPatchIncluded
+import io.github.nexalloy.morphe.shared.misc.litho.relayout.lithoRelayoutPatch
+import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
+import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
+import io.github.nexalloy.morphe.youtube.layout.originaltitles.videoTitlesHookPatch
 import io.github.nexalloy.morphe.youtube.misc.imageurlhook.addImageUrlErrorCallbackHook
 import io.github.nexalloy.morphe.youtube.misc.imageurlhook.addImageUrlHook
 import io.github.nexalloy.morphe.youtube.misc.imageurlhook.addImageUrlSuccessCallbackHook
 import io.github.nexalloy.morphe.youtube.misc.imageurlhook.cronetImageUrlHookPatch
+import io.github.nexalloy.morphe.youtube.misc.navigation.NavigationBarHook
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
-import io.github.nexalloy.morphe.setExtensionIsPatchIncluded
-import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
-import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
-import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
 import io.github.nexalloy.patch
 
 val deArrowPatch = patch(
@@ -23,11 +27,12 @@ val deArrowPatch = patch(
             "or replace video thumbnails with image captures from the video.",
 ) {
     dependsOn(
+        NavigationBarHook,
         cronetImageUrlHookPatch,
-        // TODO Thumbnails that fail to load are loaded again by mounting the Litho views again.
-//        lithoRelayoutPatch,
-        // TODO Titles are replaced by the same hooks that restore the original titles.
-//        videoTitlesHookPatch,
+        // Thumbnails that fail to load are loaded again by mounting the Litho views again.
+        lithoRelayoutPatch,
+        // Titles are replaced by the same hooks that restore the original titles.
+        videoTitlesHookPatch,
     )
     fun thumbnailPreference(key: String, titleKey: String) = ListPreference(
         key = key,
@@ -37,21 +42,21 @@ val deArrowPatch = patch(
     )
 
     PreferenceScreen.DEARROW.addPreferences(
-//        PreferenceCategory(
-//            key = "morphe_dearrow_titles_category",
-//            titleKey = "morphe_dearrow_titles_title",
-//            sorting = Sorting.UNSORTED,
-//            preferences = setOf(
-//                SwitchPreference("morphe_dearrow_titles_home"),
-//                SwitchPreference("morphe_dearrow_titles_subscription"),
-//                SwitchPreference("morphe_dearrow_titles_library"),
-//                SwitchPreference("morphe_dearrow_titles_player"),
-//                SwitchPreference("morphe_dearrow_titles_search"),
-//                SwitchPreference("morphe_dearrow_titles_icon", summary = true),
-//                SwitchPreference("morphe_dearrow_casual_mode", summary = true),
-//                TextPreference("morphe_dearrow_casual_mode_min_votes", inputType = InputType.NUMBER)
-//            )
-//        ),
+        PreferenceCategory(
+            key = "morphe_dearrow_titles_category",
+            titleKey = "morphe_dearrow_titles_title",
+            sorting = Sorting.UNSORTED,
+            preferences = setOf(
+                SwitchPreference("morphe_dearrow_titles_home"),
+                SwitchPreference("morphe_dearrow_titles_subscription"),
+                SwitchPreference("morphe_dearrow_titles_library"),
+                SwitchPreference("morphe_dearrow_titles_player"),
+                SwitchPreference("morphe_dearrow_titles_search"),
+                SwitchPreference("morphe_dearrow_titles_icon", summary = true),
+                SwitchPreference("morphe_dearrow_casual_mode", summary = true),
+                TextPreference("morphe_dearrow_casual_mode_min_votes", inputType = InputType.NUMBER)
+            )
+        ),
         PreferenceCategory(
             key = "morphe_dearrow_thumbnails_category",
             titleKey = "morphe_dearrow_thumbnails_title",

@@ -1,8 +1,6 @@
 package io.github.nexalloy
 
 import android.app.Application
-import app.morphe.extension.shared.ResourceType
-import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -43,7 +41,7 @@ class MainHook : XposedModule() {
 
             resourceMappings = object : ResourceFinder {
                 override operator fun get(type: String, name: String): Int {
-                    val id = ResourceUtils.getIdentifier(ResourceType.fromValue(type), name)
+                    val id = app.resources.getIdentifier(name, type, param.packageName)
                     if (id == 0) throw Exception("Could not find resource type: $type name: $name")
                     return id
                 }

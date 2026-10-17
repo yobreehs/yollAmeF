@@ -1,0 +1,57 @@
+package io.github.nexalloy.morphe.shared.misc.litho.relayout
+
+import android.graphics.drawable.Drawable
+import android.view.View
+import app.morphe.extension.shared.patches.LithoRelayoutPatch
+import app.morphe.extension.shared.patches.LithoRelayoutPatch.LithoViewInterface
+import io.github.nexalloy.createProxy
+import io.github.nexalloy.patch
+import java.util.WeakHashMap
+
+/**
+ * Adds support to force Litho views to calculate their layout again,
+ * such as to show texts that changed after the views were laid out.
+ */
+val lithoRelayoutPatch = patch(
+    description = "Adds support to force Litho views to calculate their layout again."
+) {
+    val lithoViewClass = LithoViewOnMeasureFingerprint.declaredClass
+    val forceLayoutField = ::lithoForceLayoutField.field
+    val unmountAllItems = LithoViewUnmountAllItemsFingerprint.method
+    val adapters = WeakHashMap<View, LithoViewInterface>()
+    LithoRelayoutPatch.setLithoViewAdapter { view ->
+        if (!lithoViewClass.isInstance(view)) null
+        else adapters.getOrPut(view) {
+            view.createProxy { reference ->
+                object : LithoViewInterface {
+                    override fun patch_forceRelayout() {
+                        val host = reference.get() ?: return
+                        forceLayoutField.setBoolean(host, true)
+                        host.requestLayout()
+                    }
+
+                    override fun patch_forceRemount() {
+                        val host = reference.get() ?: return
+                        unmountAllItems(host)
+                        host.requestLayout()
+                    }
+                }
+            }
+        }
+    }
+
+    // Remember the Litho views, so all shown views can be mounted again.
+    LithoViewOnMeasureFingerprint.hookMethod {
+        before { LithoRelayoutPatch.onLithoViewMeasured(it.thisObject as View) }
+    }
+
+    // Remember the mounted texts that are laid out again when outdated.
+    val textField = ::lithoMountedTextField.field
+    LithoTextMountFingerprint.hookMethod {
+        after {
+            if (it.hasThrowable()) return@after
+            val drawable = it.args[1] as Drawable
+            LithoRelayoutPatch.onLithoTextMounted(drawable, textField.get(drawable) as? CharSequence)
+        }
+    }
+}
