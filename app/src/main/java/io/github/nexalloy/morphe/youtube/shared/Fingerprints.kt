@@ -7,16 +7,14 @@ import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.InstructionLocation.MatchFirst
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
+import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodDirect
-import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
-import org.luckypray.dexkit.query.enums.StringMatchType
-import java.lang.reflect.Modifier
 
 internal const val CLIENT_INFO_CLASS =
     $$"Lcom/google/protos/youtube/api/innertube/InnertubeContext$ClientInfo;"
@@ -70,16 +68,14 @@ internal object EngagementPanelControllerFingerprint : Fingerprint(
 )
 
 
-val mainActivityConstructorFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR)
-    parameters()
-    classMatcher {
-        className(".MainActivity", StringMatchType.EndsWith)
-    }
-}
+internal object YouTubeMainActivityConstructorFingerprint : Fingerprint(
+    definingClass = YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),
+    parameters = listOf()
+)
 
 val mainActivityClass = findClassDirect {
-    mainActivityConstructorFingerprint().declaredClass!!
+    YouTubeMainActivityConstructorFingerprint().declaredClass!!
 }
 
 internal object YouTubeActivityOnCreateFingerprint : Fingerprint(
@@ -89,10 +85,12 @@ internal object YouTubeActivityOnCreateFingerprint : Fingerprint(
     parameters = listOf("Landroid/os/Bundle;"),
 )
 
-val seekbarFingerprint = fingerprint {
-    returns("V")
-    strings("timed_markers_width")
-}
+internal object SeekbarFingerprint : Fingerprint(
+    returnType = "V",
+    filters = listOf(
+        string("timed_markers_width"),
+    )
+)
 
 internal object PlaybackSpeedOnItemClickParentFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
@@ -146,37 +144,42 @@ internal object SpeedLimiterFingerprint : Fingerprint(
 //    }
 )
 
-val videoQualityChangedFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    opcodes(
-        Opcode.IGET,
-        Opcode.CONST_4,
-        Opcode.IF_NE,
-        Opcode.NEW_INSTANCE,
-        Opcode.IGET_OBJECT,
+@StrictQuery
+internal object VideoQualityChangedFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "L",
+    parameters = listOf("L"),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET,
+            type = "I",
+            location = MatchFirst()
+        ),
+        literal(2, location = MatchAfterImmediately()),
+        opcode(Opcode.IF_NE, location = MatchAfterImmediately()),
+        opcode(Opcode.NEW_INSTANCE, location = MatchAfterImmediately()), // Obfuscated VideoQuality
+
+        opcode(Opcode.IGET_OBJECT, location = MatchAfterWithin(6)),
+        opcode(Opcode.CHECK_CAST),
+        fieldAccess( // Video resolution (human-readable).
+            opcode = Opcode.IGET,
+            type = "I",
+            location = MatchAfterImmediately()
+        ),
+        methodCall( // VideoQuality constructor.
+            name = "<init>",
+            opcodes = listOf(Opcode.INVOKE_DIRECT, Opcode.INVOKE_DIRECT_RANGE)
+        )
     )
-    methodMatcher {
-        addUsingNumber(2)
-        addUsingField {
-            field {
-                // VIDEO_QUALITY_SETTING_UNKNOWN Enum
-                declaredClass { usingStrings("VIDEO_QUALITY_SETTING_UNKNOWN") }
-                modifiers = Modifier.STATIC
-                name = "a"
-            }
-        }
-    }
-}
+)
 
 val VideoQualityClass = findClassDirect {
-    videoQualityChangedFingerprint().invokes.single {
-        it.name == "<init>"
-    }.declaredClass!!
+    VideoQualityChangedFingerprint.instructionMatches.last().instruction.methodRef!!.declaredClass!!
 }
 
 val VideoQualityReceiver = findMethodDirect {
     val videoQualityClassName = VideoQualityClass().name
-    videoQualityChangedFingerprint().invokes.single { it.paramCount == 1 && it.paramTypeNames[0] == videoQualityClassName }
+    VideoQualityChangedFingerprint().invokes.single { it.paramCount == 1 && it.paramTypeNames[0] == videoQualityClassName }
 }
 
 internal object WatchNextResponseParserFingerprint : Fingerprint(

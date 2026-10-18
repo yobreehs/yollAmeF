@@ -63,7 +63,7 @@ val CustomPlaybackSpeed = patch(
 
     // Replace the speeds float array with custom speeds.
 
-    ::speedArrayGeneratorFingerprint.hookMethod {
+    SpeedArrayGeneratorFingerprint.hookMethod {
         val source = ::speedsFloatArrayField.field.get(null) as FloatArray
         val chunkSize = source.size
         before {

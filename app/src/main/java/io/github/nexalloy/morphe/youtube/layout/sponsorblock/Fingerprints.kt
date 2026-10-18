@@ -10,7 +10,7 @@ import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceMappings
-import io.github.nexalloy.morphe.youtube.shared.seekbarFingerprint
+import io.github.nexalloy.morphe.youtube.shared.SeekbarFingerprint
 
 internal object AppendTimeFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
@@ -32,7 +32,7 @@ internal object AppendTimeFingerprint : Fingerprint(
 )
 
 val SponsorBarRect = findFieldDirect {
-    val clazz = seekbarFingerprint().declaredClass!!
+    val clazz = SeekbarFingerprint().declaredClass!!
     clazz.findMethod {
         matcher {
             addInvoke {
@@ -44,7 +44,7 @@ val SponsorBarRect = findFieldDirect {
 }
 
 val seekbarOnDrawFingerprint = findMethodDirect {
-    seekbarFingerprint().declaredClass!!.findMethod {
+    SeekbarFingerprint().declaredClass!!.findMethod {
         matcher {
             name = "onDraw"
         }

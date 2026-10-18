@@ -253,7 +253,7 @@ val VideoInformationPatch = patch(
     // endregion.
 
     // region Handle new playback speed menu.
-    ::playbackSpeedMenuSpeedChangedFingerprint.hookMethod(scopedHook(::setPlaybackSpeedMethodReference.member) {
+    PlaybackSpeedMenuSpeedChangedFingerprint.hookMethod(scopedHook(::setPlaybackSpeedMethodReference.member) {
         before { param ->
             val speed = param.args[0] as Float
             Logger.printDebug { "Playback speed menu speed changed: ${speed}" }
@@ -269,7 +269,7 @@ val VideoInformationPatch = patch(
 
     // videoQuality
     // Detect video quality changes and override the current quality.
-    ::videoQualitySetterFingerprint.hookMethod {
+    VideoQualitySetterFingerprint.hookMethod {
         val onItemClickListenerClass = ::onItemClickListenerClassReference.field
         val setQualityField = ::setQualityFieldReference.field
         val setQualityMenuIndexMethod = ::setQualityMenuIndexMethod.method

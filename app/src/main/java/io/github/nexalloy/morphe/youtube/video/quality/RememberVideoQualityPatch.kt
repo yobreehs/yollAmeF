@@ -6,7 +6,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreferenc
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityReceiver
-import io.github.nexalloy.morphe.youtube.shared.videoQualityChangedFingerprint
+import io.github.nexalloy.morphe.youtube.shared.VideoQualityChangedFingerprint
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.morphe.youtube.video.information.VideoQualityProxy
 import io.github.nexalloy.patch
@@ -92,7 +92,7 @@ val RememberVideoQuality = patch {
     }
 
     // Inject a call to remember the selected quality for Shorts.
-    ::videoQualityItemOnClickFingerprint.hookMethod {
+    VideoQualityItemOnClickFingerprint.hookMethod {
         before { param ->
             RememberVideoQualityPatch.userChangedShortsQuality(param.args[2] as Int)
         }
@@ -100,7 +100,7 @@ val RememberVideoQuality = patch {
 
     // Inject a call to remember the user selected quality for regular videos.
     // The quality object is used, as its name is needed to get the fixed resolution.
-    ::videoQualityChangedFingerprint.hookMethod(scopedHook(::VideoQualityReceiver.member) {
+    VideoQualityChangedFingerprint.hookMethod(scopedHook(::VideoQualityReceiver.member) {
         before { param ->
             RememberVideoQualityPatch.userChangedQuality(VideoQualityProxy(param.args[0]))
         }

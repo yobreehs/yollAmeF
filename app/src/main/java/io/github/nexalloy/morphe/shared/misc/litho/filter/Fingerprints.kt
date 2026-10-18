@@ -9,14 +9,10 @@ import io.github.nexalloy.morphe.OpcodesFilter
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodDirect
-import io.github.nexalloy.morphe.fingerprint
+import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
-
-//val componentContextParserFingerprint = fingerprint {
-//    strings("Number of bits must be positive")
-//}
 
 internal object AccessibilityIdFingerprint : Fingerprint(
     filters = listOf(
@@ -100,23 +96,29 @@ object ProtobufBufferReferenceFingerprint : Fingerprint(
     )
 )
 
-val emptyComponentFingerprint = fingerprint {
-    accessFlags(AccessFlags.PRIVATE, AccessFlags.CONSTRUCTOR)
-    parameters()
-    strings("EmptyComponent")
-}
+private object EmptyComponentParentFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.CONSTRUCTOR),
+    parameters = listOf(),
+    filters = listOf(
+        string("EmptyComponent")
+    )
+)
 
-val lithoThreadExecutorFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR)
-    parameters("I", "I", "I")
-    classMatcher {
-        superClass {
-            descriptor = "Ljava/util/concurrent/ThreadPoolExecutor;"
+internal object LithoThreadExecutorFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),
+    parameters = listOf("I", "I", "I"),
+    filters = listOf(
+        literal(1L) // 1L = default thread timeout.
+    ),
+    custom = {
+        declaredClass {
+            superClass {
+                descriptor = "Ljava/util/concurrent/ThreadPoolExecutor;"
+            }
         }
     }
-    literal { 1L }
-}
+)
 
 val emptyComponentClass = findClassDirect {
-    emptyComponentFingerprint().declaredClass!!
+    EmptyComponentParentFingerprint().declaredClass!!
 }

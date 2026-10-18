@@ -1,23 +1,11 @@
 package io.github.nexalloy.morphe.shared.misc.audio.tracks
 
-import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodListDirect
-import io.github.nexalloy.morphe.fingerprint
-
-internal val formatStreamModelToStringFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("Ljava/lang/String;")
-    name("toString")
-    strings(
-        // Strings are partial matches.
-        "isDefaultAudioTrack=",
-        "audioTrackId="
-    )
-}
+import io.github.nexalloy.morphe.shared.FormatStreamModelToStringFingerprint
 
 val formatStringModelClass = findClassDirect {
-    formatStreamModelToStringFingerprint().declaredClass!!
+    FormatStreamModelToStringFingerprint().declaredClass!!
 }
 
 /*
@@ -27,7 +15,7 @@ val formatStringModelClass = findClassDirect {
 * */
 val getFormatStreamModelGetter = findMethodListDirect {
     val formatStringModelClass = formatStringModelClass().name
-    formatStreamModelToStringFingerprint().invokes.windowed(3).first {
+    FormatStreamModelToStringFingerprint().invokes.windowed(3).first {
         it[0].returnTypeName == "boolean" &&
                 it[1].returnTypeName == "java.lang.String" &&
                 it[2].returnTypeName == "java.lang.String"

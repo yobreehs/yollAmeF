@@ -12,7 +12,6 @@ import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findFieldFromToString
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
-import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
@@ -107,18 +106,27 @@ val PlaybackStartParametersInit = findMethodDirect {
     )()
 }
 
-val videoQualityItemOnClickParentFingerprint = fingerprint {
-    returns("V")
-    strings("VIDEO_QUALITIES_MENU_BOTTOM_SHEET_FRAGMENT")
-}
+private object VideoQualityItemOnClickParentFingerprint : Fingerprint(
+    returnType = "V",
+    filters = listOf(
+        string("VIDEO_QUALITIES_MENU_BOTTOM_SHEET_FRAGMENT")
+    )
+)
 
 /**
- * Resolves to class found in [videoQualityItemOnClickFingerprint].
+ * Resolves to class found in [VideoQualityItemOnClickFingerprint].
  */
-val videoQualityItemOnClickFingerprint = fingerprint {
-    classFingerprint(videoQualityItemOnClickParentFingerprint)
-    methodMatcher { name = "onItemClick" }
-}
+internal object VideoQualityItemOnClickFingerprint : Fingerprint(
+    classFingerprint = VideoQualityItemOnClickParentFingerprint,
+    name = "onItemClick",
+    returnType = "V",
+    parameters = listOf(
+        "Landroid/widget/AdapterView;",
+        "Landroid/view/View;",
+        "I",
+        "J"
+    )
+)
 
 val videoQualityBottomSheetListFragmentTitle
     get() = resourceMappings[

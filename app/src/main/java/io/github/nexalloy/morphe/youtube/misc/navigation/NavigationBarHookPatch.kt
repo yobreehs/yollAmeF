@@ -32,12 +32,12 @@ val NavigationBarHook = patch(
     dependsOn(backGesturePatch)
 
     // Hook the current navigation bar enum value. Note, the 'You' tab does not have an enum value.
-    ::initializeButtonsFingerprint.hookMethod(scopedHook(::getNavigationEnumMethod.member) {
+    InitializeButtonsFingerprint.hookMethod(scopedHook(::getNavigationEnumMethod.member) {
         after { NavigationBar.setLastAppNavigationEnum(it.result as Enum<*>) }
     })
 
     // Hook the creation of navigation tab views.
-    ::initializeButtonsFingerprint.hookMethod(scopedHook(::pivotBarButtonsCreateDrawableViewFingerprint.member) {
+    InitializeButtonsFingerprint.hookMethod(scopedHook(::pivotBarButtonsCreateDrawableViewFingerprint.member) {
         after { NavigationBar.navigationTabLoaded(it.result as View) }
     })
 
@@ -45,7 +45,7 @@ val NavigationBarHook = patch(
 //        // TODO
 //    }
 
-    ::initializeButtonsFingerprint.hookMethod(
+    InitializeButtonsFingerprint.hookMethod(
         scopedHook(
             PivotBarButtonsCreateResourceStyledViewFingerprint.member
         ) {
@@ -65,12 +65,12 @@ val NavigationBarHook = patch(
         })
 
     val selectedTab = ThreadLocal<View>()
-    ::pivotBarButtonsViewSetSelectedFingerprint.hookMethod {
+    PivotBarButtonsViewSetSelectedFingerprint.hookMethod {
         before { selectedTab.remove() }
         after { selectedTab.get()?.let { NavigationBar.navigationTabSelected(it, true) } }
     }
 
-    ::pivotBarButtonsViewSetSelectedFingerprint.hookMethod(scopedHook(::pivotBarButtonsViewSetSelectedSubFingerprint.member) {
+    PivotBarButtonsViewSetSelectedFingerprint.hookMethod(scopedHook(::pivotBarButtonsViewSetSelectedSubFingerprint.member) {
         after {
             // `setSelect` dispatch to subviews, we need to wait for the root view.
             val isSelected = it.args[0] as Boolean

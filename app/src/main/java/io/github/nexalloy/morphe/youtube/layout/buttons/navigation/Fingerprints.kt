@@ -5,12 +5,8 @@ import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
-import io.github.nexalloy.morphe.findMethodDirect
-import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
-import io.github.nexalloy.morphe.strings
-
 
 internal object CreatePivotBarFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),

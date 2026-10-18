@@ -7,16 +7,12 @@ import io.github.nexalloy.morphe.accessFlags
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
-import io.github.nexalloy.morphe.fingerprint
+import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.resourceMappings
 import io.github.nexalloy.morphe.returns
-
-// val actionBarSearchResultsFingerprint = fingerprint {
-//    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-//    returns("Landroid/view/View;")
-//    literal { actionBarSearchResultsViewMicId }
-//}
+import io.github.nexalloy.morphe.string
+import org.luckypray.dexkit.query.enums.StringMatchType
 
 val toolbarContainerId get() = resourceMappings["id", "toolbar_container"]
 
@@ -38,17 +34,19 @@ object AppCompatToolbarBackButtonFingerprint : Fingerprint(
 )
 
 /**
- * Matches to the class found in [pivotBarConstructorFingerprint].
+ * Matches to the class found in [PivotBarConstructorFingerprint].
  */
-val initializeButtonsFingerprint = fingerprint {
-    classFingerprint(pivotBarConstructorFingerprint)
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("V")
-    strings("FEvideo_picker")
-}
+internal object InitializeButtonsFingerprint : Fingerprint(
+    classFingerprint = PivotBarConstructorFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    filters = listOf(
+        string("FEvideo_picker")
+    )
+)
 
 val getNavigationEnumMethod = findMethodDirect {
-    initializeButtonsFingerprint().invokes.findMethod {
+    InitializeButtonsFingerprint().invokes.findMethod {
         matcher {
             declaredClass(navigationEnumClass(this@findMethodDirect).name)
             accessFlags(AccessFlags.STATIC)
@@ -59,9 +57,9 @@ val getNavigationEnumMethod = findMethodDirect {
 /**
  * Matches to the Enum class that looks up ordinal -> instance.
  */
-val navigationEnumFingerprint = fingerprint {
-    accessFlags(AccessFlags.STATIC, AccessFlags.CONSTRUCTOR)
-    strings(
+internal object NavigationEnumFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.STATIC, AccessFlags.CONSTRUCTOR),
+    strings = listOf(
         "PIVOT_HOME",
         "TAB_SHORTS",
         "CREATION_TAB_LARGE",
@@ -70,9 +68,9 @@ val navigationEnumFingerprint = fingerprint {
         "VIDEO_LIBRARY_WHITE",
         "INCOGNITO_CIRCLE",
     )
-}
+)
 
-val navigationEnumClass = findClassDirect { navigationEnumFingerprint().declaredClass!! }
+val navigationEnumClass = findClassDirect { NavigationEnumFingerprint().declaredClass!! }
 
 val pivotBarButtonsCreateDrawableViewFingerprint = findMethodDirect {
     findMethod {
@@ -96,18 +94,18 @@ object PivotBarButtonsCreateResourceStyledViewFingerprint : Fingerprint(
     parameters = listOf("L", "Z", "I", "L")
 )
 
-val pivotBarButtonsViewSetSelectedFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("V")
-    parameters("I", "Z")
-    classMatcher {
-        descriptor = "Lcom/google/android/libraries/youtube/rendering/ui/pivotbar/PivotBar;"
-    }
-    methodMatcher { addInvoke { name = "setSelected" } }
-}
+internal object PivotBarButtonsViewSetSelectedFingerprint : Fingerprint(
+    definingClass = "Lcom/google/android/libraries/youtube/rendering/ui/pivotbar/PivotBar;",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("I", "Z"),
+    filters = listOf(
+        methodCall(name = "setSelected")
+    )
+)
 
 val pivotBarButtonsViewSetSelectedSubFingerprint = findMethodDirect {
-    pivotBarButtonsViewSetSelectedFingerprint().invokes.single { it.name == "setSelected" }
+    PivotBarButtonsViewSetSelectedFingerprint.instructionMatches.single().instruction.methodRef!!
 }
 
 internal object PivotBarDispatchTouchEventFingerprint : Fingerprint(
@@ -117,10 +115,12 @@ internal object PivotBarDispatchTouchEventFingerprint : Fingerprint(
     parameters = listOf("Landroid/view/MotionEvent;")
 )
 
-val pivotBarConstructorFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR)
-    strings("com.google.android.apps.youtube.app.endpoint.flags")
-}
+internal object PivotBarConstructorFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),
+    filters = listOf(
+        string("com.google.android.apps.youtube.app.endpoint.flags"),
+    )
+)
 
 val getNavIconResIdFingerprint = findMethodListDirect {
     // two matches in versions 20.24.xx-20.26.xx,

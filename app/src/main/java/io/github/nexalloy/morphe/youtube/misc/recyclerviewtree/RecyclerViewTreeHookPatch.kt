@@ -7,7 +7,7 @@ import io.github.nexalloy.scopedHook
 val addRecyclerViewTreeHook = mutableListOf<(RecyclerView) -> Unit>()
 
 val recyclerViewTreeHook = patch {
-    ::recyclerViewTreeObserverFingerprint.hookMethod(scopedHook(::RecyclerView_addOnScrollListener.member) {
+    RecyclerViewTreeObserverFingerprint.hookMethod(scopedHook(::RecyclerView_addOnScrollListener.member) {
         before {
             val recyclerView = it.thisObject as RecyclerView
             addRecyclerViewTreeHook.forEach { hook ->

@@ -30,8 +30,8 @@ import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.shared.FormatStreamModelToStringFingerprint
 import io.github.nexalloy.morphe.string
+import io.github.nexalloy.morphe.youtube.shared.SeekbarFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoStreamingDataToStringFingerprint
-import io.github.nexalloy.morphe.youtube.shared.seekbarFingerprint
 import org.luckypray.dexkit.query.enums.MatchType
 
 private object SwipingUpGestureParentFingerprint : Fingerprint(
@@ -172,7 +172,7 @@ internal object FormatStreamModelMaxDVRDurationFingerprint : Fingerprint(
 )
 
 val seekbarHandlerOnTouchMethod = findMethodDirect {
-    seekbarFingerprint().declaredClass!!.findMethod {
+    SeekbarFingerprint().declaredClass!!.findMethod {
         matcher { name = "onTouchEvent" }
     }.single()
 }

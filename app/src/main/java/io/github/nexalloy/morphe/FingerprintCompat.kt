@@ -355,16 +355,12 @@ open class Fingerprint internal constructor(
     /**
      * Finds a unique method result using DexKit query.
      *
-     * When strict mode is enabled and multiple candidates are found,
-     * applies instruction matching to narrow down the results.
+     * Strict queries apply instruction matching before resolving chained fingerprints
+     * and checking the candidate count.
      */
     context(dexkit: DexKitBridge)
     fun run(): MethodData {
-        var results: List<MethodData> = queryAll()
-
-        if (results.size > 1 && isStrict) {
-            results = results.filter { matchOrNull(it) != null }
-        }
+        val results = queryAll()
 
         if (results.size != 1) {
             val name = this::class.simpleName ?: "Anonymous Fingerprint"
@@ -402,11 +398,17 @@ open class Fingerprint internal constructor(
             }
         }
 
-        if (results.size > 10) {
+        val filteredResults = if (results.size > 1 && isStrict) {
+            results.filter { matchOrNull(it) != null }
+        } else {
+            results
+        }
+
+        if (filteredResults.size > 10) {
             throw IllegalStateException("Bad query, too much results")
         }
 
-        return results
+        return filteredResults
     }
 
     context(dexkit: DexKitBridge)

@@ -2,22 +2,24 @@ package io.github.nexalloy.morphe.youtube.video.information
 
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
+import io.github.nexalloy.morphe.InstructionLocation.MatchFirst
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
+import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.StringComparisonType
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
-import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
 import io.github.nexalloy.morphe.youtube.shared.PlaybackSpeedOnItemClickParentFingerprint
+import io.github.nexalloy.morphe.youtube.shared.VideoQualityChangedFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
-import io.github.nexalloy.morphe.youtube.shared.videoQualityChangedFingerprint
 import org.luckypray.dexkit.query.enums.OpCodeMatchType
 import org.luckypray.dexkit.result.FieldUsingType
 
@@ -218,54 +220,74 @@ val mdxGetVideoTime = findMethodDirect {
 }
 
 /**
- * Resolves with the class found in [videoQualityChangedFingerprint].
+ * Resolves with the class found in [VideoQualityChangedFingerprint].
  */
-val playbackSpeedMenuSpeedChangedFingerprint = fingerprint {
-    classFingerprint(videoQualityChangedFingerprint)
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("L")
-    parameters("L")
-    opcodes(
-        Opcode.IGET,
-        Opcode.INVOKE_VIRTUAL,
-        Opcode.SGET_OBJECT,
-        Opcode.RETURN_OBJECT,
+@StrictQuery
+internal object PlaybackSpeedMenuSpeedChangedFingerprint : Fingerprint(
+    classFingerprint = VideoQualityChangedFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "L",
+    parameters = listOf("L"),
+    filters = listOf(
+        fieldAccess(opcode = Opcode.IGET, type = "F"),
+        // Newer versions also have a handler that reads floats for other player settings.
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            parameters = listOf("F"),
+            returnType = "V",
+            location = MatchAfterImmediately()
+        )
     )
-}
+)
 
-val videoQualitySetterFingerprint = fingerprint {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
-    returns("V")
-    parameters("[L", "I", "Z")
-    opcodes(
+internal object VideoQualitySetterFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("[L", "I", "Z"),
+    filters = OpcodesFilter.opcodesToFilters(
         Opcode.IF_EQZ,
         Opcode.INVOKE_VIRTUAL,
         Opcode.MOVE_RESULT_OBJECT,
         Opcode.INVOKE_VIRTUAL,
         Opcode.IPUT_BOOLEAN,
-    )
-    strings("menu_item_video_quality")
-}
+    ),
+    strings = listOf("menu_item_video_quality")
+)
 
 /**
- * Matches with the class found in [videoQualitySetterFingerprint].
+ * Matches with the class found in [VideoQualitySetterFingerprint].
  */
-val setVideoQualityFingerprint = fingerprint {
-    classFingerprint(videoQualitySetterFingerprint)
-    returns("V")
-    parameters("L")
-    opcodes(
-        Opcode.IGET_OBJECT,
-        Opcode.IPUT_OBJECT,
-        Opcode.IGET_OBJECT,
+@StrictQuery
+internal object SetVideoQualityFingerprint : Fingerprint(
+    classFingerprint = VideoQualitySetterFingerprint,
+    returnType = "V",
+    parameters = listOf("L"),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = "this",
+            location = MatchFirst()
+        ),
+        fieldAccess(
+            opcode = Opcode.IPUT_OBJECT,
+            location = MatchAfterImmediately()
+        ),
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = "this",
+            location = MatchAfterImmediately()
+        ),
     )
-}
+)
 
-val onItemClickListenerClassReference =
-    findFieldDirect { setVideoQualityFingerprint().usingFields[0].field }
-val setQualityFieldReference = findFieldDirect { setVideoQualityFingerprint().usingFields[1].field }
+val onItemClickListenerClassReference = findFieldDirect {
+    SetVideoQualityFingerprint.instructionMatches[0].instruction.fieldRef!!
+}
+val setQualityFieldReference = findFieldDirect {
+    SetVideoQualityFingerprint.instructionMatches[1].instruction.fieldRef!!
+}
 val setQualityMenuIndexMethod = findMethodDirect {
-    setVideoQualityFingerprint().usingFields[1].field.type.findMethod {
+    setQualityFieldReference().type.findMethod {
         matcher { addParamType { descriptor = VideoQualityClass().descriptor } }
     }.single()
 }

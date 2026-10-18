@@ -136,7 +136,7 @@ internal fun sharedLithoFilterPatch(
 
     // region Change Litho thread executor to 1 thread to fix layout issue in unpatched YouTube.
 
-    ::lithoThreadExecutorFingerprint.hookMethod {
+    LithoThreadExecutorFingerprint.hookMethod {
         before {
             it.args[0] = LithoFilterPatch.getExecutorCorePoolSize(it.args[0] as Int)
             it.args[1] = LithoFilterPatch.getExecutorMaxThreads(it.args[1] as Int)
