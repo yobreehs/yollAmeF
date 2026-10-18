@@ -6,7 +6,7 @@ import io.github.nexalloy.morphe.youtube.misc.litho.rendernext.disableRenderNext
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_22_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_15_or_greater
-import io.github.nexalloy.morphe.youtube.misc.verticalscroll.FixVerticalScroll
+import io.github.nexalloy.morphe.youtube.misc.verticalscroll.fixVerticalScrollPatch
 
 val LithoFilter = sharedLithoFilterPatch(
     // YouTube 20.22+ always uses the native Upb encode path.
@@ -16,7 +16,7 @@ val LithoFilter = sharedLithoFilterPatch(
     useLegacyLithoFiltering = { !is_20_22_or_greater }
 ) {
     dependsOn(
-        FixVerticalScroll,
+        fixVerticalScrollPatch,
         VersionCheck,
         conversionContextPatch,
         disableRenderNextPatch,
