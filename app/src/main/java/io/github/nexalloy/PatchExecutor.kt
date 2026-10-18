@@ -178,6 +178,9 @@ class PatchExecutor(
         val t = measureTimeMillis {
             loadCacheIfValid()
             try {
+                XposedBridge.log("NexAlloy version: ${BuildConfig.BUILD_TYPE} ${BuildConfig.VERSION_NAME} ${BuildConfig.COMMIT_HASH}")
+                XposedBridge.log("${lpparam.applicationInfo.packageName} version: ${getAppVersion()}")
+
                 executePatches()
                 finalizePatching()
                 logDebugInfo()
@@ -242,7 +245,6 @@ class PatchExecutor(
     private fun logDebugInfo() {
         val success = failedPatches.isEmpty()
         if (DEBUG) {
-            XposedBridge.log("${lpparam.applicationInfo.packageName} version: ${getAppVersion()}")
             if (success) {
                 Utils.showToastLong("apply patches success")
             }
