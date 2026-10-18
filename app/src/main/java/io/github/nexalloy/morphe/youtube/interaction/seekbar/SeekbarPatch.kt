@@ -18,7 +18,7 @@ val seekbarPatch = patch(
         enableSlideToSeekPatch,
         enableTapToSeekPatch,
         hideSeekbarPatch,
-        liveStreamDVRPatch,
+//        liveStreamDVRPatch,
         seekbarThumbnailPreviewPatch
     )
 }

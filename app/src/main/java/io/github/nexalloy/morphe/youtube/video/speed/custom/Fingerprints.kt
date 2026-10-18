@@ -12,6 +12,9 @@ import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.parameters
 import io.github.nexalloy.morphe.returns
+import io.github.nexalloy.morphe.fieldAccess
+import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterFingerprint
 
 internal val speedArrayGeneratorFingerprint = fingerprint {
@@ -45,6 +48,36 @@ val clampFloatFingerprint = findMethodDirect {
         }
     }.single()
 }
+
+internal object TapAndHoldSpeedFingerprint : Fingerprint(
+    name = "run",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf(),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            type = "Landroid/os/Handler;"
+        ),
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            smali = "Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V"
+        ),
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            parameters = listOf(),
+            returnType = "Z"
+        ),
+        opcode(Opcode.IF_EQZ),
+        fieldAccess(
+            opcode = Opcode.IGET_BOOLEAN,
+            type = "Z"
+        ),
+        opcode(Opcode.IF_NEZ),
+        opcode(Opcode.IGET_OBJECT),
+        literal(2.0f)
+    )
+)
 
 /**
  * Checks if the audio offload supports changing the playback speed.

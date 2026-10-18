@@ -18,6 +18,7 @@ import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.string
+import io.github.nexalloy.morphe.youtube.video.speed.custom.TapAndHoldSpeedFingerprint
 
 internal object ParseElementFromBufferFingerprint : Fingerprint(
     parameters = listOf("L", "L", "[B", "L", "L"),
@@ -139,4 +140,57 @@ internal object ListMenuItemViewOnMeasureFingerprint : Fingerprint(
     name = "onMeasure",
     returnType = "V",
     parameters = listOf("I", "I")
+)
+
+val tapAndHoldCanStartMethod = findMethodDirect {
+    TapAndHoldSpeedFingerprint.instructionMatches[2].instruction.methodRef!!
+}
+
+val tapAndHoldRunnableOwnerField = findFieldDirect {
+    val match = TapAndHoldSpeedFingerprint.match()
+    val runnableType = match.method.declaredClass!!.descriptor
+    match.method.instructions
+        .take(match.instructionMatches[0].index)
+        .last {
+            it.opcode == Opcode.IGET_OBJECT.ordinal &&
+                    it.fieldRef!!.declaredClass!!.descriptor == runnableType
+        }.fieldRef!!
+}
+
+val tapAndHoldAlreadySpeedingUpField = findFieldDirect {
+    TapAndHoldSpeedFingerprint.instructionMatches[4].instruction.fieldRef!!
+}
+
+val tapAndHoldEndMethod = findMethodDirect {
+    val speedControllerType = TapAndHoldSpeedFingerprint.instructionMatches[6]
+        .instruction.fieldRef!!.type!!.descriptor
+    Fingerprint(
+        definingClass = speedControllerType,
+        accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+        returnType = "V",
+        parameters = listOf()
+    )()
+}
+
+internal object ShowControlsOnRelatedPanelDragFingerprint : Fingerprint(
+    classFingerprint = object : Fingerprint(
+        returnType = "V",
+        filters = listOf(
+            resourceLiteral(ResourceType.ID, "scrim_overlay"),
+            checkCast("Landroid/widget/ImageView;", location = MatchAfterWithin(10))
+        )
+    ) {},
+    accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("F"),
+    filters = listOf(
+        opcode(Opcode.IF_GEZ),
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            definingClass = "this",
+            parameters = listOf(),
+            returnType = "V"
+        ),
+        opcode(Opcode.RETURN_VOID, MatchAfterImmediately())
+    )
 )

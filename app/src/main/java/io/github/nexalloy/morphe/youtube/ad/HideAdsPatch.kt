@@ -4,15 +4,13 @@ import android.view.View
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.youtube.patches.components.AdsFilter
-import app.morphe.extension.youtube.settings.preference.ChannelWhitelistPreference
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import io.github.nexalloy.morphe.shared.ad.HideFullscreenAds
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
-import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.youtube.layout.hide.general.HideHorizontalShelves
+import io.github.nexalloy.morphe.youtube.layout.hide.shelves.HideHorizontalShelves
 import io.github.nexalloy.morphe.youtube.misc.contexthook.Endpoint
 import io.github.nexalloy.morphe.youtube.misc.contexthook.addOSNameHook
 import io.github.nexalloy.morphe.youtube.misc.contexthook.clientContextHookPatch

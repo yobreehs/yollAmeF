@@ -12,18 +12,16 @@ import app.morphe.extension.youtube.patches.components.CommentsFilter
 import app.morphe.extension.youtube.patches.components.CustomFilter
 import app.morphe.extension.youtube.patches.components.DescriptionComponentsFilter
 import app.morphe.extension.youtube.patches.components.ExploreMenuFilter
-import app.morphe.extension.youtube.patches.components.HorizontalShelvesFilter
 import app.morphe.extension.youtube.patches.components.KeywordContentFilter
 import app.morphe.extension.youtube.patches.components.LayoutComponentsFilter
+import app.morphe.extension.youtube.patches.spans.SanitizeVideoSubtitleFilter
+import app.morphe.extension.youtube.patches.spans.SearchLinksFilter
 import app.morphe.extension.youtube.settings.preference.HTMLPreference
 import app.morphe.extension.youtube.settings.preference.KeywordContentStatsPreferenceCategory
-import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.litho.filter.emptyComponentClass
 import io.github.nexalloy.morphe.shared.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
-import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
-import io.github.nexalloy.morphe.shared.misc.settings.preference.noTitleUnsortedPreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
@@ -32,17 +30,19 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScree
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.noTitleUnsortedPreferenceCategory
+import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
+import io.github.nexalloy.morphe.shared.misc.spans.addSpanFilter
+import io.github.nexalloy.morphe.shared.misc.spans.inclusiveSpanPatch
 import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
-import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
+import io.github.nexalloy.morphe.youtube.layout.hide.shelves.HideHorizontalShelves
+import io.github.nexalloy.morphe.youtube.misc.aislist.aiSListPatch
 import io.github.nexalloy.morphe.youtube.misc.engagement.EngagementPanelHook
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.youtube.misc.litho.node.TreeNodeElementHook
-import io.github.nexalloy.morphe.youtube.misc.litho.observer.LayoutReloadObserver
 import io.github.nexalloy.morphe.youtube.misc.navigation.NavigationBarHook
-import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
-import io.github.nexalloy.morphe.youtube.misc.aislist.aiSListPatch
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_26_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_20_31_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_07_or_greater
@@ -50,22 +50,11 @@ import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_11_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_26_or_greater
 import io.github.nexalloy.morphe.youtube.misc.proto.elementProtoParserHookPatch
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
+import io.github.nexalloy.morphe.youtube.video.speed.custom.TapAndHoldSpeedFingerprint
 import io.github.nexalloy.new
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import org.luckypray.dexkit.wrap.DexMethod
-
-val HideHorizontalShelves = patch {
-    dependsOn(
-        LithoFilter,
-        PlayerTypeHook,
-        NavigationBar,
-        EngagementPanelHook,
-        LayoutReloadObserver
-    )
-
-    addLithoFilter(HorizontalShelvesFilter())
-}
 
 val HideLayoutComponents = patch(
     name = "Hide layout components",
@@ -80,6 +69,7 @@ val HideLayoutComponents = patch(
         HideHorizontalShelves,
         elementProtoParserHookPatch,
         TreeNodeElementHook,
+        inclusiveSpanPatch,
         textComponentPatch,
     )
 
@@ -150,7 +140,7 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_comments_timestamp_button"),
                 SwitchPreference("morphe_hide_comments_top_fans_button"),
                 SwitchPreference("morphe_hide_comments_translate_button"),
-//                SwitchPreference("morphe_sanitize_comments_highlighted_search_links", summary = true)
+                SwitchPreference("morphe_sanitize_comments_highlighted_search_links", summary = true)
             ),
             sorting = Sorting.UNSORTED
         ),
@@ -168,10 +158,10 @@ val HideLayoutComponents = patch(
 //        SwitchPreference("morphe_hide_snackbar"),
         SwitchPreference("morphe_hide_subscribers_community_guidelines"),
         SwitchPreference("morphe_hide_sync_button"),
-//        SwitchPreference("morphe_hide_tap_and_hold_gradient", summary = true),
+        SwitchPreference("morphe_hide_tap_and_hold_gradient", summary = true),
         SwitchPreference("morphe_hide_timed_reactions", summary = true),
         SwitchPreference("morphe_hide_video_title", summary = true),
-//        SwitchPreference("morphe_sanitize_video_subtitle", summary = true)
+        SwitchPreference("morphe_sanitize_video_subtitle", summary = true)
     )
 
     if (is_20_31_or_greater) {
@@ -366,9 +356,8 @@ val HideLayoutComponents = patch(
     addLithoFilter(CommentsFilter())
     addLithoFilter(KeywordContentFilter())
     addLithoFilter(CustomFilter())
-//    TODO InclusiveSpanPatch TextComponentPatch
-//    addSpanFilter(SanitizeVideoSubtitleFilter())
-//    addSpanFilter(SearchLinksFilter())
+    addSpanFilter(SanitizeVideoSubtitleFilter())
+    addSpanFilter(SearchLinksFilter())
     hookTreeNodeResult(CommentsFilter::hideCommentsFilterBarOptions)
 
     // region hide mix playlists
@@ -419,7 +408,36 @@ val HideLayoutComponents = patch(
     // hide live chat donators bar
     // layout.live_chat_ticker_item
 
-    // TODO hide tap and hold gradient
+    // region hide tap and hold gradient
+
+    val tapAndHoldOwnerField = ::tapAndHoldRunnableOwnerField.field
+    val alreadySpeedingUpField = ::tapAndHoldAlreadySpeedingUpField.field
+    TapAndHoldSpeedFingerprint.hookMethod(scopedHook(::tapAndHoldCanStartMethod.method) {
+        after {
+            // R8 merges several Runnable branches into this method. Check the
+            // captured owner and both guards before marking a hold as active.
+            val owner = tapAndHoldOwnerField.get(outerParam.thisObject)
+            if (it.result == true && alreadySpeedingUpField.declaringClass.isInstance(owner) &&
+                !alreadySpeedingUpField.getBoolean(owner)
+            ) {
+                LayoutComponentsFilter.onTapAndHoldStart()
+            }
+        }
+    })
+
+    ::tapAndHoldEndMethod.hookMethod {
+        before { LayoutComponentsFilter.onTapAndHoldEnd() }
+    }
+
+    ShowControlsOnRelatedPanelDragFingerprint.hookMethod {
+        before {
+            if (LayoutComponentsFilter.hideTapAndHoldGradient()) {
+                it.result = null
+            }
+        }
+    }
+
+    // endregion
 
     // region fix live chat text field behind the navigation bar
 
