@@ -7,9 +7,13 @@ import android.widget.RelativeLayout
 import app.morphe.extension.shared.ResourceUtils
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch
+import app.morphe.extension.youtube.patches.spans.MetapanelTextColorFilter
 import io.github.nexalloy.HookDsl
 import io.github.nexalloy.IHookCallback
 import io.github.nexalloy.PatchExecutor
+import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
+import io.github.nexalloy.morphe.shared.misc.spans.addSpanFilter
+import io.github.nexalloy.morphe.shared.misc.spans.inclusiveSpanPatch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
@@ -133,6 +137,7 @@ val LegacyPlayerControls = patch(
     dependsOn(
         PlayerControlsOverlayVisibility,
         VersionCheck,
+        inclusiveSpanPatch,
     )
 
     if (is_20_31_or_greater && !is_21_36_or_greater) {
@@ -146,13 +151,36 @@ val LegacyPlayerControls = patch(
     }
 
     if (is_21_08_or_greater) {
+        // The text of the video metadata panel can have the dark theme colors
+        // of the elevated player, when the elevated player is turned off.
+        addSpanFilter(MetapanelTextColorFilter())
+
+        // The icons can also have the dark theme tint. The tint is read when the image is loaded,
+        // without the conversion context, so the image component registers its images
+        // with their conversion context when it prepares them.
+        ::imageComponentPrepareMethod.hookMethod {
+            val contextField = ::imageComponentConversionContextField.field
+            val imageFields = ::imageComponentImageFields.fieldList
+            before {
+                val context = contextField.get(it.thisObject) ?: return@before
+                imageFields.forEach { field ->
+                    LegacyPlayerControlsPatch.registerImage(ConversionContext(context), field.get(it.thisObject))
+                }
+            }
+        }
+
+        ::imageTintColorMethod.hookMethod {
+            before { LegacyPlayerControlsPatch.setTintImage(it.args[0]) }
+            after { it.result = LegacyPlayerControlsPatch.getImageTintColor(it.result as Int) }
+        }
+
         // The elevated player shows the video metadata without a background over the
         // ambient mode colors, so the light theme text can not be read.
         // The metadata panel also has its own forced dark and light themes, which do not depend
         // on the elevated player. With the forced dark theme and the elevated player off, the
         // white text is drawn on the light background of the watch page, so turn all of them off
         // and the metadata panel uses the app theme.
-        insertLiteralOverride(45757309L, false)
+        insertLiteralOverride(45757309L, LegacyPlayerControlsPatch::useElevatedPlayer)
         if (is_21_29_or_greater) insertLiteralOverride(45813114L, false)
         if (is_21_38_or_greater) insertLiteralOverride(45840190L, false)
     }

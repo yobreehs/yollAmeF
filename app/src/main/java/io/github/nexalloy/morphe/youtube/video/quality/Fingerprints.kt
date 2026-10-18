@@ -61,6 +61,25 @@ val getVideoQualitySettingMethod = findMethodDirect {
     )()
 }
 
+/**
+ * Chooses the qualities allowed by the player, when the video starts and again while it plays:
+ * the quality last selected in the quality menu, or an automatic quality.
+ */
+val getVideoQualityConstraintMethod = findMethodDirect {
+    Fingerprint(
+        accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+        parameters = listOf("Z", "L", "Ljava/lang/String;", "L"),
+        filters = listOf(methodCall(reference = getVideoQualitySettingMethod()))
+    ).match().method
+}
+
+val fixedVideoQualityConstraintMethod = findMethodDirect {
+    val constraintType = getVideoQualityConstraintMethod().returnType!!
+    constraintType.methods.single { method ->
+        method.returnType == constraintType && method.paramTypes.map { it.descriptor } == listOf("I")
+    }
+}
+
 internal object PlaybackStartParametersToStringFingerprint : Fingerprint(
     name = "toString",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),

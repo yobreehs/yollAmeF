@@ -92,7 +92,7 @@ val flyoutPatch = patch(
         after {
             val buttonInfo = getSubMessageMethod(null, it.args[0])
             val enumValue = enumMethodCall(null, enumIntField.get(buttonInfo))
-            FlyoutUtils.setCurrentButtonInfo(enumValue as? Enum<*>, buttonInfo)
+            FlyoutUtils.setCurrentButtonInfo(enumValue as? Enum<*>, buttonInfo, it.result as? CharSequence)
         }
     })
 

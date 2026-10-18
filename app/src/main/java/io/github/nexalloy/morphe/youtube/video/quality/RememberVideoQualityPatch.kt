@@ -77,6 +77,20 @@ val RememberVideoQuality = patch {
         }
     }
 
+    // The initial video quality is only used when the video starts. YouTube chooses the quality
+    // again while the video plays, and without a quality selected in the quality menu it is
+    // then chosen automatically, such as 720p for the size of the player.
+    // The default quality is used as a fixed quality for these choices too.
+    ::getVideoQualityConstraintMethod.hookMethod {
+        val fixedConstraint = ::fixedVideoQualityConstraintMethod.method
+        after {
+            val quality = RememberVideoQualityPatch.getFixedVideoQuality()
+            if (quality >= 0 && it.result != null) {
+                it.result = fixedConstraint(it.result, quality)
+            }
+        }
+    }
+
     // Inject a call to remember the selected quality for Shorts.
     ::videoQualityItemOnClickFingerprint.hookMethod {
         before { param ->

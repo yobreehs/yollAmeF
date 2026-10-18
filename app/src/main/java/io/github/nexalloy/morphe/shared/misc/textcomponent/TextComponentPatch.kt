@@ -5,26 +5,27 @@ import app.morphe.extension.shared.patches.TextComponentPatch
 import io.github.nexalloy.morphe.shared.SpannableStringBuilderFingerprint
 import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
 import io.github.nexalloy.morphe.shared.misc.litho.context.conversionContextPatch
-import io.github.nexalloy.morphe.shared.spannableStringBuilderGetSpannedMethod
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.patch
+import io.github.nexalloy.scopedHook
+import org.luckypray.dexkit.wrap.DexMethod
 import java.lang.reflect.Modifier
 
 val textComponentPatch = patch(
     description = "Provides hooks into text components for extension filtering."
 ) {
-    SpannableStringBuilderFingerprint.hookMethod {
-        val getSpannedMethod = ::spannableStringBuilderGetSpannedMethod.method
-        after {
-            if (it.result == "")
-                return@after
+    dependsOn(conversionContextPatch)
 
-            val spannedContext = it.args[0]
-            val spanned = getSpannedMethod(it.args[2]) as String
+    SpannableStringBuilderFingerprint.hookMethod(scopedHook(
+        DexMethod("Landroid/text/SpannableString;->valueOf(Ljava/lang/CharSequence;)Landroid/text/SpannableString;").toMethod()
+    ) {
+        before {
+            if (innerDepth != 0) return@before
+            val spanned = it.args[0] as? CharSequence ?: return@before
             // TODO EmojiCompat.process(spanned)
-            hooks.forEach { it(ConversionContext(spannedContext), spanned) }
+            hooks.forEach { it(ConversionContext(outerParam.args[0]), spanned) }
         }
-    }
+    })
 }
 
 private val hooks = mutableListOf<(ContextInterface, CharSequence) -> Unit>()
