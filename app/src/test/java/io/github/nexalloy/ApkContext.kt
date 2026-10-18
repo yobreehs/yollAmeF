@@ -1,5 +1,6 @@
 package io.github.nexalloy
 
+import io.github.nexalloy.morphe.FingerprintQueryCache
 import io.github.nexalloy.morphe.ResourceFinder
 import io.github.nexalloy.morphe.resourceMappings
 import jadx.api.JadxArgs
@@ -9,10 +10,11 @@ import jadx.api.security.impl.JadxSecurity
 import jadx.core.utils.android.AndroidManifestParser
 import jadx.core.utils.android.AppAttribute
 import org.luckypray.dexkit.DexKitBridge
+import java.io.Closeable
 import java.io.File
 import java.util.EnumSet
 
-class ApkContext(apkPath: String) {
+class ApkContext(apkPath: String) : Closeable {
     val dexkit: DexKitBridge
     val jadx: JadxDecompiler
     val appVersion: AppVersion
@@ -36,6 +38,18 @@ class ApkContext(apkPath: String) {
 
     fun setupCurrentThread() {
         jadxResourceReader.set(JadxResourceReader(jadx))
+    }
+
+    override fun close() {
+        try {
+            jadx.close()
+        } finally {
+            try {
+                dexkit.close()
+            } finally {
+                FingerprintQueryCache.shared.clearClosedBridges()
+            }
+        }
     }
 
     private fun setupDexKit(apkPath: String): DexKitBridge {

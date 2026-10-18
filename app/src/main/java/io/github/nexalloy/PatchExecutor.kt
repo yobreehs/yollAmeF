@@ -20,6 +20,7 @@ import io.github.libxposed.api.XposedInterface.Hooker
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.nexalloy.BuildConfig.DEBUG
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.FingerprintQueryCache
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.DexKitCacheBridge
 import org.luckypray.dexkit.annotations.DexKitExperimentalApi
@@ -181,7 +182,11 @@ class PatchExecutor(
                 finalizePatching()
                 logDebugInfo()
             } finally {
-                dexkit.close()
+                try {
+                    dexkit.close()
+                } finally {
+                    FingerprintQueryCache.shared.clearClosedBridges()
+                }
             }
         }
         Logger.printDebug { "${lpparam.packageName} handleLoadPackage: ${t}ms" }

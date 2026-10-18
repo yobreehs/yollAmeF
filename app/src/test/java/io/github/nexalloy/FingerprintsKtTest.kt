@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.params.AfterParameterizedClassInvocation
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.luckypray.dexkit.DexKitBridge
@@ -14,6 +15,7 @@ import org.luckypray.dexkit.result.MethodData
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -21,7 +23,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 @ParameterizedClass
 @ArgumentsSource(FilePathArgumentsProvider::class)
 class FingerprintsKtTest(val apkPath: Path) {
-    val context = ApkContext(apkPath.toString())
+    val context = contexts.computeIfAbsent(apkPath) { ApkContext(it.toString()) }
     val dexkit: DexKitBridge = context.dexkit
     val appVersion: AppVersion = context.appVersion
 
@@ -31,6 +33,14 @@ class FingerprintsKtTest(val apkPath: Path) {
     private lateinit var resultGroup: FingerprintTestReport.Group
 
     companion object {
+        private val contexts = ConcurrentHashMap<Path, ApkContext>()
+
+        @AfterParameterizedClassInvocation
+        @JvmStatic
+        fun closeApkContext(apkPath: Path) {
+            contexts.remove(apkPath)?.close()
+        }
+
         @AfterAll
         @JvmStatic
         fun writeJsonReport() = FingerprintTestReport.write()
@@ -144,6 +154,7 @@ class FingerprintsKtTest(val apkPath: Path) {
             group.error = e.stackTraceToString()
             throw e
         } finally {
+            ApkContext.jadxResourceReader.remove()
             group.completed = true
         }
         if (errors.isNotEmpty()) throw AssertionError()

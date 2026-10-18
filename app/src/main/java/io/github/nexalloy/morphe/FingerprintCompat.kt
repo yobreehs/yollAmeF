@@ -373,7 +373,11 @@ open class Fingerprint internal constructor(
     private val isStrict = this::class.java.annotations.filterIsInstance<StrictQuery>().isNotEmpty()
 
     context(dexkit: DexKitBridge)
-    private fun queryAll(): List<MethodData> {
+    private fun queryAll(): List<MethodData> =
+        FingerprintQueryCache.shared.getOrQuery(dexkit, this) { queryAllUncached() }
+
+    context(dexkit: DexKitBridge)
+    private fun queryAllUncached(): List<MethodData> {
         val methodMatcher = buildMethodMatcher()
         val results: List<MethodData> = if (classMatcherBlock != null) {
             dexkit.findClass {
