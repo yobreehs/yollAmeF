@@ -9,10 +9,9 @@ import app.morphe.extension.youtube.videoplayer.ExternalDownloadButton
 import android.net.Uri
 import io.github.nexalloy.callMethod
 import io.github.nexalloy.R
-import io.github.nexalloy.HookDsl
-import io.github.nexalloy.IScopedHookCallback
 import io.github.nexalloy.morphe.shared.misc.request.buildRequestPatch
 import io.github.nexalloy.morphe.shared.misc.request.hookBuildRequest
+import io.github.nexalloy.morphe.shared.misc.spoof.plainStreamRequestsPatch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
@@ -36,6 +35,7 @@ val Downloads = patch(
         LegacyPlayerControls,
         VideoInformationPatch,
         buildRequestPatch,
+        plainStreamRequestsPatch,
     )
 
     PreferenceScreen.PLAYER.addPreferences(
@@ -141,32 +141,6 @@ val Downloads = patch(
             if (replacement != null) it.result = replacement
         }
     })
-
-    // Streams of other clients are plain urls, which the server rejects or sends slowly if they are
-    // requested like the streams of the app, with a POST body. Send them as plain GET requests instead.
-    val urlField = ::cronetUrlField.field
-    val httpMethodField = ::cronetHttpMethodField.field
-    val uploadField = ::cronetUploadField.field
-    CronetUrlRequestBuildFingerprint.hookMethod {
-        before {
-            if (InAppDownloadsPatch.isPlainStreamRequest(urlField.get(it.thisObject) as String?)) {
-                httpMethodField.set(it.thisObject, "GET")
-                uploadField.set(it.thisObject, null)
-            }
-        }
-    }
-    // Plain streams are sent slowly if a large range is requested. Request a smaller range instead.
-    val limitRange: HookDsl<IScopedHookCallback>.() -> Unit = {
-        before {
-            if (innerDepth == 0) {
-                it.args[0] = InAppDownloadsPatch.limitPlainStreamRange(it.args[0] as String?)
-            }
-        }
-    }
-    val createRequestHooks = ::cronetCreateRequestMethods.dexMethodList.map { method ->
-        method.toMethod() to limitRange
-    }.toTypedArray()
-    CronetUrlRequestBuildFingerprint.hookMethod(scopedHook(*createRequestHooks))
 
     // endregion
 }

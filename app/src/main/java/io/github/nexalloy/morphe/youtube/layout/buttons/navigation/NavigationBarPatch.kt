@@ -1,13 +1,18 @@
 package io.github.nexalloy.morphe.youtube.layout.buttons.navigation
 
+import android.view.View
 import android.widget.TextView
 import app.morphe.extension.youtube.patches.NavigationBarPatch
+import io.github.nexalloy.HookDsl
+import io.github.nexalloy.IScopedHookCallback
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.setExtensionIsPatchIncluded
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
+import io.github.nexalloy.morphe.youtube.layout.hide.shorts.ShortsBottomBarContainerFingerprint
 import io.github.nexalloy.morphe.youtube.misc.contexthook.Endpoint
 import io.github.nexalloy.morphe.youtube.misc.contexthook.addOSNameHook
 import io.github.nexalloy.morphe.youtube.misc.contexthook.clientContextHookPatch
@@ -90,6 +95,45 @@ val NavigationBar = patch(
     insertLiteralOverride(45630927L, NavigationBarPatch::useTranslucentNavigationBar)
     insertLiteralOverride(45632194L, NavigationBarPatch::useTranslucentNavigationBar)
     insertLiteralOverride(45631257L, NavigationBarPatch::useTranslucentNavigationBar)
+
+    // With the translucent navigation bar, the navigation bar makes room for the system
+    // navigation buttons. If the navigation bar is hidden in the Shorts player, nothing makes
+    // that room, so the Shorts player makes it itself. The first parameter is the layout
+    // of the Shorts player fragment.
+    ShortsBottomBarContainerFingerprint.hookMethod {
+        before { NavigationBarPatch.setShortsPlayerBottomInset(it.args[0] as View) }
+    }
+
+    // With the keyboard open, the bottom inset also holds the keyboard, so the bar covering
+    // the system navigation buttons grows as tall as the keyboard and covers the page.
+    // The padding is first stored in a field of the bar, and the same register is then passed
+    // to setPadding. Some targets set it in two places.
+    val paddingField = ::navigationBarBottomPaddingField.field
+    val updateHeight: HookDsl<IScopedHookCallback>.() -> Unit = {
+        before {
+            if (innerDepth == 0 && paddingField.declaringClass.isInstance(it.thisObject)) {
+                val view = it.thisObject as View
+                paddingField.setInt(view, NavigationBarPatch.getNavigationBarBottomPadding(view, paddingField.getInt(view)))
+            }
+        }
+    }
+    val updatePadding: HookDsl<IScopedHookCallback>.() -> Unit = {
+        before {
+            if (innerDepth == 0 && paddingField.declaringClass.isInstance(it.thisObject)) {
+                it.args[3] = NavigationBarPatch.getNavigationBarBottomPadding(it.thisObject as View, it.args[3] as Int)
+            }
+        }
+    }
+    val setPadding = paddingField.declaringClass.getMethod(
+        "setPadding", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType,
+        Int::class.javaPrimitiveType, Int::class.javaPrimitiveType
+    )
+    val paddingHooks = (::navigationBarRelayoutMethods.dexMethodList.map {
+        it.toMethod() to updateHeight
+    } + (setPadding to updatePadding)).toTypedArray()
+    ::navigationBarBottomPaddingMethods.dexMethodList.forEach {
+        it.toMethod().hookMethod(scopedHook(*paddingHooks))
+    }
 
     // TODO Paint over the translucent status bar and navigation bar
 

@@ -4,11 +4,26 @@ import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
+import io.github.nexalloy.morphe.ResourceType
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
+import io.github.nexalloy.morphe.resourceLiteral
+import io.github.nexalloy.morphe.string
+
+internal object ShortsBottomBarContainerFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("Landroid/view/View;", "Landroid/os/Bundle;"),
+    filters = listOf(
+        string("r_pfvc"),
+        resourceLiteral(ResourceType.ID, "bottom_bar_container"),
+        methodCall(name = "getHeight"),
+        opcode(Opcode.MOVE_RESULT)
+    )
+)
 
 internal object ShortsExperimentalPlayerFeatureFlagFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
