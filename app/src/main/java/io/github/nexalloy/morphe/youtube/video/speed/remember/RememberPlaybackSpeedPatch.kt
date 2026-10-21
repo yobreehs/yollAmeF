@@ -46,9 +46,9 @@ val RememberPlaybackSpeed = patch {
         )
     )
 
-    onCreateHook.add { RememberPlaybackSpeedPatch.newVideoStarted(it) }
+    onCreateHook(RememberPlaybackSpeedPatch::newVideoStarted)
 
-    userSelectedPlaybackSpeedHook.add { RememberPlaybackSpeedPatch.userSelectedPlaybackSpeed(it) }
+    userSelectedPlaybackSpeedHook(RememberPlaybackSpeedPatch::userSelectedPlaybackSpeed)
 
     hookPlayerResponseVideoId(RememberPlaybackSpeedPatch::preloadMusicVideoFetch)
 

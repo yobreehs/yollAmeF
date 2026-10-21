@@ -43,7 +43,7 @@ val AutoCaptions = patch(
         }
     })
 
-    onCreateHook.add { AutoCaptionsPatch.newVideoStarted(it) }
+    onCreateHook(AutoCaptionsPatch::newVideoStarted)
 
     hookVideoStarted(AutoCaptionsPatch::videoInformationLoaded)
 

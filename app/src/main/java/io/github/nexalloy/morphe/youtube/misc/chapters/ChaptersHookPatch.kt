@@ -10,7 +10,7 @@ package io.github.nexalloy.morphe.youtube.misc.chapters
 import app.morphe.extension.youtube.patches.ChaptersHookPatch
 import app.morphe.extension.youtube.patches.ChaptersHookPatch.TimelineMarker
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
-import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
+import io.github.nexalloy.morphe.youtube.video.videoid.hookVideoId
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 
@@ -27,7 +27,7 @@ private data class TimelineMarkerAdapter(
 val chaptersHookPatch = patch {
     dependsOn(VideoId)
 
-    videoIdHooks.add(ChaptersHookPatch::newVideoLoaded)
+    hookVideoId(ChaptersHookPatch::newVideoLoaded)
 
     val startMillis = ::timelineMarkerStartMillisField.field
     val endMillis = ::timelineMarkerEndMillisField.field

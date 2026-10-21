@@ -20,7 +20,7 @@ import io.github.nexalloy.morphe.youtube.misc.loadvideo.loadVideoHookPatch
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_05_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
-import io.github.nexalloy.morphe.youtube.video.information.playerStatusMethod
+import io.github.nexalloy.morphe.youtube.video.information.playerStatusOverrideHook
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 
@@ -76,13 +76,7 @@ val addToQueuePatch = patch(
 
     navigationIntentHook(LocalQueuePatch::shouldCancelNavigation)
 
-    ::playerStatusMethod.hookMethod {
-        before {
-            if (LocalQueuePatch.shouldCancelEndOfVideo(it.args[0] as Enum<*>)) {
-                it.result = null
-            }
-        }
-    }
+    playerStatusOverrideHook(LocalQueuePatch::shouldCancelEndOfVideo)
 
     setExtensionIsPatchIncluded(AddToQueuePatch::class.java)
 }

@@ -93,7 +93,7 @@ val CustomPlaybackSpeed = patch(
     // endregion
 
     // Close the unpatched playback dialog and show the custom speeds.
-    addRecyclerViewTreeHook.add { CustomPlaybackSpeedPatch.onFlyoutMenuCreate(it) }
+    addRecyclerViewTreeHook(CustomPlaybackSpeedPatch::onFlyoutMenuCreate)
 
     // Required to check if the playback speed menu is currently shown.
     addLithoFilter(PlaybackSpeedMenuFilter())

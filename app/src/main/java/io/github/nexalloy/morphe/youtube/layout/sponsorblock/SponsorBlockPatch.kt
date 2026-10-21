@@ -30,6 +30,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCateg
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.ControlInitializer
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.LegacyPlayerControls
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.addTopControl
@@ -40,17 +41,24 @@ import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_36_or_greater
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.morphe.youtube.video.information.onCreateHook
-import io.github.nexalloy.morphe.youtube.video.information.videoTimeHooks
+import io.github.nexalloy.morphe.youtube.video.information.videoTimeHook
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
-import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
-import io.github.nexalloy.morphe.shared.misc.settings.preference.screenInfoPreferenceCategory
+import io.github.nexalloy.morphe.youtube.video.videoid.hookVideoId
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import org.luckypray.dexkit.wrap.DexMethod
 
 private const val SB_PREFERENCES_PACKAGE = "app.morphe.extension.youtube.sponsorblock.preferences"
 public fun categoryPreference(settingKey: String): BasePreference =
-    object : BasePreference(settingKey, null, null, null, null, null, SegmentCategoryPreference::class.java) {}
+    object : BasePreference(
+        settingKey,
+        null,
+        null,
+        null,
+        null,
+        null,
+        SegmentCategoryPreference::class.java
+    ) {}
 
 val SponsorBlock = patch(
     name = "SponsorBlock",
@@ -178,8 +186,8 @@ val SponsorBlock = patch(
     )
 
     // Hook the video time methods.
-    videoTimeHooks.add { YouTubeSponsorBlockConfig.setVideoTime(it) }
-    videoIdHooks.add { YouTubeSponsorBlockConfig.setCurrentVideoId(it) }
+    videoTimeHook(YouTubeSponsorBlockConfig::setVideoTime)
+    hookVideoId(YouTubeSponsorBlockConfig::setCurrentVideoId)
 
     // Seekbar drawing
     var rectSetOnce = false
@@ -240,7 +248,7 @@ val SponsorBlock = patch(
     }
 
     // Initialize the player controller.
-    onCreateHook.add { YouTubeSponsorBlockConfig.initialize(it) }
+    onCreateHook(YouTubeSponsorBlockConfig::initialize)
 
     // Initialize the SponsorBlock view.
     val controls_overlay_layout =

@@ -6,12 +6,16 @@ import io.github.nexalloy.morphe.youtube.video.playerresponse.PlayerResponseMeth
 import io.github.nexalloy.morphe.youtube.video.playerresponse.addPlayerResponseMethodHook
 import io.github.nexalloy.patch
 
+private val videoIdHooks = mutableListOf<(String) -> Unit>()
+
 /**
  * Hooks the new video id when the video changes.
  *
  * Supports all videos (regular videos and Shorts).
  */
-val videoIdHooks: MutableList<(String) -> Unit> = mutableListOf()
+fun hookVideoId(hook: (videoId: String) -> Unit) {
+    videoIdHooks.add(hook)
+}
 
 /**
  * Hooks the playlist ID of every video when loaded.

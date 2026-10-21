@@ -79,9 +79,7 @@ val NavigationBar = patch(
     })
 
     // Hook navigation button created, in order to hide them.
-    hookNavigationButtonCreated.add { button, view ->
-        NavigationBarPatch.navigationTabCreated(button, view)
-    }
+    hookNavigationButtonCreated(NavigationBarPatch::navigationTabCreated)
 
     // TODO Hide navigation bar
 

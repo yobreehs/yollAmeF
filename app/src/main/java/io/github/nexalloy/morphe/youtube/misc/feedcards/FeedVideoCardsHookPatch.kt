@@ -7,7 +7,7 @@ import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
 import io.github.nexalloy.morphe.youtube.misc.proto.elementProtoParserHookPatch
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
-import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
+import io.github.nexalloy.morphe.youtube.video.videoid.hookVideoId
 import io.github.nexalloy.patch
 
 /**
@@ -24,7 +24,7 @@ internal val feedVideoCardsHookPatch = patch(
     hookElement(FeedVideoCardsPatch::onElementLoaded)
 
     // The next video that plays in the feed redraws the cards.
-    videoIdHooks.add(FeedVideoCardsPatch::onVideoLoaded)
+    hookVideoId(FeedVideoCardsPatch::onVideoLoaded)
 
     // Feed videos are Litho components and have no views of their own,
     // so the root host of each video is found when it is laid out.

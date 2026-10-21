@@ -25,7 +25,7 @@ import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponseVideoId
-import io.github.nexalloy.morphe.youtube.video.videoid.videoIdHooks
+import io.github.nexalloy.morphe.youtube.video.videoid.hookVideoId
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 
@@ -72,7 +72,7 @@ val returnYouTubeDislikePatch = patch(
 
     // region Inject newVideoLoaded event handler to update dislikes when a new video is loaded.
 
-    videoIdHooks.add(ReturnYouTubeDislikePatch::newVideoLoaded)
+    hookVideoId(ReturnYouTubeDislikePatch::newVideoLoaded)
 
     // Hook the player response video ID, to start loading RYD sooner in the background.
     hookPlayerResponseVideoId(ReturnYouTubeDislikePatch::preloadVideoId)

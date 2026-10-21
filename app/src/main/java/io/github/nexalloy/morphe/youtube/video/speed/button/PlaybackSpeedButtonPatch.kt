@@ -40,7 +40,7 @@ val PlaybackSpeedButton = patch(
         )
     )
 
-    videoSpeedChangedHook.add { PlaybackSpeedDialogButton.videoSpeedChanged(it) }
-    userSelectedPlaybackSpeedHook.add { PlaybackSpeedDialogButton.videoSpeedChanged(it) }
+    videoSpeedChangedHook(PlaybackSpeedDialogButton::videoSpeedChanged)
+    userSelectedPlaybackSpeedHook(PlaybackSpeedDialogButton::videoSpeedChanged)
 }
 

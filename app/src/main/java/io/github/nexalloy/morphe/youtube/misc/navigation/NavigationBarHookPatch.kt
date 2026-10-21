@@ -19,12 +19,15 @@ import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import org.luckypray.dexkit.wrap.DexMethod
 
-fun onNavigationTabCreated(button: NavigationBar.NavigationButton, tabView: View) {
-    hookNavigationButtonCreated.forEach { it(button, tabView) }
+private val navigationButtonCreatedHooks = mutableListOf<(NavigationBar.NavigationButton, View) -> Unit>()
+
+fun hookNavigationButtonCreated(hook: (button: NavigationBar.NavigationButton, view: View) -> Unit) {
+    navigationButtonCreatedHooks.add(hook)
 }
 
-val hookNavigationButtonCreated: MutableList<(NavigationBar.NavigationButton, View) -> Unit> =
-    mutableListOf()
+fun onNavigationTabCreated(button: NavigationBar.NavigationButton, tabView: View) {
+    navigationButtonCreatedHooks.forEach { it(button, tabView) }
+}
 
 val NavigationBarHook = patch(
     description = "Hooks the active navigation or search bar.",

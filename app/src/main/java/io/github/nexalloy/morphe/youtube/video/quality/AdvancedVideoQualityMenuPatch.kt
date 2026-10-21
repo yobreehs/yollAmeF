@@ -49,7 +49,7 @@ val AdvancedVideoQualityMenu = patch {
     }
 
     // region Patch for the new type of the video quality menu.
-    addRecyclerViewTreeHook.add(AdvancedVideoQualityMenuPatch::onFlyoutMenuCreate)
+    addRecyclerViewTreeHook(AdvancedVideoQualityMenuPatch::onFlyoutMenuCreate)
     // Required to check if the video quality menu is currently shown in order to click on the "Advanced" item.
     addLithoFilter(AdvancedVideoQualityMenuFilter())
     // endregion

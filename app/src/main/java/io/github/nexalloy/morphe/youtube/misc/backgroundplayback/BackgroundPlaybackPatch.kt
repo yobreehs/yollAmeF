@@ -33,7 +33,7 @@ val BackgroundPlayback = patch(
         ListPreference("morphe_auto_pause_on_screen_lock")
     )
 
-    onCreateHook.add(BackgroundPlaybackPatch::initialize)
+    onCreateHook(BackgroundPlaybackPatch::initialize)
 
     PreferenceScreen.SHORTS.addPreferences(
         SwitchPreference("morphe_shorts_disable_background_playback"),
