@@ -16,6 +16,7 @@ import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
+import io.github.nexalloy.morphe.shared.misc.videoinformation.seekSourceUnknownField
 import io.github.nexalloy.morphe.string
 import io.github.nexalloy.morphe.youtube.shared.PlaybackSpeedOnItemClickParentFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityChangedFingerprint
@@ -105,6 +106,10 @@ val seekSourceType = findClassDirect {
     SeekFingerprint().paramTypes[1]
 }
 
+val seekSourceUnknown = findFieldDirect {
+    seekSourceUnknownField(seekSourceType().descriptor)
+}
+
 private object CreateVideoPlayerSeekbarFingerprint : Fingerprint(
     name = "onDraw",
     returnType = "V",
@@ -158,6 +163,10 @@ object MdxSeekFingerprint : Fingerprint(
 
 val mdxSeekSourceType = findClassDirect {
     MdxSeekFingerprint().paramTypes[1]
+}
+
+val mdxSeekSourceUnknown = findFieldDirect {
+    seekSourceUnknownField(mdxSeekSourceType().descriptor)
 }
 
 internal object MdxPlayerDirectorSetVideoStageFingerprint : Fingerprint(

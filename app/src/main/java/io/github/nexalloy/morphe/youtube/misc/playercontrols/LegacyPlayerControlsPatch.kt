@@ -11,6 +11,8 @@ import app.morphe.extension.youtube.patches.spans.MetapanelTextColorFilter
 import io.github.nexalloy.HookDsl
 import io.github.nexalloy.IHookCallback
 import io.github.nexalloy.PatchExecutor
+import io.github.nexalloy.morphe.shared.layout.theme.lithoColorHookPatch
+import io.github.nexalloy.morphe.shared.layout.theme.lithoDrawableColorHook
 import io.github.nexalloy.morphe.shared.misc.litho.context.ConversionContext
 import io.github.nexalloy.morphe.shared.misc.spans.addSpanFilter
 import io.github.nexalloy.morphe.shared.misc.spans.inclusiveSpanPatch
@@ -24,6 +26,7 @@ import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_04_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_05_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_08_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_29_or_greater
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_30_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_38_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_36_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_41_or_greater
@@ -138,6 +141,7 @@ val LegacyPlayerControls = patch(
         PlayerControlsOverlayVisibility,
         VersionCheck,
         inclusiveSpanPatch,
+        lithoColorHookPatch { is_21_30_or_greater },
     )
 
     if (is_20_31_or_greater && !is_21_36_or_greater) {
@@ -173,6 +177,9 @@ val LegacyPlayerControls = patch(
             before { LegacyPlayerControlsPatch.setTintImage(it.args[0]) }
             after { it.result = LegacyPlayerControlsPatch.getImageTintColor(it.result as Int) }
         }
+
+        // The page indicator of the comments button can also have the dark theme colors.
+        lithoDrawableColorHook(LegacyPlayerControlsPatch::getBackgroundColor)
 
         // The elevated player shows the video metadata without a background over the
         // ambient mode colors, so the light theme text can not be read.

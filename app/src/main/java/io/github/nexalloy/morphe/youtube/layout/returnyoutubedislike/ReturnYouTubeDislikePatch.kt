@@ -19,6 +19,7 @@ import io.github.nexalloy.morphe.shared.misc.textcomponent.hookLithoSpannableStr
 import io.github.nexalloy.morphe.shared.misc.textcomponent.lithoSpannableStringPatch
 import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
 import io.github.nexalloy.morphe.youtube.misc.playertype.PlayerTypeHook
+import io.github.nexalloy.morphe.youtube.misc.feedcards.feedVideoCardsHookPatch
 import io.github.nexalloy.morphe.youtube.misc.fix.videoactionbar.restoreOldVideoActionBarPatch
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
@@ -30,7 +31,8 @@ import io.github.nexalloy.scopedHook
 
 val returnYouTubeDislikePatch = patch(
     name = "Return YouTube Dislike",
-    description = "Adds an option to show the dislike count of videos with Return YouTube Dislike."
+    description = "Adds an option to show the dislike count of videos with Return YouTube Dislike, " +
+            "and the like count and like ratio on the thumbnails of feed videos."
 ) {
     dependsOn(
         textComponentPatch,
@@ -38,12 +40,15 @@ val returnYouTubeDislikePatch = patch(
         VideoId,
         VideoInformationPatch,
         PlayerTypeHook,
+        feedVideoCardsHookPatch,
         restoreOldVideoActionBarPatch
     )
 
     PreferenceScreen.RETURN_YOUTUBE_DISLIKE.addPreferences(
         SwitchPreference("morphe_ryd_enabled"),
         SwitchPreference("morphe_ryd_dislike_percentage", summary = true),
+        SwitchPreference("morphe_ryd_feed_like_count"),
+        SwitchPreference("morphe_ryd_feed_like_ratio"),
         SwitchPreference("morphe_ryd_estimated_like", summary = true),
         SwitchPreference("morphe_ryd_toast_on_connection_error", summary = true),
         screenInfoPreferenceCategory(

@@ -6,6 +6,7 @@ import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.string
+import org.luckypray.dexkit.result.FieldData
 
 /**
  * Matches method {androidx.media3.exoplayer.ExoPlayerImpl.setPlaybackParameters(PlaybackParameters p1)}
@@ -37,3 +38,14 @@ internal object PlaybackParametersToStringFingerprint : Fingerprint(
         string("PlaybackParameters(speed=%.2f, pitch=%.2f)")
     )
 )
+
+/** The enum fields are obfuscated, but its initializer keeps the constant names as strings. */
+context(bridge: org.luckypray.dexkit.DexKitBridge)
+internal fun seekSourceUnknownField(seekSourceEnumType: String): FieldData = Fingerprint(
+    definingClass = seekSourceEnumType,
+    name = "<clinit>",
+    filters = listOf(
+        string("SEEK_SOURCE_UNKNOWN"),
+        fieldAccess(opcode = Opcode.SPUT_OBJECT, definingClass = seekSourceEnumType, type = seekSourceEnumType)
+    )
+).instructionMatches[1].instruction.fieldRef!!

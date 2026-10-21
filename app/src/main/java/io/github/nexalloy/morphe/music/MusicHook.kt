@@ -2,7 +2,7 @@ package io.github.nexalloy.morphe.music
 
 import io.github.nexalloy.ExtensionResourceHook
 import io.github.nexalloy.morphe.music.ad.HideAds
-import io.github.nexalloy.morphe.music.audio.exclusiveaudio.EnableExclusiveAudioPlayback
+import io.github.nexalloy.morphe.music.misc.audio.EnableExclusiveAudioPlayback
 import io.github.nexalloy.morphe.music.layout.upgradebutton.HideUpgradeButton
 import io.github.nexalloy.morphe.music.misc.backgroundplayback.BackgroundPlayback
 import io.github.nexalloy.morphe.music.misc.debugging.EnableDebugging

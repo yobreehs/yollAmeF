@@ -1,6 +1,7 @@
 package io.github.nexalloy.morphe.shared.misc.proto
 
 import io.github.nexalloy.patch
+import io.github.nexalloy.Patch
 
 
 /**
@@ -9,15 +10,27 @@ import io.github.nexalloy.patch
  * Hooks the generic proto parser method so that patched extensions can inspect (and modify)
  * the raw byte buffer of every parsed proto element.
  *
- * @param sharedExtensionPatchDep The app-specific `sharedExtensionPatch`.
+ * @param readsResourcesWithParser Whether inline resources can be read with this parser (YouTube 21.40+).
  */
 internal fun createElementProtoParserHookPatch(
+    readsResourcesWithParser: () -> Boolean = { false },
+    vararg dependencies: Patch,
 ) = patch(
     description = "Hook to modify the proto message class, which can only be accessed through reflection.",
 ) {
+    dependsOn(*dependencies)
+    val resourceDepth = ThreadLocal.withInitial { 0 }
+    if (readsResourcesWithParser()) {
+        // Inline resources are not elements, so their parser calls have no element hooks.
+        ::resourceBytesMethod.hookMethod {
+            before { resourceDepth.set(resourceDepth.get()!! + 1) }
+            after { resourceDepth.set(resourceDepth.get()!! - 1) }
+        }
+    }
 
     NewElementProtoParserFingerprint.hookMethod {
         after {
+            if (it.hasThrowable() || resourceDepth.get()!! > 0) return@after
             var result = it.result as ByteArray?
             hooks.forEach {
                 result = it(result)

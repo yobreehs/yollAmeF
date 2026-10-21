@@ -8,7 +8,6 @@ import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.bindProxy
 import io.github.nexalloy.createProxy
 import io.github.nexalloy.findFirstFieldByExactType
-import io.github.nexalloy.getStaticObjectField
 import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.litho.context.conversionContextPatch
 import io.github.nexalloy.morphe.shared.misc.textcomponent.hookSpannableString
@@ -124,8 +123,7 @@ val VideoInformationPatch = patch(
 
     //region playerController
     PlayerInitFingerprint.apply {
-        val seekSourceType = ::seekSourceType.clazz
-        val seekSourceNone = seekSourceType.getStaticObjectField("a")!!
+        val seekSourceNone = ::seekSourceUnknown.field.get(null)!!
         hookMethod {
             val seekFingerprint = SeekFingerprint.method
             val seekRelativeFingerprint = SeekRelativeFingerprint.method
@@ -148,8 +146,7 @@ val VideoInformationPatch = patch(
 
     //region mdxPlayerDirector
     MdxPlayerDirectorSetVideoStageFingerprint.apply {
-        val seekSourceType = ::mdxSeekSourceType.clazz
-        val seekSourceNone = seekSourceType.getStaticObjectField("a")!!
+        val seekSourceNone = ::mdxSeekSourceUnknown.field.get(null)!!
         hookMethod {
             val mdxSeekFingerprint = MdxSeekFingerprint.method
             val mdxSeekRelativeFingerprint = MdxSeekRelativeFingerprint.method

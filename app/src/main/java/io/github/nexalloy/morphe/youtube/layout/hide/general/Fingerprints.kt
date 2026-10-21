@@ -33,20 +33,41 @@ private object PlayerOverlayFingerprint : Fingerprint(
     strings = listOf("player_overlay_in_video_programming"),
 )
 
+/** Sets the visibility of the channel watermark from a boolean field of the overlay. */
 internal object ShowWatermarkFingerprint : Fingerprint(
     classFingerprint = PlayerOverlayFingerprint,
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",
-    parameters = listOf("L", "L"),
+    parameters = listOf("Landroid/content/Context;", "Landroid/view/View;"),
+    filters = listOf(
+        fieldAccess(opcode = Opcode.IGET_BOOLEAN, definingClass = "this"),
+        methodCall(
+            opcode = Opcode.INVOKE_STATIC,
+            parameters = listOf("Landroid/view/View;", "Z"),
+            returnType = "V",
+            location = MatchAfterImmediately()
+        )
+    )
 )
 
 internal val showWatermarkSubFingerprint = findMethodDirect {
-    ShowWatermarkFingerprint.run().invokes.findMethod {
-        matcher {
-            returnType = "void"
-            paramTypes("android.view.View", "boolean")
-        }
-    }.single()
+    ShowWatermarkFingerprint.instructionMatches[1].instruction.methodRef!!
+}
+
+@SkipTest
+internal object MoreCommentsIconFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Landroid/view/View;",
+    parameters = listOf(),
+    filters = listOf(
+        resourceLiteral(ResourceType.ID, "more_comments_icon"),
+        methodCall(opcode = Opcode.INVOKE_VIRTUAL, name = "findViewById"),
+        opcode(Opcode.MOVE_RESULT_OBJECT, location = MatchAfterImmediately())
+    )
+)
+
+val moreCommentsIconMethods = findMethodListDirect {
+    MoreCommentsIconFingerprint.matchAll().map { it.method }
 }
 
 @SkipTest

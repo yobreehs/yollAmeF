@@ -1,11 +1,14 @@
 package io.github.nexalloy.morphe.shared.misc.proto
 
+import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.checkCast
+import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
 
 @StrictQuery
@@ -35,3 +38,18 @@ private object ProtoStuffReflectionFingerprint : Fingerprint(
         )
     )
 )
+
+/** Bytes of an inline resource of a response, rather than a proto element. Added in YouTube 21.40. */
+@get:RequireAppVersion(minVersion = "21.40.000")
+val resourceBytesMethod = findMethodDirect {
+    val parser = NewElementProtoParserFingerprint()
+    Fingerprint(
+        accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.STATIC),
+        returnType = "[B",
+        parameters = listOf(parser.paramTypes.first().descriptor, "Z"),
+        filters = listOf(
+            methodCall(reference = parser),
+            opcode(Opcode.ARRAY_LENGTH)
+        )
+    ).match().method
+}

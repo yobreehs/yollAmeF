@@ -132,9 +132,11 @@ val HideLayoutComponents = patch(
                 SwitchPreference("morphe_hide_comments_gift_button"),
                 SwitchPreference("morphe_hide_comments_info_button"),
                 SwitchPreference("morphe_hide_comments_live_chat_donators_bar"),
+                SwitchPreference("morphe_hide_comments_live_chat_scroll_to_bottom_button"),
                 SwitchPreference("morphe_hide_comments_live_chat_tooltips", summary = true),
                 SwitchPreference("morphe_hide_comments_menu_button", summary = true),
 //                SwitchPreference("morphe_hide_comments_preview_comment", summary = true),
+                SwitchPreference("morphe_hide_comments_zero_state"),
                 SwitchPreference("morphe_minimal_comments_button", summary = true),
                 SwitchPreference("morphe_hide_comments_thanks_button"),
                 SwitchPreference("morphe_hide_comments_timestamp_button"),
@@ -592,6 +594,22 @@ val HideLayoutComponents = patch(
             }
         }
     }
+
+    // region hide live chat scroll to bottom button
+
+    val moreCommentsIcon = getIdIdentifier("more_comments_icon")
+    val findViewById = View::class.java.getDeclaredMethod("findViewById", Int::class.javaPrimitiveType)
+    ::moreCommentsIconMethods.dexMethodList.forEach { method ->
+        method.hookMethod(scopedHook(findViewById) {
+            after {
+                if (it.args[0] == moreCommentsIcon) {
+                    CommentsFilter.hideLiveChatScrollToBottomButton(it.result as? View)
+                }
+            }
+        })
+    }
+
+    // endregion
 
     // layout hook
     DexMethod("Landroid/view/LayoutInflater;->inflate(ILandroid/view/ViewGroup;)Landroid/view/View;").hookMethod {
