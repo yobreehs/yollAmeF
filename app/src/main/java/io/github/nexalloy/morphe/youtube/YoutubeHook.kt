@@ -6,9 +6,9 @@ import io.github.libxposed.api.XposedInterface
 import io.github.nexalloy.ExtensionResourceHook
 import io.github.nexalloy.addModuleAssets
 import io.github.nexalloy.atLast
+import io.github.nexalloy.hookExtensionClassLoading
 import io.github.nexalloy.hookMethod
 import io.github.nexalloy.injectHostClassLoaderToSelf
-import io.github.nexalloy.injectSelfClassLoaderToHost
 import io.github.nexalloy.morphe.shared.misc.CheckRecycleBitmapMediaSession
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatureFlagFingerprint
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalIndexedBooleanFeatureFlagFingerprint
@@ -48,7 +48,7 @@ import org.luckypray.dexkit.wrap.DexMethod
 
 val ExtensionHook = patch(name = "<ExtensionHook>") {
     injectHostClassLoaderToSelf(this::class.java.classLoader!!, classLoader)
-    injectSelfClassLoaderToHost(this::class.java.classLoader!!, classLoader)
+    hookExtensionClassLoading(this::class.java.classLoader!!)
     DexMethod("$YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE->onCreate(Landroid/os/Bundle;)V").hookMethod {
         before {
             val mainActivity = it.thisObject as Activity
