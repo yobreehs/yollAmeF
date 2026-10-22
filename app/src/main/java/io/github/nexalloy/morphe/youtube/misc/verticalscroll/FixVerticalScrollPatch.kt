@@ -1,10 +1,10 @@
 package io.github.nexalloy.morphe.youtube.misc.verticalscroll
 
-import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_18_or_greater
 import io.github.nexalloy.patch
+import io.github.nexalloy.scopedHook
 
 val FixVerticalScroll = patch(
     description = "Fixes issues with refreshing the feed when the first component is of type EmptyComponent."
@@ -16,5 +16,10 @@ val FixVerticalScroll = patch(
         insertLiteralOverride(45782902L)
     }
 
-    ::canScrollVerticallyFingerprint.hookMethod(returnConstant(false))
+    // Only inside SwipeRefreshLayout.canScrollVertically() the check is forced to false,
+    // so the feed can always be pulled down to refresh (the layout wrongly assumes it is
+    // scrolled when the first component is an EmptyComponent).
+    CanScrollVerticallyFingerprint.hookMethod(scopedHook(::canScrollVerticallyMethod.method) {
+        after { it.result = false }
+    })
 }

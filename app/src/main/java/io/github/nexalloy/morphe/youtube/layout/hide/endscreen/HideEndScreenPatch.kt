@@ -1,7 +1,7 @@
 package io.github.nexalloy.morphe.youtube.layout.hide.endscreen
 
+import android.content.Context
 import android.view.View
-import android.view.ViewStub
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.shared.patches.components.BufferAsciiStrings
@@ -10,144 +10,125 @@ import app.morphe.extension.shared.patches.components.Filter
 import app.morphe.extension.shared.patches.components.StringFilterGroup
 import app.morphe.extension.shared.settings.BooleanSetting
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
-import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
-import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
+import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.patch
-import org.luckypray.dexkit.wrap.DexMethod
+
+private const val SETTING_KEY = "morphe_hide_end_screen"
+
+/** Name of the preferences file used by the in-app Morphe settings screen. */
+private const val SETTINGS_PREFERENCES_NAME = "morphe_prefs"
 
 /**
- * Registered lazily (app-side) so the in-app settings screen resolves the key
- * (no "Preference key has no setting" debug log) and the settings UI keeps the
- * value live via the normal Setting sync. No extension-side setting is needed.
+ * Setting backing the toggle. Created eagerly inside the patch (the Setting constructor needs
+ * `Utils.getContext()`, which is already available when patches are applied) so the settings
+ * screen always finds it in `Setting.getSettingFromPath()` and syncs both directions.
  *
- * MUST NOT be a plain top-level val: the Setting constructor requires
- * Utils.getContext(), which is only set after the first YouTube activity is
- * created. Eager initialization at class load kills the whole module.
+ * MUST NOT be a top-level val: eager initialization at class load kills the whole module.
  */
-val hideEndScreenSetting by lazy { BooleanSetting("morphe_hide_end_screen", false) }
+internal lateinit var hideEndScreenSetting: BooleanSetting
+    private set
+
+@Volatile
+private var lastLoggedValue: Boolean? = null
+
+/**
+ * Reads the toggle directly from the in-app preferences file on every call.
+ *
+ * The settings screen writes the switch value there, and reading the file avoids relying on the
+ * cached [BooleanSetting] value. This keeps the feature in sync with the UI even if the
+ * Setting/preference sync is skipped (for example when the settings screen was opened before
+ * the Setting object was created).
+ */
+fun isHideEndScreenEnabled(): Boolean {
+    val fromPreferences = runCatching {
+        Utils.getContext()
+            .getSharedPreferences(SETTINGS_PREFERENCES_NAME, Context.MODE_PRIVATE)
+            // A missing key means the switch is at its default (false).
+            .getBoolean(SETTING_KEY, false)
+    }.getOrNull()
+
+    val enabled = fromPreferences ?: runCatching { hideEndScreenSetting.get() }.getOrDefault(false)
+    if (lastLoggedValue != enabled) {
+        lastLoggedValue = enabled
+        Logger.printDebug {
+            "HideEndScreen: enabled=$enabled (preferences=${fromPreferences ?: "unavailable"})"
+        }
+    }
+    return enabled
+}
 
 /**
  * Adds an option to hide the end screen (video suggestions with channel icons) that YouTube
  * shows at the end of a video.
  *
- * The end screen ("full_screen_end_screen" / "related_endscreen_results") is created by the
- * player when the video ends. All creation paths are intercepted so no variant escapes.
+ * The end screen is composed of the creator end screen cards (channel avatar / icon / video
+ * cards) and the autonav suggested-video preview. Both are hidden through dedicated method
+ * hooks (see [Fingerprints.kt]):
+ *
+ * - `ShowEndScreenCardsFingerprint` — the method that displays the whole card group.
+ * - `endScreenSuggestedVideoMethod` — the method that lays out the "up next" preview.
+ *
+ * The previous implementation hooked `ViewStub.setVisibility` / `View.findViewById` /
+ * `View.setVisibility` by resource id. That never worked on current versions because the ids
+ * `full_screen_end_screen` / `related_endscreen_results` are plain views inside layouts (not
+ * ViewStubs), so the hooks either never matched or added a global `View.setVisibility` hook
+ * that only cost performance.
  */
 val HideEndScreen = patch(
     name = "Hide end screen",
     description = "Hides the video suggestions end screen (and its channel icons) shown at the end of a video.",
 ) {
-    dependsOn(LithoFilter)
+    dependsOn(VersionCheck)
 
-    // Registered both in the "New features → Player" chapter and in the main "Player" section,
-    // so the toggle is easy to find regardless of where the user looks.
+    hideEndScreenSetting = BooleanSetting(SETTING_KEY, false)
+
+    // Registered only once, in the "New features → Player" chapter. Registering the same key a
+    // second time (previously also on the main "Player" screen) leaves two independent
+    // SwitchPreference objects that do not update each other, so the other screen keeps showing
+    // a stale (often still checked) state until the settings activity is recreated.
     addNewFeaturesPlayerPreferences(
-        SwitchPreference("morphe_hide_end_screen", summary = true),
-    )
-    PreferenceScreen.PLAYER.addPreferences(
-        SwitchPreference("morphe_hide_end_screen", summary = true),
+        SwitchPreference(SETTING_KEY, summary = true),
     )
 
-    // Since 21.39 the end-of-video suggestion strip is delivered as an elements (eml-js-fe)
-    // component ("teaser_carousel_with_controller.eml-js-fe|<hash>"), so it goes through the
-    // Litho filter machinery (see "Searching ID:" debug lines). Filter it by identifier;
-    // the native view hooks below remain as a fallback for other versions.
+    // Fallback for the elements (eml-js-fe) teaser component that has been seen since 21.39.
+    // Harmless if the identifier is not present in a given version.
     addLithoFilter(EndScreenTeaserFilter())
 
-    val endScreenId by lazy {
-        runCatching {
-            Utils.getContext().resources
-                .getIdentifier("full_screen_end_screen", "id", Utils.getContext().packageName)
-        }.getOrDefault(0)
-    }
-    val endScreenResultsId by lazy {
-        runCatching {
-            Utils.getContext().resources
-                .getIdentifier("related_endscreen_results", "id", Utils.getContext().packageName)
-        }.getOrDefault(0)
-    }
-
-    var idsLogged = false
-    fun logIdsIfNeeded() {
-        if (!idsLogged) {
-            idsLogged = true
-            if (endScreenId == 0 && endScreenResultsId == 0) {
-                Logger.printDebug { "HideEndScreen: no end screen ids found in this version" }
-            }
-            Logger.printDebug {
-                "HideEndScreen: full_screen_end_screen id=$endScreenId, " +
-                    "related_endscreen_results id=$endScreenResultsId, " +
-                    "enabled=${hideEndScreenSetting.get()}"
+    // 1) Hide the creator end screen cards (video cards, channel avatar and icons).
+    ShowEndScreenCardsFingerprint.hookMethod {
+        before {
+            if (isHideEndScreenEnabled()) {
+                Logger.printDebug { "HideEndScreen: suppressing end screen cards" }
+                it.result = null
             }
         }
     }
 
-    fun isHideEndScreenEnabled(): Boolean {
-        logIdsIfNeeded()
-        return hideEndScreenSetting.get()
-    }
-
-    fun isEndScreenView(view: View): Boolean =
-        view.id == endScreenId || view.id == endScreenResultsId
-
-    fun hideEndScreenView(view: View) {
-        view.visibility = View.GONE
-        Logger.printDebug { "Hiding end screen view: id=${view.id} class=${view.javaClass.name}" }
-    }
-
-    val isEndScreenStub: (ViewStub) -> Boolean = { stub ->
-        stub.id == endScreenId || stub.id == endScreenResultsId ||
-            stub.inflatedId == endScreenId || stub.inflatedId == endScreenResultsId
-    }
-
-    // 1) The end screen is inflated from a stub when the video ends;
-    //    suppress showing the stub (same mechanism as the autoplay preview).
-    DexMethod("Landroid/view/ViewStub;->setVisibility(I)V").hookMethod {
-        before { param ->
-            if (param.thisObject is ViewStub) {
-                val stub = param.thisObject as ViewStub
-                if ((param.args[0] as? Int) == View.VISIBLE &&
-                    isEndScreenStub(stub) && isHideEndScreenEnabled()
-                ) {
-                    Logger.printDebug { "HideEndScreen: suppressing end screen stub (id=${stub.id})" }
-                    param.result = null
+    // Hide the cards as well right after they are created, in case a variant of the layout is
+    // added to the player without going through the method above.
+    listOf(
+        EndScreenLayoutCircleFingerprint,
+        EndScreenLayoutIconFingerprint,
+        EndScreenLayoutVideoFingerprint,
+    ).forEach { fingerprint ->
+        fingerprint.memberOrNull?.hookMethod {
+            after {
+                if (isHideEndScreenEnabled()) {
+                    (it.result as? View)?.visibility = View.GONE
                 }
             }
         }
     }
 
-    // 2) Some versions call stub.inflate() directly; hide the inflated view.
-    DexMethod("Landroid/view/ViewStub;->inflate()Landroid/view/View;").hookMethod {
-        after { param ->
-            if (param.thisObject is ViewStub) {
-                val stub = param.thisObject as ViewStub
-                if (isEndScreenStub(stub) && isHideEndScreenEnabled()) {
-                    (param.result as? View)?.let { hideEndScreenView(it) }
-                }
-            }
-        }
-    }
-
-    // 3) Native layouts resolved by id (not stubs) — hide right when they are found.
-    DexMethod("Landroid/view/View;->findViewById(I)Landroid/view/View;").hookMethod {
-        after { param ->
-            val id = param.args[0] as? Int ?: return@after
-            if ((id == endScreenId || id == endScreenResultsId) && isHideEndScreenEnabled()) {
-                (param.result as? View)?.let { hideEndScreenView(it) }
-            }
-        }
-    }
-
-    // 4) The end screen root is often shown with plain View.setVisibility(VISIBLE);
-    //    suppress the show (the view is left GONE).
-    DexMethod("Landroid/view/View;->setVisibility(I)V").hookMethod {
-        before { param ->
-            if ((param.args[0] as? Int) != View.VISIBLE) return@before
-            val view = param.thisObject as? View ?: return@before
-            if (isEndScreenView(view) && isHideEndScreenEnabled()) {
-                param.result = null
+    // 2) Hide the suggested video ("up next") preview.
+    ::endScreenSuggestedVideoMethod.memberOrNull?.hookMethod {
+        before {
+            if (isHideEndScreenEnabled()) {
+                Logger.printDebug { "HideEndScreen: suppressing suggested video end screen" }
+                it.result = null
             }
         }
     }
@@ -175,5 +156,5 @@ class EndScreenTeaserFilter : Filter() {
         matchedGroup: StringFilterGroup,
         contentType: Filter.FilterContentType,
         contentIndex: Int,
-    ): Boolean = hideEndScreenSetting.get()
+    ): Boolean = isHideEndScreenEnabled()
 }

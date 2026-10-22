@@ -59,6 +59,17 @@ fun enableDebuggingPatch(
         }
     }
 
+    // 21.42+ adds a second boolean accessor that takes the proto type as the first int.
+    // The accessor is absent on older versions.
+    ::experimentalIndexedBooleanFeatureFlagFingerprint.memberOrNull?.hookMethod {
+        after {
+            it.result = EnableDebuggingPatch.isBooleanFeatureFlagEnabled(
+                it.result as Boolean,
+                it.args.atLast(2) as Long
+            )
+        }
+    }
+
     if (hookDoubleFeatureFlag()) {
         ::experimentalDoubleFeatureFlagFingerprint.hookMethod {
             after {
