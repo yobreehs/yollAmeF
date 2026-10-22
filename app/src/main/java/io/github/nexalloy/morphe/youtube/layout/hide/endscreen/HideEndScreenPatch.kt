@@ -4,12 +4,7 @@ import android.content.Context
 import android.view.View
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.Utils
-import app.morphe.extension.shared.patches.components.BufferAsciiStrings
-import app.morphe.extension.shared.patches.components.ContextInterface
-import app.morphe.extension.shared.patches.components.Filter
-import app.morphe.extension.shared.patches.components.StringFilterGroup
 import app.morphe.extension.shared.settings.BooleanSetting
-import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
@@ -93,9 +88,12 @@ val HideEndScreen = patch(
         SwitchPreference(SETTING_KEY, summary = true),
     )
 
-    // Fallback for the elements (eml-js-fe) teaser component that has been seen since 21.39.
-    // Harmless if the identifier is not present in a given version.
-    addLithoFilter(EndScreenTeaserFilter())
+    // NOTE: the previous revision also registered a Litho filter for the identifier
+    // "teaser_carousel_with_controller". That identifier is not exclusive to the end screen:
+    // the upstream comments filter uses the same component for the comments teaser
+    // (see CommentsFilter's "comments" group), so filtering it made the comments disappear from
+    // the watch page. The component is now left alone: the method hooks below already hide the
+    // end screen, and they do not touch comments.
 
     // 1) Hide the creator end screen cards (video cards, channel avatar and icons).
     ShowEndScreenCardsFingerprint.hookMethod {
@@ -132,29 +130,4 @@ val HideEndScreen = patch(
             }
         }
     }
-}
-
-/**
- * Filters the end-of-video "teaser" (suggested video + channel icon) that appears in the last
- * seconds of a video. Since 21.39 it is an elements component:
- * "teaser_carousel_with_controller.eml-js-fe|<hash>" (seen in the Debug protobuffer log).
- */
-class EndScreenTeaserFilter : Filter() {
-    init {
-        addIdentifierCallbacks(
-            StringFilterGroup(null, "teaser_carousel_with_controller")
-        )
-    }
-
-    override fun isFiltered(
-        contextInterface: ContextInterface,
-        identifier: String,
-        accessibility: String,
-        path: CharSequence,
-        buffer: ByteArray,
-        asciiStrings: BufferAsciiStrings,
-        matchedGroup: StringFilterGroup,
-        contentType: Filter.FilterContentType,
-        contentIndex: Int,
-    ): Boolean = isHideEndScreenEnabled()
 }
