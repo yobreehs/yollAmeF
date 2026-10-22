@@ -1,8 +1,10 @@
 package io.github.nexalloy.morphe.shared
 
+import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.StringComparisonType
+import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.string
@@ -40,3 +42,20 @@ internal object SpannableStringBuilderFingerprint : Fingerprint(
 val spannableStringBuilderGetSpannedMethod = findMethodDirect {
     SpannableStringBuilderFingerprint.instructionMatches[0].instruction.methodRef!!
 }
+/**
+ * `FormatStream.toString()` — anchor class for the stream (format) model.
+ */
+internal object FormatStreamModelToStringFingerprint : Fingerprint(
+    name = "toString",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Ljava/lang/String;",
+    filters = listOf(
+        string(" isDefaultAudioTrack="),
+        string(" audioTrackId="),
+        string(" audioTrackDisplayName="),
+        string(" width="),
+        string(" height="),
+        string("FormatStream(itag="),
+        string(" mimeType=")
+    )
+)
