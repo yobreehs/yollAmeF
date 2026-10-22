@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.youtube.shared
 
+import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
@@ -8,6 +9,7 @@ import io.github.nexalloy.morphe.InstructionLocation.MatchFirst
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
 import io.github.nexalloy.morphe.StrictQuery
+import io.github.nexalloy.morphe.StringComparisonType
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
 import io.github.nexalloy.morphe.findMethodDirect
@@ -223,3 +225,72 @@ internal object InitializePlaybackSpeedValuesFingerprint : Fingerprint(
         string("menu_item_playback_speed"),
     )
 )
+
+internal object VideoPlaybackIntentFingerprint : Fingerprint(
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf("L", "Ljava/util/Map;"),
+    filters = listOf(
+        methodCall(opcode = Opcode.INVOKE_VIRTUAL, parameters = listOf(), returnType = "L"),
+        opcode(Opcode.MOVE_RESULT_OBJECT, MatchAfterImmediately()),
+        string("PLAYBACK_START_DESCRIPTOR_MUTATOR", MatchAfterImmediately()),
+        string("force_fullscreen"),
+        string("VideoPresenterConstants.VIDEO_THUMBNAIL_BITMAP_KEY")
+    )
+)
+
+@RequireAppVersion(minVersion = "21.20.000")
+internal object ShortsPlaybackIntentFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PROTECTED, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf(
+        "L",
+        "Ljava/util/Map;",
+        "J",
+        "Ljava/lang/String;"
+    ),
+    filters = listOf(
+        // None of these strings are unique.
+        string("PLAYBACK_START_DESCRIPTOR_MUTATOR"),
+        string("com.google.android.apps.youtube.app.endpoint.flags"),
+        string("com.google.android.libraries.youtube.rendering.elements.sender_view")
+    )
+)
+
+@RequireAppVersion(maxVersion = "21.20.000")
+internal object ShortsPlaybackIntentFingerprintLegacy : Fingerprint(
+    accessFlags = listOf(AccessFlags.PROTECTED, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf(
+        "L",
+        "Ljava/util/Map;",
+        "J",
+        "Ljava/lang/String;"
+    ),
+    filters = listOf(
+        // None of these strings are unique.
+        string("com.google.android.apps.youtube.app.endpoint.flags"),
+        string("ReelWatchFragmentArgs"),
+        string("reels_fragment_descriptor")
+    )
+)
+
+internal object PlaybackStartDescriptorToStringFingerprint : Fingerprint(
+    name = "toString",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Ljava/lang/String;",
+    filters = listOf(
+        methodCall(smali = "Ljava/util/Locale;->getDefault()Ljava/util/Locale;"),
+        // First method call after Locale is the video ID.
+        methodCall(returnType = "Ljava/lang/String;", parameters = listOf()),
+        string("PlaybackStartDescriptor:", comparison = StringComparisonType.STARTS_WITH)
+    )
+)
+
+val playbackStartVideoIdMethod = findMethodDirect {
+    PlaybackStartDescriptorToStringFingerprint.instructionMatches[1].instruction.methodRef!!
+}
+
+val regularVideoPlaybackStartDescriptorGetter = findMethodDirect {
+    VideoPlaybackIntentFingerprint.instructionMatches.first().instruction.methodRef!!
+}

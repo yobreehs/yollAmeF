@@ -2,9 +2,9 @@ package io.github.nexalloy.morphe.youtube.misc.contexthook
 
 import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.morphe.Fingerprint
-import io.github.nexalloy.morphe.music.misc.playservice.versionCheckPatch
+import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
+import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_20_or_greater
 import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_21_or_greater
-import io.github.nexalloy.morphe.youtube.misc.playservice.is_21_33_or_greater
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
 import java.lang.reflect.Field
@@ -40,12 +40,12 @@ enum class Endpoint {
 val clientContextHookPatch = patch(
     description = "Hooks the context body of the endpoint.",
 ) {
-    dependsOn(versionCheckPatch)
+    dependsOn(VersionCheck)
 
     val clientInfoField = ::clientInfoField.field
     val messageLiteBuilderField = ::messageLiteBuilderField.field
 
-    val messageLiteBuilderMethod = if (is_21_33_or_greater)
+    val messageLiteBuilderMethod = if (is_21_20_or_greater)
         ::messageLiteBuilderMethod.method else
         ::messageLiteBuilderMethodLegacy.method
 

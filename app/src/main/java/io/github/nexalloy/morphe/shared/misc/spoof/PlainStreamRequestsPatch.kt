@@ -33,4 +33,25 @@ val plainStreamRequestsPatch = patch {
         method.toMethod() to limitRange
     }.toTypedArray()
     CronetUrlRequestBuildFingerprint.hookMethod(scopedHook(*createRequestHooks))
+
+    // A shortened response must pause the transfer so saving continues from the last byte read.
+    val remainingBytes = ::cronetRemainingBytesField.field
+    val pauseTransfer = PriorityTooLowExceptionFingerprint.constructor
+    listOf(CronetDataSourceReadFingerprint, CronetDataSourceReadBufferFingerprint).forEach { fingerprint ->
+        fingerprint.hookMethod {
+            before {
+                if (SpoofVideoStreamsPatch.isLimitedStreamRangeFinished(remainingBytes.getLong(it.thisObject))) {
+                    it.throwable = pauseTransfer.newInstance(0, 0) as Throwable
+                }
+            }
+            after {
+                // A successful read still delivers its bytes; the next read pauses at entry.
+                if (!it.hasThrowable() && it.result == -1 &&
+                    SpoofVideoStreamsPatch.isLimitedStreamRangeFinished(remainingBytes.getLong(it.thisObject))
+                ) {
+                    it.throwable = pauseTransfer.newInstance(0, 0) as Throwable
+                }
+            }
+        }
+    }
 }

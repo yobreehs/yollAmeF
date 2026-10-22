@@ -49,13 +49,14 @@ internal object ControlsStateToStringFingerprint : Fingerprint(
 internal object VideoStateEnumFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.STATIC, AccessFlags.CONSTRUCTOR),
     parameters = listOf(),
-    strings = listOf(
-        "NEW",
-        "PLAYING",
-        "PAUSED",
-        "RECOVERABLE_ERROR",
-        "UNRECOVERABLE_ERROR",
-        "ENDED"
+    filters = listOf(
+        string("NEW"),
+        string("PLAYING"),
+        string("PAUSED"),
+        string("RECOVERABLE_ERROR"),
+        string("UNRECOVERABLE_ERROR"),
+        string("ENDED"),
+        opcode(Opcode.APUT_OBJECT)
     )
 )
 

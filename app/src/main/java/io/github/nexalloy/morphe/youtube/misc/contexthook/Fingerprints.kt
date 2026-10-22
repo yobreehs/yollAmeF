@@ -21,7 +21,7 @@ import io.github.nexalloy.morphe.string
 import io.github.nexalloy.morphe.youtube.shared.BuildClientContextBodyConstructorFingerprint
 import io.github.nexalloy.morphe.youtube.shared.CLIENT_INFO_CLASS
 
-// 21.33+
+// 21.20+
 @SkipTest
 internal object AuthenticationChangeListenerFingerprint : Fingerprint(
     classFingerprint = Fingerprint(
@@ -92,7 +92,7 @@ val messageLiteBuilderField = findFieldDirect {
     BuildDummyClientContextBodyFingerprint.instructionMatches.first().instruction.fieldRef!!
 }
 
-@get:RequireAppVersion(maxVersion = "21.33.000")
+@get:RequireAppVersion(maxVersion = "21.20.000")
 val messageLiteBuilderMethodLegacy = findMethodDirect {
     val messageLiteBuilderClassName = messageLiteBuilderField().declaredClassName
     Fingerprint(
@@ -107,7 +107,7 @@ val messageLiteBuilderMethodLegacy = findMethodDirect {
     }.invokes.single { it.returnTypeName == messageLiteBuilderClassName }
 }
 
-@get:RequireAppVersion("21.33.000")
+@get:RequireAppVersion("21.20.000")
 val messageLiteBuilderMethod = findMethodDirect {
     val messageLiteBuilderClassName = messageLiteBuilderField().declaredClassName
     AuthenticationChangeListenerFingerprint.matchAll().mapNotNull {
@@ -171,14 +171,14 @@ open class EndpointRequestBodyFingerprint(
     strings: List<String>? = null
 ) : Fingerprint(
     classFingerprint = Fingerprint(
-        classFingerprint,
-        definingClass,
-        name,
-        accessFlags,
-        returnType,
-        parameters,
-        filters,
-        strings
+        classFingerprint = classFingerprint,
+        definingClass = definingClass,
+        name = name,
+        accessFlags = accessFlags,
+        returnType = returnType,
+        parameters = parameters,
+        filters = filters,
+        strings = strings
     ),
     accessFlags = listOf(AccessFlags.PROTECTED, AccessFlags.FINAL),
     returnType = "V",

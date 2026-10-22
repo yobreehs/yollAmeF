@@ -4,11 +4,13 @@
  *
  * See the included NOTICE file for GPLv3 Section 7 terms that apply to this code.
  */
+
 package io.github.nexalloy.morphe.youtube.misc.chapters
 
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterLast
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterWithin
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.ResourceType
@@ -35,7 +37,8 @@ internal fun getTimelineMarkersArrayFingerprint(timelineMarkerClassName: String)
     returnType = "[$timelineMarkerClassName",
     parameters = listOf("L"),
     filters = listOf(
-        checkCast("[$timelineMarkerClassName")
+        checkCast("[$timelineMarkerClassName"),
+        opcode(Opcode.RETURN_OBJECT, location = MatchAfterLast())
     )
 ) {}
 

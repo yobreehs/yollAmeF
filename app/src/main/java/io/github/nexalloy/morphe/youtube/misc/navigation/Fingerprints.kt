@@ -12,12 +12,11 @@ import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.resourceMappings
 import io.github.nexalloy.morphe.returns
 import io.github.nexalloy.morphe.string
-import org.luckypray.dexkit.query.enums.StringMatchType
 
 val toolbarContainerId get() = resourceMappings["id", "toolbar_container"]
 
 object ToolbarLayoutFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.CONSTRUCTOR),
+    name = "<init>",
     filters = listOf(
         resourceLiteral(ResourceType.ID, "toolbar_container")
     )

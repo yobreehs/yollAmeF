@@ -1,11 +1,11 @@
 package io.github.nexalloy.morphe.youtube.misc.playercontrols
 
+import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchFirst
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.OpcodesFilter
-import io.github.nexalloy.RequireAppVersion
 import io.github.nexalloy.morphe.StringComparisonType
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findFieldListDirect
@@ -65,7 +65,7 @@ internal object PlayerControlsVisibilityEntityModelFingerprint : Fingerprint(
  */
 @RequireAppVersion("21.08.000")
 internal object ElementsImageComponentFingerprint : Fingerprint(
-    filters = listOf(string("Failed to find a valid source for the image", comparison = StringComparisonType.CONTAINS))
+    strings = listOf(string("Failed to find a valid source for the image", comparison = StringComparisonType.STARTS_WITH))
 )
 
 /**

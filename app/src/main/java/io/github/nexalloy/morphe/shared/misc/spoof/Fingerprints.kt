@@ -2,11 +2,14 @@ package io.github.nexalloy.morphe.shared.misc.spoof
 
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.opcode
+import io.github.nexalloy.morphe.string
 import java.lang.reflect.Modifier
 
 /**
@@ -69,4 +72,79 @@ internal val cronetUploadField = findFieldDirect {
 
 internal val cronetHttpMethodField = findFieldDirect {
     CronetUrlRequestSetHttpMethodFingerprint.instructionMatches.first().instruction.fieldRef!!
+}
+
+internal object CronetDataSourceReadFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "I",
+    parameters = listOf("[B", "I", "I"),
+    filters = listOf(
+        methodCall(definingClass = "Ljava/nio/ByteBuffer;", name = "clear"),
+        // Reads the next part of the response.
+        methodCall(
+            definingClass = "this",
+            parameters = listOf("Ljava/nio/ByteBuffer;", "L"),
+            returnType = "V"
+        ),
+        // If the response is finished.
+        fieldAccess(
+            opcode = Opcode.IGET_BOOLEAN,
+            definingClass = "this",
+            type = "Z",
+            location = MatchAfterImmediately()
+        ),
+        opcode(Opcode.IF_EQZ, location = MatchAfterImmediately()),
+        // Remaining byte count of the request.
+        fieldAccess(
+            opcode = Opcode.IPUT_WIDE,
+            definingClass = "this",
+            type = "J",
+            location = MatchAfterImmediately()
+        )
+    )
+)
+
+internal object CronetDataSourceReadBufferFingerprint : Fingerprint(
+    classFingerprint = CronetDataSourceReadFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "I",
+    parameters = listOf("Ljava/nio/ByteBuffer;"),
+    filters = listOf(
+        // Reads the next part of the response.
+        methodCall(
+            definingClass = "this",
+            parameters = listOf("Ljava/nio/ByteBuffer;", "L"),
+            returnType = "V"
+        ),
+        // If the response is finished.
+        fieldAccess(
+            opcode = Opcode.IGET_BOOLEAN,
+            definingClass = "this",
+            type = "Z",
+            location = MatchAfterImmediately()
+        ),
+        opcode(Opcode.IF_EQZ, location = MatchAfterImmediately()),
+        // Remaining byte count of the request.
+        fieldAccess(
+            opcode = Opcode.IPUT_WIDE,
+            definingClass = "this",
+            type = "J",
+            location = MatchAfterImmediately()
+        )
+    )
+)
+
+internal object PriorityTooLowExceptionFingerprint : Fingerprint(
+    superclass = "Ljava/io/IOException;",
+    name = "<init>",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),
+    returnType = "V",
+    parameters = listOf("I", "I"),
+    filters = listOf(
+        string("Priority too low [priority=")
+    )
+)
+
+val cronetRemainingBytesField = findFieldDirect {
+    CronetDataSourceReadFingerprint.instructionMatches.last().instruction.fieldRef!!
 }

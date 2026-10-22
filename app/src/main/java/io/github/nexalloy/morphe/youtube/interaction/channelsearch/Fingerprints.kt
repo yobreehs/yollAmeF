@@ -3,37 +3,25 @@ package io.github.nexalloy.morphe.youtube.interaction.channelsearch
 import io.github.nexalloy.SkipTest
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.InstructionLocation.MatchBeforeAnywhere
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.ResourceType
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.indexOfFirstInstructionOrThrow
-import io.github.nexalloy.morphe.indexOfFirstInstructionReversedOrThrow
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.string
 
 val endpointField = findFieldDirect {
-    BrowseFragmentOnCreateViewFingerprint().let {
-        val browseDataIndex = BrowseFragmentOnCreateViewFingerprint.instructionMatches.first().index
-        val endpointIndex = it.indexOfFirstInstructionReversedOrThrow(
-            startIndex = browseDataIndex,
-            filter = fieldAccess(opcode = Opcode.IGET_OBJECT, definingClass = "this")
-        )
-
-        it.instructions[endpointIndex].fieldRef!!
-    }
+    BrowseFragmentOnCreateViewFingerprint.instructionMatches[1].instruction.fieldRef!!
 }
 
 val browserIdMethod = findMethodDirect {
     BrowseFragmentOnCreateViewFingerprint().let {
-        val browseDataIndex = BrowseFragmentOnCreateViewFingerprint.instructionMatches.first().index
-        val endpointIndex = it.indexOfFirstInstructionReversedOrThrow(
-            startIndex = browseDataIndex,
-            filter = fieldAccess(opcode = Opcode.IGET_OBJECT, definingClass = "this")
-        )
+        val endpointIndex = BrowseFragmentOnCreateViewFingerprint.instructionMatches[1].index
 
         // Browse data is an extension of the endpoint, and reading it starts with that field.
         val browseDataExtensionIndex = it.indexOfFirstInstructionOrThrow(
@@ -48,7 +36,7 @@ val browserIdMethod = findMethodDirect {
             filters = listOf(
                 fieldAccess(opcode = Opcode.SGET_OBJECT, reference = browseDataExtensionField)
             )
-        ).matchAll().last().method // any one result of the two should work
+        ).matchAll(1..2).first().method // Both matches are identical methods in the same class.
     }
 }
 
@@ -84,7 +72,12 @@ internal object BrowseFragmentOnCreateViewFingerprint : Fingerprint(
         "Landroid/os/Bundle;"
     ),
     filters = listOf(
-        string("Browse Fragment was given a navigation endpoint without browse data.")
+        string("Browse Fragment was given a navigation endpoint without browse data."),
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = "this",
+            location = MatchBeforeAnywhere()
+        )
     )
 )
 

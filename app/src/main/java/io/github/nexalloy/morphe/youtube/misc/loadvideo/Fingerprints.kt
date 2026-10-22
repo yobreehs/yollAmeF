@@ -11,7 +11,8 @@ import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
 import io.github.nexalloy.morphe.Opcode
-import io.github.nexalloy.morphe.OpcodesFilter
+import io.github.nexalloy.morphe.StrictQuery
+import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
@@ -62,27 +63,22 @@ internal object OpenNewVideoIntentParcelableFingerprint : Fingerprint(
     )
 )
 
-internal object BackButtonFinishActivityOnNewVideoIntentFingerprint : Fingerprint(
+@StrictQuery
+internal class BackButtonFinishActivityOnNewVideoIntentFingerprint(appWatchDescriptorType: String) : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",
-    parameters = listOf("L"),
-    filters = OpcodesFilter.opcodesToFilters(
-        Opcode.IGET_OBJECT,
-        Opcode.CHECK_CAST,
-        Opcode.IGET_OBJECT,
-        Opcode.INVOKE_INTERFACE,
-        Opcode.MOVE_RESULT_OBJECT,
-        Opcode.CHECK_CAST,
-        Opcode.IGET_OBJECT,
-        Opcode.INVOKE_VIRTUAL,
-        Opcode.MOVE_RESULT,
-        Opcode.IPUT_BOOLEAN,
-        Opcode.INVOKE_INTERFACE,
-        Opcode.MOVE_RESULT_OBJECT,
-        Opcode.CHECK_CAST,
-        Opcode.INVOKE_VIRTUAL,
-        Opcode.MOVE_RESULT,
-        Opcode.IPUT_BOOLEAN
+    parameters = listOf(appWatchDescriptorType),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = appWatchDescriptorType
+        ),
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            parameters = listOf(),
+            returnType = "Z",
+            location = MatchAfterImmediately()
+        )
     )
 )
 
@@ -129,4 +125,17 @@ val dismissPlayerMethod = findMethodDirect {
 
 val playerControllerConstructor = findMethodDirect {
     dismissPlayerMethod().declaredClass!!.methods.single { it.name == "<init>" }
+}
+
+internal object AppWatchDescriptorToStringFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Ljava/lang/String;",
+    parameters = listOf(),
+    strings = listOf("AppWatchDescriptor{watchDescriptor=")
+)
+
+val backButtonFinishActivityOnNewVideoIntentMethod = findMethodDirect {
+    BackButtonFinishActivityOnNewVideoIntentFingerprint(
+        AppWatchDescriptorToStringFingerprint().declaredClass!!.descriptor
+    ).match().method
 }

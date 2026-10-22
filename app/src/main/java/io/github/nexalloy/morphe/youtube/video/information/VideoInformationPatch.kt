@@ -19,8 +19,8 @@ import io.github.nexalloy.morphe.youtube.video.playerresponse.Hook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.PlayerResponseMethodHook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.addPlayerResponseMethodHook
 import io.github.nexalloy.morphe.youtube.video.videoid.VideoId
-import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponseVideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponsePlaylistId
+import io.github.nexalloy.morphe.youtube.video.videoid.hookPlayerResponseVideoId
 import io.github.nexalloy.morphe.youtube.video.videoid.hookVideoId
 import io.github.nexalloy.new
 import io.github.nexalloy.patch
@@ -322,7 +322,17 @@ val VideoInformationPatch = patch(
         }
     }
 
-    // TODO Set channel information.
+    // Live state is also needed by the Shorts playback speed override.
+    val isLive = ::playerResponseIsLiveMethod.method
+    ::channelInformationMethods.dexMethodList.forEach { method ->
+        method.hookMethod {
+            before { param ->
+                VideoInformation.setLiveStream(isLive.invoke(param.args[0]) as Boolean)
+            }
+        }
+    }
+
+    // TODO Set channel id, channel name and video title.
 
     addExoPlayerHooks()
 

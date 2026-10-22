@@ -9,9 +9,12 @@ import io.github.nexalloy.morphe.ResourceType
 import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.fieldAccess
+import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findFieldListDirect
+import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.string
 
@@ -127,4 +130,85 @@ val playlistPanelVideoIdFields = findFieldListDirect {
 
 val nextVideoTitleViewMethods = findMethodListDirect {
     NextVideoTitleViewFingerprint.matchAll().map { it.method }
+}
+
+internal object CompactVideoBindFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("L", "Ljava/lang/Object;"),
+    filters = listOf(
+        // Renderer of the video.
+        opcode(Opcode.CHECK_CAST),
+        resourceLiteral(ResourceType.INTEGER, "compact_renderer_title_max_lines"),
+        fieldAccess(opcode = Opcode.IPUT_OBJECT, type = "[B"),
+        methodCall(returnType = "Landroid/text/Spanned;"),
+        // Sets the title.
+        methodCall(
+            parameters = listOf("Ljava/lang/CharSequence;"),
+            returnType = "V",
+            location = MatchAfterWithin(2)
+        )
+    )
+)
+
+internal fun compactVideoTitleSetterFingerprint(definingClass: String, name: String) = Fingerprint(
+    definingClass = definingClass,
+    name = name,
+    returnType = "V",
+    parameters = listOf("Ljava/lang/CharSequence;"),
+    filters = listOf(
+        fieldAccess(opcode = Opcode.IGET_OBJECT, type = "Landroid/widget/TextView;"),
+        methodCall(name = "setText", location = MatchAfterWithin(2))
+    )
+)
+
+@StrictQuery
+internal object SuggestedVideoEndScreenBindFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("Landroid/content/Context;", "Landroid/view/View;"),
+    filters = listOf(
+        // Renderer of the suggested video.
+        methodCall(opcode = Opcode.INVOKE_VIRTUAL, parameters = listOf()),
+        fieldAccess(opcode = Opcode.IGET_OBJECT, location = MatchAfterWithin(2)),
+        // Sets the title.
+        methodCall(
+            definingClass = "Lcom/google/android/libraries/youtube/common/ui/YouTubeTextView;",
+            name = "setText",
+            location = MatchAfterWithin(10)
+        )
+    )
+)
+
+val compactVideoIdField = findFieldDirect {
+    CompactVideoBindFingerprint.instructionMatches.first().instruction.classRef!!.fields.single {
+        it.typeSign == "Ljava/lang/String;" && !java.lang.reflect.Modifier.isStatic(it.accessFlags)
+    }
+}
+
+val compactVideoTitleSetter = findMethodDirect {
+    CompactVideoBindFingerprint.instructionMatches.last().instruction.methodRef!!
+}
+
+val compactVideoTitleViewField = findFieldDirect {
+    val setter = compactVideoTitleSetter()
+    compactVideoTitleSetterFingerprint(setter.declaredClass!!.descriptor, setter.name)
+        .instructionMatches.first().instruction.fieldRef!!
+}
+
+val suggestedVideoRendererGetter = findMethodDirect {
+    SuggestedVideoEndScreenBindFingerprint.instructionMatches.first().instruction.methodRef!!
+}
+
+val suggestedVideoIdField = findFieldDirect {
+    suggestedVideoRendererGetter().returnType!!.fields.single {
+        it.typeSign == "Ljava/lang/String;" && !java.lang.reflect.Modifier.isStatic(it.accessFlags)
+    }
+}
+
+val suggestedVideoTitleField = findFieldDirect {
+    val match = SuggestedVideoEndScreenBindFingerprint.match()
+    val setter = match.instructionMatches.last()
+    val viewRegister = setter.instruction.register(0)
+    match.method.instructions.take(setter.index).last {
+        it.opcode == Opcode.IGET_OBJECT.opCode && it.registerOrNull(0) == viewRegister
+    }.fieldRef!!
 }

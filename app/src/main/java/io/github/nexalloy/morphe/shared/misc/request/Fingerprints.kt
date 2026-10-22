@@ -31,17 +31,7 @@ internal object BuildRequestFingerprint : Fingerprint(
         ),
         methodCall(opcode = Opcode.INVOKE_VIRTUAL, name = "ordinal"),
         methodCall(opcode = Opcode.INVOKE_VIRTUAL, name = "setPriority")
-    ),
-    custom = {
-        addInvoke {
-            returnType {
-                addMethod {
-                    name = "<clinit>"
-                    usingStrings(listOf("LOW", "NORMAL", "HIGH", "IMMEDIATE"))
-                }
-            }
-        }
-    }
+    )
 )
 
 @get:TargetApp("youtube")

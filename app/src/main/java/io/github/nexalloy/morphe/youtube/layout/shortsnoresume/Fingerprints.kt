@@ -1,6 +1,7 @@
 package io.github.nexalloy.morphe.youtube.layout.shortsnoresume
 
 import io.github.nexalloy.RequireAppVersion
+import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation
 import io.github.nexalloy.morphe.Opcode
@@ -25,6 +26,11 @@ internal object UserWasInShortsEvaluateAnchorFingerprint: Fingerprint(
  */
 @RequireAppVersion("21.41.000")
 internal object UserWasInShortsEvaluateFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "L",
+    parameters = listOf(
+        "Ljava/util/function/Supplier;", "L", "Ljava/lang/String;"
+    ),
     filters = listOf(
         methodCall(
             opcode = Opcode.INVOKE_DIRECT_RANGE,
@@ -45,6 +51,11 @@ internal object UserWasInShortsEvaluateFingerprint : Fingerprint(
  */
 @RequireAppVersion("21.30.000", "21.41.000")
 internal object UserWasInShortsEvaluateLegacy2130Fingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "L",
+    parameters = listOf(
+        "Ljava/util/function/Supplier;", "L"
+    ),
     filters = listOf(
         methodCall(
             opcode = Opcode.INVOKE_DIRECT_RANGE,
@@ -65,6 +76,9 @@ internal object UserWasInShortsEvaluateLegacy2130Fingerprint : Fingerprint(
  */
 @RequireAppVersion(minVersion="21.03.00", maxVersion = "21.30.000")
 internal object UserWasInShortsEvaluateLegacy2103Fingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "L",
+    parameters = listOf("Ljava/util/function/Supplier;", "L"),
     filters = listOf(
         methodCall(
             opcode = Opcode.INVOKE_DIRECT_RANGE,

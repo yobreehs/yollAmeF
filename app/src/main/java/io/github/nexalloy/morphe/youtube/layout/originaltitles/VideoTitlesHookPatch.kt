@@ -70,6 +70,46 @@ internal val videoTitlesHookPatch = patch(
 
     val findViewById = View::class.java.getMethod("findViewById", Int::class.javaPrimitiveType)
 
+    // Compact videos do not use Litho, such as the videos of the watch history.
+    val compactId = ::compactVideoIdField.field
+    val compactTitle = ::compactVideoTitleViewField.field
+    CompactVideoBindFingerprint.hookMethod(scopedHook(::compactVideoTitleSetter.method) {
+        after {
+            if (innerDepth == 0 && !it.hasThrowable()) {
+                RestoreOriginalTitlesPatch.restoreOriginalTitle(
+                    compactTitle.get(it.thisObject) as? TextView,
+                    compactId.get(outerParam.args[1]) as? String
+                )
+            }
+        }
+    })
+
+    // The suggested video at the end of a video in fullscreen does not use Litho.
+    val rendererGetter = ::suggestedVideoRendererGetter.method
+    val suggestedId = ::suggestedVideoIdField.field
+    val suggestedTitle = ::suggestedVideoTitleField.field
+    val setTitle = TextView::class.java.getMethod("setText", CharSequence::class.java)
+    SuggestedVideoEndScreenBindFingerprint.hookMethod(scopedHook(rendererGetter) {
+        after {
+            if (innerDepth == 0 && !it.hasThrowable()) {
+                outerParam.setObjectExtra("suggestedVideoRenderer", it.result)
+                outerParam.setObjectExtra("suggestedVideoTitleView", suggestedTitle.get(it.thisObject))
+            }
+        }
+    })
+    SuggestedVideoEndScreenBindFingerprint.hookMethod(scopedHook(setTitle) {
+        after {
+            if (innerDepth == 0 && !it.hasThrowable() &&
+                it.thisObject === outerParam.getObjectExtra("suggestedVideoTitleView")
+            ) {
+                val renderer = outerParam.getObjectExtra("suggestedVideoRenderer") ?: return@after
+                RestoreOriginalTitlesPatch.restoreOriginalTitle(
+                    it.thisObject as TextView, suggestedId.get(renderer) as? String
+                )
+            }
+        }
+    })
+
     // The video information shown while the video is loading shows the title of the element that opened the video,
     // which can be marked with the video id.
     val loadingTitleId = getResourceId(ResourceType.ID, "title")

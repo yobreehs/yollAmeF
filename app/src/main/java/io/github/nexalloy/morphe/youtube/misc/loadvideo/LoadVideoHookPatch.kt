@@ -10,9 +10,9 @@ package io.github.nexalloy.morphe.youtube.misc.loadvideo
 import android.content.Intent
 import android.os.Parcelable
 import app.morphe.extension.youtube.patches.LoadVideoPatch
-import app.morphe.extension.youtube.patches.LoadVideoPatch.PlayerInterface
 import app.morphe.extension.youtube.patches.LoadVideoPatch.InlinePlaybackInterface
 import app.morphe.extension.youtube.patches.LoadVideoPatch.MainActivityInterface
+import app.morphe.extension.youtube.patches.LoadVideoPatch.PlayerInterface
 import io.github.nexalloy.createProxy
 import io.github.nexalloy.morphe.youtube.shared.YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE
 import io.github.nexalloy.patch
@@ -68,7 +68,7 @@ internal val loadVideoHookPatch = patch(
         MainActivityInterface { intent -> onNewIntent(activity, intent) }
     }
 
-    BackButtonFinishActivityOnNewVideoIntentFingerprint.hookMethod {
+    ::backButtonFinishActivityOnNewVideoIntentMethod.hookMethod {
         before { it.result = null }
     }
 }

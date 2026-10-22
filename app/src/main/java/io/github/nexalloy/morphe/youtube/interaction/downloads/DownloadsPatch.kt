@@ -1,21 +1,21 @@
 package io.github.nexalloy.morphe.youtube.interaction.downloads
 
+import android.net.Uri
 import app.morphe.extension.shared.settings.preference.ExternalDownloaderPreference
-import app.morphe.extension.youtube.patches.DownloadsPatch
-import app.morphe.extension.youtube.patches.InAppDownloadsPatch
 import app.morphe.extension.shared.spoof.SpoofVideoStreamsPatch
 import app.morphe.extension.shared.spoof.requests.StreamingDataRequest
+import app.morphe.extension.youtube.patches.DownloadsPatch
+import app.morphe.extension.youtube.patches.InAppDownloadsPatch
 import app.morphe.extension.youtube.videoplayer.ExternalDownloadButton
-import android.net.Uri
-import io.github.nexalloy.callMethod
 import io.github.nexalloy.R
+import io.github.nexalloy.callMethod
 import io.github.nexalloy.morphe.shared.misc.request.buildRequestPatch
 import io.github.nexalloy.morphe.shared.misc.request.hookBuildRequest
-import io.github.nexalloy.morphe.shared.misc.spoof.plainStreamRequestsPatch
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
+import io.github.nexalloy.morphe.shared.misc.spoof.plainStreamRequestsPatch
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.ControlInitializer
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.LegacyPlayerControls
 import io.github.nexalloy.morphe.youtube.misc.playercontrols.addTopControl
@@ -44,11 +44,11 @@ val Downloads = patch(
             sorting = PreferenceScreenPreference.Sorting.UNSORTED,
             preferences = setOf(
                 ListPreference("morphe_download_mode"),
+                SwitchPreference("morphe_external_downloader_overlay_button", summary = true),
                 TextPreference(
                     "morphe_external_downloader_name",
                     tag = ExternalDownloaderPreference::class.java
                 ),
-                SwitchPreference("morphe_external_downloader_action_button", summary = true),
             ),
         ),
     )

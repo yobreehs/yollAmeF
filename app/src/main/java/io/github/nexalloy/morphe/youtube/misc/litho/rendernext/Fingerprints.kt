@@ -15,7 +15,6 @@ import io.github.nexalloy.morphe.parameters
 import io.github.nexalloy.morphe.string
 import org.luckypray.dexkit.DexKitBridge
 
-
 /**
  * Reads the enable_rendernext field of an Element proto, set by the server.
  * If true, the element is presented with an ElementsView instead of Litho.
@@ -34,12 +33,14 @@ internal object RenderNextEnablementCheckFingerprint : Fingerprint(
 val RenderNextConfigField = findFieldDirect {
     val enablementCheck = RenderNextEnablementCheckFingerprint()
     Fingerprint(
+        accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
         filters = listOf(
             fieldAccess(
                 opcode = Opcode.IGET_BOOLEAN,
                 type = "Z"
             ),
-            methodCall(reference = enablementCheck)
+            methodCall(reference = enablementCheck),
+            methodCall(name = "toBuilder")
         )
     ).matchAll().first()
         .instructionMatches.first().instruction.fieldRef!!
@@ -92,7 +93,7 @@ val RenderNextConfigFieldReadFingerprint = findMethodListDirect {
  */
 @RequireAppVersion(minVersion = "20.29.00")
 internal object RenderNextTemplateCheckFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.STATIC),
+    isStatic = true,
     returnType = "Z",
     parameters = listOf("L", "Ljava/lang/String;", "Ljava/lang/String;"),
     filters = listOf(

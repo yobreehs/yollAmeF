@@ -14,7 +14,7 @@ import io.github.nexalloy.morphe.string
 @StrictQuery
 internal object NewElementProtoParserFingerprint : Fingerprint(
     classFingerprint = ProtoStuffReflectionFingerprint,
-    accessFlags = listOf(AccessFlags.STATIC),
+    isStatic = true,
     parameters = listOf("L"),
     returnType = "[B",
     filters = listOf(

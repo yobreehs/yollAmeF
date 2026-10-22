@@ -27,7 +27,7 @@ internal object WatchHistoryMenuUseProgressDrawableFingerprint : Fingerprint(
 )
 
 internal object LithoLinearGradientFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.STATIC),
+    isStatic = true,
     returnType = "Landroid/graphics/LinearGradient;",
     parameters = listOf("F", "F", "F", "F", "[I", "[F"),
 )

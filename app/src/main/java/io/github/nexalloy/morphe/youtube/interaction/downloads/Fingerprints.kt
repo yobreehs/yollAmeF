@@ -1,22 +1,22 @@
 package io.github.nexalloy.morphe.youtube.interaction.downloads
 
-import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.SkipTest
-import io.github.nexalloy.morphe.findFieldDirect
-import io.github.nexalloy.morphe.findMethodDirect
-import java.lang.reflect.Modifier
-import org.luckypray.dexkit.DexKitBridge
-import org.luckypray.dexkit.result.ClassData
+import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
+import io.github.nexalloy.morphe.Opcode
+import io.github.nexalloy.morphe.StrictQuery
 import io.github.nexalloy.morphe.anyInstruction
 import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.fieldAccess
+import io.github.nexalloy.morphe.findFieldDirect
+import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
-import io.github.nexalloy.morphe.AccessFlags
-import io.github.nexalloy.morphe.Opcode
+import java.lang.reflect.Modifier
+import org.luckypray.dexkit.DexKitBridge
+import org.luckypray.dexkit.result.ClassData
 
 internal object OfflineVideoEndpointFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
@@ -177,7 +177,14 @@ internal object ProtobufClassParseByteArrayFingerprint : Fingerprint(
     name = "parseFrom",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
     returnType = "L",
-    parameters = listOf("L", "[B")
+    parameters = listOf("L", "[B"),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.SGET_OBJECT,
+            definingClass = "Lcom/google/protobuf/ExtensionRegistryLite;",
+            type = "Lcom/google/protobuf/ExtensionRegistryLite;"
+        )
+    )
 )
 
 internal object ProtobufClassParseByteArrayWithRegistryFingerprint : Fingerprint(

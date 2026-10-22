@@ -28,6 +28,10 @@ internal object FormatStreamModelToStringFingerprint : Fingerprint(
 
 internal object MediaSessionSetMetadataFingerprint : Fingerprint(
     filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            type = "Landroid/media/MediaMetadata;"
+        ),
         methodCall(
             definingClass = "Landroid/media/session/MediaSession;",
             name = "setMetadata",

@@ -10,6 +10,7 @@ import io.github.nexalloy.morphe.checkCast
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findFieldFromToString
+import io.github.nexalloy.morphe.findFieldListDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.literal
@@ -21,6 +22,9 @@ import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.resourceMappings
 import io.github.nexalloy.morphe.returns
 import io.github.nexalloy.morphe.string
+
+internal const val CLIENT_ABR_STATE_CLASS =
+    "Lcom/google/android/apps/youtube/proto/ClientAbrStateOuterClass\$ClientAbrState;"
 
 internal const val FIXED_RESOLUTION_STRING = ", initialPlaybackVideoQualityFixedResolution="
 
@@ -68,15 +72,26 @@ val getVideoQualityConstraintMethod = findMethodDirect {
     Fingerprint(
         accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
         parameters = listOf("Z", "L", "Ljava/lang/String;", "L"),
-        filters = listOf(methodCall(reference = getVideoQualitySettingMethod()))
+        filters = listOf(
+            methodCall(returnType = LastSelectedVideoQualityConstructorFingerprint().declaredClass!!.descriptor),
+            methodCall(reference = getVideoQualitySettingMethod())
+        )
     ).match().method
 }
 
-val fixedVideoQualityConstraintMethod = findMethodDirect {
-    val constraintType = getVideoQualityConstraintMethod().returnType!!
-    constraintType.methods.single { method ->
-        method.returnType == constraintType && method.paramTypes.map { it.descriptor } == listOf("I")
-    }
+val lastSelectedVideoQualityGetter = findMethodDirect {
+    Fingerprint(
+        definingClass = getVideoQualityConstraintMethod().declaredClass!!.descriptor,
+        name = getVideoQualityConstraintMethod().name,
+        filters = listOf(
+            methodCall(returnType = LastSelectedVideoQualityConstructorFingerprint().declaredClass!!.descriptor)
+        )
+    ).instructionMatches.first().instruction.methodRef!!
+}
+
+val lastSelectedVideoQualityFields = findFieldListDirect {
+    val matches = LastSelectedVideoQualityConstructorFingerprint.instructionMatches
+    listOf(0, 1, 3, 4, 5).map { matches[it].instruction.fieldRef!! }
 }
 
 internal object PlaybackStartParametersToStringFingerprint : Fingerprint(
@@ -209,6 +224,52 @@ internal object ShortsQualityConstructorFingerprint : Fingerprint(
         fieldAccess(
             opcode = Opcode.IPUT_OBJECT,
             definingClass = "this"
+        )
+    )
+)
+
+internal object ClientAbrStateFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = CLIENT_ABR_STATE_CLASS,
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IPUT_OBJECT,
+            definingClass = CLIENT_ABR_STATE_CLASS,
+            type = "Lcom/google/android/apps/youtube/proto/streaming/MediaCapabilitiesOuterClass\$MediaCapabilities;"
+        )
+    )
+)
+
+internal object LastSelectedVideoQualityConstructorFingerprint : Fingerprint(
+    name = "<init>",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),
+    parameters = listOf("L", "I", "L"),
+    filters = listOf(
+        fieldAccess( // Time the quality was selected.
+            opcode = Opcode.IPUT_WIDE,
+            definingClass = "this",
+            type = "J"
+        ),
+        fieldAccess( // Video ID the quality was selected for.
+            opcode = Opcode.IPUT_OBJECT,
+            definingClass = "this",
+            type = "Ljava/lang/String;"
+        ),
+        string("last_playback_start_timestamp"),
+        fieldAccess( // Time the last playback started.
+            opcode = Opcode.IPUT_WIDE,
+            definingClass = "this",
+            type = "J"
+        ),
+        fieldAccess( // Resolution of the quality.
+            opcode = Opcode.IPUT,
+            definingClass = "this",
+            type = "I"
+        ),
+        fieldAccess( // Direction of the quality change.
+            opcode = Opcode.IPUT,
+            definingClass = "this",
+            type = "I"
         )
     )
 )

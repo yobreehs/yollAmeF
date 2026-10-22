@@ -17,14 +17,10 @@ private object OnResponseStartedFingerprint : Fingerprint(
         "Content-Type",
         "identity",
         "application/x-protobuf",
+        // Uniquely identifies the callback used upstream among similar implementations.
+        "UnaryScanner instances cannot be reused",
     )
 )
-{
-    init {
-        classMatcher { superClass { descriptor("Lorg/chromium/net/UrlRequest\$Callback;") } }
-    }
-}
-
 internal object OnFailureFingerprint : Fingerprint(
     classFingerprint = OnResponseStartedFingerprint,
     name = "onFailed",
