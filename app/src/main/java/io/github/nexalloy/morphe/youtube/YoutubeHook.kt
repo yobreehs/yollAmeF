@@ -4,11 +4,13 @@ import android.app.Activity
 import app.morphe.extension.shared.Utils
 import io.github.libxposed.api.XposedInterface
 import io.github.nexalloy.ExtensionResourceHook
+import io.github.nexalloy.hookMethod
 import io.github.nexalloy.addModuleAssets
 import io.github.nexalloy.injectHostClassLoaderToSelf
 import io.github.nexalloy.injectSelfClassLoaderToHost
 import io.github.nexalloy.morphe.shared.misc.CheckRecycleBitmapMediaSession
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatureFlagFingerprint
+import io.github.nexalloy.morphe.shared.misc.debugging.experimentalIndexedBooleanFeatureFlagFingerprint
 import io.github.nexalloy.morphe.youtube.ad.HideAds
 import io.github.nexalloy.morphe.youtube.interaction.copyvideolink.CopyVideoLinkButtonPatch
 import io.github.nexalloy.morphe.youtube.interaction.channelsearch.channelSearch
@@ -46,6 +48,7 @@ import io.github.nexalloy.morphe.youtube.video.quality.VideoQuality
 import io.github.nexalloy.morphe.youtube.video.speed.PlaybackSpeed
 import io.github.nexalloy.patch
 import io.github.nexalloy.atLast
+import java.lang.reflect.Member
 import org.luckypray.dexkit.wrap.DexMethod
 
 val ExtensionHook = patch(name = "<ExtensionHook>") {
@@ -73,13 +76,19 @@ fun insertLiteralOverride(id: Long, override: (Boolean) -> Boolean) {
 }
 
 val FeatureOverride = patch {
-    ::experimentalBooleanFeatureFlagFingerprint.hookMethod {
-        priority = XposedInterface.PRIORITY_DEFAULT - 1
-        after {
-            val id = it.args.atLast(2) as Long
-            val orig = it.result as Boolean
-            val match = overrides[id] ?: return@after
-            it.result = match(orig)
+    val methods = mutableListOf<Member>(::experimentalBooleanFeatureFlagFingerprint.method)
+    // 21.42+ adds a second boolean accessor that takes the proto type as the first int.
+    // The accessor is absent on older versions.
+    ::experimentalIndexedBooleanFeatureFlagFingerprint.memberOrNull?.let { methods += it }
+    methods.forEach { method ->
+        method.hookMethod {
+            priority = XposedInterface.PRIORITY_DEFAULT - 1
+            after {
+                val id = it.args.atLast(2) as Long
+                val orig = it.result as Boolean
+                val match = overrides[id] ?: return@after
+                it.result = match(orig)
+            }
         }
     }
 }
