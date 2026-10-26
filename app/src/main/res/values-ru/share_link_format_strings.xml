@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_share_link_format_title">Формат ссылок</string>
+    <string name="morphe_share_link_format_summary">Выбирает, как записывать ссылки при отправке. Параметры отслеживания удаляются всегда.</string>
+</resources>

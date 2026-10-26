@@ -81,7 +81,7 @@ val navigationEnumFingerprint = fingerprint {
 val navigationEnumClass = findClassDirect { navigationEnumFingerprint().declaredClass!! }
 
 val pivotBarButtonsCreateDrawableViewFingerprint = findMethodDirect {
-    findMethod {
+    val candidates = findMethod {
         matcher {
             accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
             returns("Landroid/view/View;")
@@ -90,9 +90,17 @@ val pivotBarButtonsCreateDrawableViewFingerprint = findMethodDirect {
                     "Lcom/google/android/libraries/youtube/rendering/ui/pivotbar/PivotBar;"
             }
         }
-    }.single {
+    }
+    // Up to 21.42 this method takes the tab drawable as its first argument.
+    val drawableMethod = candidates.firstOrNull {
         it.paramTypes.firstOrNull()?.descriptor == "Landroid/graphics/drawable/Drawable;"
     }
+    if (drawableMethod != null) return@findMethodDirect drawableMethod
+
+    // 21.43 merged the drawable and resource-styled variants into one method that takes
+    // the tab object, a boolean, a color and a styling object.
+    candidates.singleOrNull { it.paramTypes.size == 4 }
+        ?: error("PivotBar create view method not found")
 }
 
 object PivotBarButtonsCreateResourceStyledViewFingerprint : Fingerprint(

@@ -34,9 +34,15 @@ val NavigationBarHook = patch(
     })
 
     // Hook the creation of navigation tab views.
-    ::initializeButtonsFingerprint.hookMethod(scopedHook(::pivotBarButtonsCreateDrawableViewFingerprint.member) {
-        after { NavigationBar.navigationTabLoaded(it.result as View) }
-    })
+    // 21.43 merged the drawable tab method into the resource-styled one, so avoid
+    // registering the same hook twice.
+    val resourceStyledCreateMember = PivotBarButtonsCreateResourceStyledViewFingerprint.member
+    val drawableCreateMember = ::pivotBarButtonsCreateDrawableViewFingerprint.member
+    if (drawableCreateMember != resourceStyledCreateMember) {
+        ::initializeButtonsFingerprint.hookMethod(scopedHook(drawableCreateMember) {
+            after { NavigationBar.navigationTabLoaded(it.result as View) }
+        })
+    }
 
 //    if (!is_20_28_or_greater) {
 //        // TODO
@@ -131,8 +137,17 @@ val NavigationBarHook = patch(
     // Fix YT bug of notification tab missing the filled icon.
     val tabActivityCairo = ::navigationEnumClass.clazz.enumValueOf("TAB_ACTIVITY_CAIRO")
     if (tabActivityCairo != null) {
-        ::getNavIconResIdFingerprint.dexMethodList.forEach {
-            it.hookMethod {
+        ::getNavIconResIdFingerprint.dexMethodList.forEach { dexMethod ->
+            // 21.43 adds an abstract interface declaration for this method alongside the
+            // concrete implementations. Hooking the abstract one throws and used to fail the
+            // whole Navigation bar patch, taking dependent patches down with it.
+            val method = runCatching { dexMethod.toMethod() }.getOrNull()
+            if (method == null || method.declaringClass.isInterface ||
+                java.lang.reflect.Modifier.isAbstract(method.modifiers)
+            ) {
+                return@forEach
+            }
+            dexMethod.hookMethod {
                 val fillBellCairoBlack = ResourceUtils.getIdentifier(
                     ResourceType.DRAWABLE,
                     if (VersionCheckPatch.IS_20_31_OR_GREATER)

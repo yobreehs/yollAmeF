@@ -38,7 +38,8 @@ val DisableVideoCodecs = patch(
 
     Vp9CapabilityFingerprint.hookMethod {
         before {
-            if (!DisableVideoCodecsPatch.allowVP9()) {
+            // The codec preference can also force AVC. It takes priority over the old switch.
+            if (!DisableVideoCodecsPatch.allowVP9() || selectedVideoCodec() == CODEC_AVC) {
                 it.result = false
             }
         }

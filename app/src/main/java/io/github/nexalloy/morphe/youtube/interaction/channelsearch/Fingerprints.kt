@@ -66,7 +66,7 @@ internal object ChannelSearchBoxHintFingerprint : Fingerprint(
 /**
  * Every search submit path funnels through this method, including suggestions and filter chips.
  */
-internal object ChannelSearchSubmitFingerprint : Fingerprint(
+private object LegacyChannelSearchSubmitFingerprint : Fingerprint(
     returnType = "V",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     parameters = listOf(
@@ -114,6 +114,55 @@ internal object ChannelSearchSubmitFingerprint : Fingerprint(
         ),
     ),
 )
+
+/**
+ * 21.43 added a trailing string argument to the submit method and to the request it builds.
+ */
+private object ChannelSearchSubmitFingerprint21_43 : Fingerprint(
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(
+        "Ljava/lang/String;",
+        "I",
+        "Ljava/lang/String;",
+        "Ljava/lang/String;",
+        "Ljava/lang/String;",
+        "Ljava/lang/String;",
+        "Z",
+        "Ljava/lang/String;",
+    ),
+    filters = listOf(
+        anyInstruction(
+            methodCall(
+                parameters = listOf(
+                    "Ljava/lang/String;",
+                    "[B",
+                    "Ljava/lang/String;",
+                    "I",
+                    "L",
+                    "L",
+                    "Ljava/lang/String;",
+                    "Ljava/lang/String;",
+                    "Ljava/lang/String;",
+                    "Ljava/lang/String;",
+                    "Z",
+                    "Ljava/lang/String;",
+                ),
+                returnType = "V",
+            ),
+        ),
+    ),
+)
+
+/**
+ * Resolves the submit method across app versions. The extension hook only reads the
+ * first argument, so both signatures are compatible with the same hook.
+ */
+val channelSearchSubmitMethod = findMethodDirect {
+    runCatching { ChannelSearchSubmitFingerprint21_43.run() }
+        .recoverCatching { LegacyChannelSearchSubmitFingerprint.run() }
+        .getOrThrow()
+}
 
 /**
  * The index of the instruction reading the endpoint field of the fragment ("this"), right

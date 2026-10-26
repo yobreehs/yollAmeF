@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_share_link_format_title">Share link format</string>
+    <string name="morphe_share_link_format_summary">Chooses how links are written when sharing. Tracking parameters are always removed.</string>
+</resources>

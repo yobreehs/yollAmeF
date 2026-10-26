@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="morphe_share_link_format_entries">
+        <item>Default (as shared)</item>
+        <item>Short (youtu.be)</item>
+        <item>Old full (youtube.com/watch)</item>
+    </string-array>
+    <string-array name="morphe_share_link_format_entry_values">
+        <item>default</item>
+        <item>short</item>
+        <item>full</item>
+    </string-array>
+</resources>

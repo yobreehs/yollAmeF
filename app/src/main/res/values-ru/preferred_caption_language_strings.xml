@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_preferred_caption_language_title">Предпочитаемый язык субтитров</string>
+    <string name="morphe_preferred_caption_language_summary">Автоматически выбирает субтитры поставщика или переводит на предпочитаемый язык. Язык, выбранный в меню плеера, запоминается.</string>
+    <string name="morphe_preferred_caption_language_entry_off">Выключено</string>
+    <string name="morphe_preferred_caption_language_entry_default">По умолчанию</string>
+    <string name="morphe_preferred_caption_language_search_hint">Поиск языка</string>
+</resources>

@@ -20,6 +20,14 @@ val DisablePlaylistAutoplay = patch(
     // extract it and let the extension decide whether the playlist should advance.
     // Each method is hooked independently so one unroutable method cannot fail the whole patch.
     ::playlistAutoplayNavigationMethods.dexMethodList.forEach { method ->
+        // 21.43 exposes the same signature on interfaces (abstract, no code). Hooking those
+        // throws, so only hook the concrete implementations.
+        val resolved = runCatching { method.toMethod() }.getOrNull()
+        if (resolved == null || resolved.declaringClass.isInterface ||
+            java.lang.reflect.Modifier.isAbstract(resolved.modifiers)
+        ) {
+            return@forEach
+        }
         runCatching {
             method.hookMethod {
                 before { param ->

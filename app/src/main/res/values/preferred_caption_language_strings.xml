@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="morphe_preferred_caption_language_title">Preferred subtitle language</string>
+    <string name="morphe_preferred_caption_language_summary">Automatically picks provider subtitles or auto-translates to the preferred language. A language picked in the player menu is remembered.</string>
+    <string name="morphe_preferred_caption_language_entry_off">Off</string>
+    <string name="morphe_preferred_caption_language_entry_default">Default</string>
+    <string name="morphe_preferred_caption_language_search_hint">Search language</string>
+</resources>

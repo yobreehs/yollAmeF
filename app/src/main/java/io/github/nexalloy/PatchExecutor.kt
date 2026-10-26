@@ -249,6 +249,8 @@ class PatchExecutor(
             if (!isEnabled) return@forEach // Pref Key
             runCatching { hook.run(this) }.onFailure { err ->
                 XposedBridge.log(err)
+                // Also write to logcat so patch failures can be diagnosed without root/LSPosed logs.
+                android.util.Log.e("FemAlloy", "Patch '${hook.name}' failed to apply", err)
                 failedPatches.add(hook)
             }.onSuccess {
                 appliedPatches.add(hook)

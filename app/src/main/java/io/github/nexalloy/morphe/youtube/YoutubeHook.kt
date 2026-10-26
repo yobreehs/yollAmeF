@@ -21,6 +21,7 @@ import io.github.nexalloy.morphe.youtube.layout.buttons.action.HideVideoActionBu
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
 import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.HidePlayerOverlayButtons
 import io.github.nexalloy.morphe.youtube.layout.captions.AutoCaptions
+import io.github.nexalloy.morphe.youtube.layout.captions.PreferredCaptionLanguage
 import io.github.nexalloy.morphe.youtube.layout.hide.general.HideLayoutComponents
 import io.github.nexalloy.morphe.youtube.layout.hide.ambientmode.AmbientMode
 import io.github.nexalloy.morphe.youtube.layout.hide.endscreen.HideEndScreen
@@ -45,6 +46,8 @@ import io.github.nexalloy.morphe.youtube.misc.settings.SettingsHook
 import io.github.nexalloy.morphe.youtube.shared.YOUTUBE_MAIN_ACTIVITY_CLASS_TYPE
 import io.github.nexalloy.morphe.youtube.video.audio.ForceOriginalAudio
 import io.github.nexalloy.morphe.youtube.video.codecs.DisableVideoCodecs
+import io.github.nexalloy.morphe.youtube.video.codecs.VideoCodec
+import io.github.nexalloy.morphe.youtube.video.codecs.VideoCodecButton
 import io.github.nexalloy.morphe.youtube.video.quality.VideoQuality
 import io.github.nexalloy.morphe.youtube.video.speed.PlaybackSpeed
 import io.github.nexalloy.patch
@@ -110,6 +113,8 @@ val YouTubePatches = arrayOf(
     NavigationBar,
     SwipeControls,
     VideoQuality,
+    VideoCodec,
+    VideoCodecButton,
     HideLayoutComponents,
     HideVideoActionButtons,
     HidePlayerOverlayButtons,
@@ -117,6 +122,7 @@ val YouTubePatches = arrayOf(
     seekbarPatch,
     PlaybackSpeed,
     AutoCaptions,
+    PreferredCaptionLanguage,
     EnableDebugging,
     ForceOriginalAudio,
     DisableVideoCodecs,

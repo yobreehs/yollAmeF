@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.shared.misc.litho.filter
 
+import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.patches.components.Filter
 import app.morphe.extension.shared.patches.components.LithoFilterPatch
 import de.robv.android.xposed.XC_MethodReplacement
@@ -108,26 +109,43 @@ internal fun sharedLithoFilterPatch(
         val protoBufferEncodeClass = ProtobufBufferEncodeFingerprint.declaredClass
         val accessibilityIdMethod = ::AccessibilityIdMethod.method
         val accessibilityTextMethod = ::accessibilityTextMethod.method
+        // FemAlloy: any failure here used to be thrown back into Litho's component creation on a
+        // background thread, spamming the log with uncaught exceptions for every affected component.
+        // Report it once and let the component be created unfiltered instead.
+        val filterFailureReported = java.util.concurrent.atomic.AtomicBoolean()
         after { param ->
-            val conversion = param.args[1]
-            val bufferParent = param.args[2]
-            // Verify it's the expected subclass just in case.
-            val buffer = if (protoBufferEncodeClass.isInstance(bufferParent)) {
-                protoBufferEncodeMethod(bufferParent) as ByteArray?
-            } else byteArrayOf()
-            val buttonViewModel = buttonViewModelThreadLocal.get()
-            buttonViewModelThreadLocal.remove()
-            val accessibilityId = buttonViewModel?.let { accessibilityIdMethod(it) as String? }
-            val accessibilityText = buttonViewModel?.let { accessibilityTextMethod(it) as String? }
+            try {
+                val conversion = param.args.getOrNull(1)
+                val bufferParent = param.args.getOrNull(2)
+                // Verify it's the expected subclass just in case.
+                val buffer = if (protoBufferEncodeClass.isInstance(bufferParent)) {
+                    protoBufferEncodeMethod(bufferParent) as? ByteArray ?: byteArrayOf()
+                } else byteArrayOf()
+                val buttonViewModel = buttonViewModelThreadLocal.get()
+                buttonViewModelThreadLocal.remove()
+                val accessibilityId = buttonViewModel
+                    ?.takeIf { accessibilityIdMethod.declaringClass.isInstance(it) }
+                    ?.let { accessibilityIdMethod(it) as? String }
+                val accessibilityText = buttonViewModel
+                    ?.takeIf { accessibilityTextMethod.declaringClass.isInstance(it) }
+                    ?.let { accessibilityTextMethod(it) as? String }
 
-            if (LithoFilterPatch.isFiltered(
-                    ConversionContext(conversion),
-                    buffer,
-                    accessibilityId,
-                    accessibilityText
-                )
-            ) {
-                param.result = emptyComponentClazz.new()
+                if (conversion != null && LithoFilterPatch.isFiltered(
+                        ConversionContext(conversion),
+                        buffer,
+                        accessibilityId,
+                        accessibilityText
+                    )
+                ) {
+                    param.result = emptyComponentClazz.new()
+                }
+            } catch (ex: Throwable) {
+                if (filterFailureReported.compareAndSet(false, true)) {
+                    Logger.printException(
+                        { "LithoFilterPatch: component filtering failed, the component is shown unfiltered" },
+                        ex
+                    )
+                }
             }
         }
     }

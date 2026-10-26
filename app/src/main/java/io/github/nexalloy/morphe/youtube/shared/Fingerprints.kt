@@ -12,6 +12,7 @@ import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
 import io.github.nexalloy.morphe.methodCall
+import io.github.nexalloy.morphe.newInstance
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.string
 import org.luckypray.dexkit.query.enums.StringMatchType
@@ -29,6 +30,34 @@ internal object VideoStreamingDataToStringFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "Ljava/lang/String;",
     filters = listOf(string("VideoStreamingData(itags="))
+)
+
+/**
+ * Constructor of the parsed streaming data model.
+ *
+ * The adaptive format lists are stored into (and later read from) this model,
+ * so filtering them here changes which codecs the player can pick.
+ */
+internal object VideoStreamingDataConstructorFingerprint : Fingerprint(
+    classFingerprint = VideoStreamingDataToStringFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),
+    returnType = "V",
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = $$"Lcom/google/protos/youtube/api/innertube/StreamingDataOuterClass$StreamingData;"
+        ),
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = "this",
+            type = "Ljava/lang/String;"
+        ),
+        newInstance("Ljava/util/ArrayList;"),
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = $$"Lcom/google/protos/youtube/api/innertube/StreamingDataOuterClass$StreamingData;"
+        )
+    )
 )
 
 internal object BuildClientContextBodyConstructorFingerprint : Fingerprint(

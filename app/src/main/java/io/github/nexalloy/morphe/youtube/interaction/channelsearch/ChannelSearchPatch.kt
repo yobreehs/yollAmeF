@@ -46,7 +46,7 @@ internal val channelSearch = patch(
 
     // Every search submit path funnels through this method. If it is a search in the channel,
     // the extension handles it with a dialog and the original search is suppressed.
-    ChannelSearchSubmitFingerprint.hookMethod {
+    ::channelSearchSubmitMethod.hookMethod {
         before { param ->
             val query = param.args.firstOrNull() as? String
             if (ExtensionChannelSearchPatch.searchInChannel(query)) {

@@ -10,6 +10,6 @@ val SanitizeSharingLinks = patch(
 ) {
     SanitizeSharingLinks(
         preferenceScreen = PreferenceScreen.MISC,
-        replaceLinksWithShortener = true
+        shareLinkFormat = true
     )
 }

@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.youtube.layout.player.pip
 
+import android.app.Activity
 import android.app.PendingIntent
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
@@ -9,7 +10,11 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.drawable.Icon
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import app.morphe.extension.shared.Logger
+import app.morphe.extension.shared.settings.BooleanSetting
+import app.morphe.extension.shared.settings.Setting.Availability
 import app.morphe.extension.youtube.patches.VideoInformation
 import app.morphe.extension.youtube.settings.Settings
 import io.github.nexalloy.IHookCallback
@@ -18,12 +23,18 @@ import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPr
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
+import java.lang.ref.WeakReference
 
 private const val ACTION_SEEK_BACK = "io.github.nexalloy.morphe.PIP_SEEK_BACK"
 private const val ACTION_SEEK_FORWARD = "io.github.nexalloy.morphe.PIP_SEEK_FORWARD"
 private const val SEEK_OFFSET_MS = 5_000L
 private const val SEEK_BACK_TITLE = "-5 s"
 private const val SEEK_FORWARD_TITLE = "+5 s"
+
+/** Restore YouTube's own PiP buttons when less than this amount of video is left. */
+private const val NEAR_END_THRESHOLD_MS = 30_000L
+
+private const val RESTORE_NEAR_END_KEY = "morphe_pip_seek_buttons_restore_near_end"
 
 /**
  * Adds rewind/forward (±5 seconds) buttons to the Picture-in-picture window.
@@ -39,8 +50,17 @@ val PipSeekButtons = patch(
 ) {
     dependsOn(VideoInformationPatch)
 
+    // Created eagerly so the settings screen finds the Setting and applies its availability
+    // (the toggle is disabled while "Picture-in-picture seek buttons" is off).
+    val restoreNearEndSetting = BooleanSetting(
+        RESTORE_NEAR_END_KEY,
+        false,
+        Availability { Settings.PIP_SEEK_BUTTONS.get() },
+    )
+
     addNewFeaturesPlayerPreferences(
         SwitchPreference("morphe_pip_seek_buttons", summary = true),
+        SwitchPreference(RESTORE_NEAR_END_KEY, summary = true),
     )
 
     val context = appContext
@@ -118,6 +138,67 @@ val PipSeekButtons = patch(
         }
     }
 
+    /** Milliseconds left until the end of the video, or -1 when unknown. */
+    fun remainingMs(): Long = runCatching {
+        val length = VideoInformation.getVideoLength()
+        if (length <= 0) -1 else length - VideoInformation.getVideoTime()
+    }.getOrDefault(-1)
+
+    fun restoreOriginalNearEnd(actions: List<RemoteAction>): Boolean =
+        restoreNearEndSetting.get() && remainingMs() in 0 until NEAR_END_THRESHOLD_MS && actions.isNotEmpty()
+
+    // Dynamic ("on the fly") switch: while the video is in PiP and the seek buttons are shown,
+    // re-apply YouTube's own actions when the last 30 seconds begin. YouTube does not refresh
+    // the PiP params by itself at that point.
+    val handler = Handler(Looper.getMainLooper())
+    var pendingRestore: Runnable? = null
+    var restoringOriginal = false
+    var lastOriginalActions: List<RemoteAction> = emptyList()
+    var lastActivity: WeakReference<Activity>? = null
+
+    fun scheduleRestore(activity: Activity?) {
+        pendingRestore?.let { handler.removeCallbacks(it) }
+        pendingRestore = null
+        if (activity != null) lastActivity = WeakReference(activity)
+        if (!Settings.PIP_SEEK_BUTTONS.get() || !restoreNearEndSetting.get()) return
+
+        val remaining = remainingMs()
+        if (remaining <= 0) return
+        val delay = (remaining - NEAR_END_THRESHOLD_MS).coerceAtLeast(0) + 200
+
+        val runnable = object : Runnable {
+            override fun run() {
+                try {
+                    if (!Settings.PIP_SEEK_BUTTONS.get() || !restoreNearEndSetting.get()) return
+                    val currentRemaining = remainingMs()
+                    // Seeked backwards, keep the seek buttons and check again later.
+                    if (currentRemaining > NEAR_END_THRESHOLD_MS) {
+                        scheduleRestore(lastActivity?.get())
+                        return
+                    }
+                    val pipActivity = lastActivity?.get() ?: return
+                    if (!pipActivity.isInPictureInPictureMode || lastOriginalActions.isEmpty()) return
+
+                    Logger.printDebug {
+                        "PipSeekButtons: restoring original buttons, remaining=${currentRemaining}ms"
+                    }
+                    restoringOriginal = true
+                    pipActivity.setPictureInPictureParams(
+                        PictureInPictureParams.Builder()
+                            .setActions(lastOriginalActions)
+                            .build()
+                    )
+                } catch (e: Throwable) {
+                    Logger.printException({ "PipSeekButtons: failed to restore original actions" }, e)
+                } finally {
+                    restoringOriginal = false
+                }
+            }
+        }
+        pendingRestore = runnable
+        handler.postDelayed(runnable, delay)
+    }
+
     fun logActions(stage: String, actions: List<RemoteAction>) {
         Logger.printDebug {
             "PipSeekButtons: $stage actions=${actions.size} " +
@@ -134,11 +215,21 @@ val PipSeekButtons = patch(
                     "Landroid/app/PictureInPictureParams\$Builder;"
         ).hookMethod {
             before { param ->
-                if (!Settings.PIP_SEEK_BUTTONS.get()) return@before
+                if (!Settings.PIP_SEEK_BUTTONS.get() || restoringOriginal) return@before
 
                 @Suppress("UNCHECKED_CAST")
                 val actions = param.args[0] as? List<RemoteAction> ?: return@before
+                if (actions.isNotEmpty()) lastOriginalActions = actions
                 logActions("builder.setActions in", actions)
+
+                if (restoreOriginalNearEnd(actions)) {
+                    Logger.printDebug {
+                        "PipSeekButtons: near the end, keeping original buttons " +
+                                "(remaining=${remainingMs()}ms)"
+                    }
+                    return@before
+                }
+
                 val merged = mergeSeekActions(actions)
                 logActions("builder.setActions out", merged)
                 param.args[0] = merged
@@ -152,16 +243,27 @@ val PipSeekButtons = patch(
     // Reading the current actions requires API 33 (Android 13), so it is only used there.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val addToParams: IHookCallback = { param ->
-            if (Settings.PIP_SEEK_BUTTONS.get()) {
+            if (Settings.PIP_SEEK_BUTTONS.get() && !restoringOriginal) {
+                val activity = param.thisObject as? Activity
                 val params = param.args[0] as? PictureInPictureParams
                 if (params != null) {
                     logActions("pipParams in", params.actions)
-                    val merged = mergeSeekActions(params.actions)
-                    if (merged.map { it.title } != params.actions.map { it.title }) {
-                        logActions("pipParams out", merged)
-                        param.args[0] = PictureInPictureParams.Builder(params)
-                            .setActions(merged)
-                            .build()
+
+                    if (restoreOriginalNearEnd(params.actions)) {
+                        Logger.printDebug {
+                            "PipSeekButtons: near the end, keeping original buttons " +
+                                    "(remaining=${remainingMs()}ms)"
+                        }
+                    } else {
+                        val merged = mergeSeekActions(params.actions)
+                        if (merged.map { it.title } != params.actions.map { it.title }) {
+                            logActions("pipParams out", merged)
+                            param.args[0] = PictureInPictureParams.Builder(params)
+                                .setActions(merged)
+                                .build()
+                        }
+                        // Re-arm the on-the-fly switch for the last 30 seconds.
+                        scheduleRestore(activity)
                     }
                 }
             }

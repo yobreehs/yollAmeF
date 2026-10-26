@@ -20,6 +20,19 @@ internal fun addNewFeaturesPlayerPreferences(vararg preferences: BasePreference)
 }
 
 /**
+ * Playback chapter ("chapter 2") of the "New features" screen. Fork-specific playback
+ * options (such as the video codec) register themselves here.
+ */
+internal val newFeaturesPlaybackChapterPreferences = mutableSetOf<BasePreference>(
+    SwitchPreference("morphe_volume_boost", summary = true),
+    SwitchPreference("morphe_force_fullscreen_landscape", summary = true),
+)
+
+internal fun addNewFeaturesPlaybackPreferences(vararg preferences: BasePreference) {
+    newFeaturesPlaybackChapterPreferences += preferences
+}
+
+/**
  * FemAlloy convenience section: settings hoisted into "New features" that upstream v1.45
  * registers only on their own screens. All toggles read the same extension settings, so this
  * patch only registers the UI (plus any fork-specific wiring).
@@ -31,10 +44,7 @@ val NewFeatures = patch(
         PreferenceCategory(
             key = "morphe_new_patches_chapter_2",
             titleKey = "morphe_new_patches_chapter_2_title",
-            preferences = setOf(
-                SwitchPreference("morphe_volume_boost", summary = true),
-                SwitchPreference("morphe_force_fullscreen_landscape", summary = true),
-            ),
+            preferences = newFeaturesPlaybackChapterPreferences,
         ),
         PreferenceCategory(
             key = "morphe_new_patches_chapter_3",
