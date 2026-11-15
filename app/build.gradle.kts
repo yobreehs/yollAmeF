@@ -9,6 +9,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.compose.compiler)
 }
 
 val gitCommitHashProvider = providers.exec {
@@ -26,7 +27,7 @@ android {
 
     defaultConfig {
         applicationId = "fem.alloy"
-        versionCode = 122
+        versionCode = 124
         versionName = "2.0.$versionCode"
         val patchVersion = Properties().apply {
             rootProject.file("morphe-patches/gradle.properties").inputStream().use { load(it) }
@@ -61,6 +62,7 @@ android {
         }
     }
     buildFeatures.buildConfig = true
+    buildFeatures.compose = true
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -135,10 +137,27 @@ kotlin {
 }
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    // Forward inventory-harness options from the Gradle CLI to the test JVM, e.g.
+    // `./gradlew -Dfemalloy.baseline=v1.45.0 :app:testDebugUnitTest --tests ...PatchInventoryTest`.
+    listOf("femalloy.baseline", "femalloy.appBaseline", "femalloy.strictInventory", "femalloy.reportPath").forEach { name ->
+        System.getProperty(name)?.let { systemProperty(name, it) }
+    }
 }
 
 dependencies {
 //    implementation(libs.dexkit)
+
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     // DexKit fork with instruction operand introspection
     // https://github.com/NexAlloy/DexKit/commit/046c0484b37e6a2100dd7bcc16748132c45dd2d9

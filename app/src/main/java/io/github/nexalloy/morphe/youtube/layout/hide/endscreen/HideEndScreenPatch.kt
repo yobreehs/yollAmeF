@@ -6,8 +6,8 @@ import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.shared.settings.BooleanSetting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
 import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.hookMethod
 import io.github.nexalloy.patch
 
@@ -75,18 +75,27 @@ fun isHideEndScreenEnabled(): Boolean {
 val HideEndScreen = patch(
     name = "Hide end screen",
     description = "Hides the video suggestions end screen (and its channel icons) shown at the end of a video.",
+    settings = {
+        // The patch may be disabled, but the Setting still has to exist so the settings screen
+        // can sync its toggle.
+        if (!::hideEndScreenSetting.isInitialized) {
+            hideEndScreenSetting = BooleanSetting(SETTING_KEY, false)
+        }
+
+        // Registered only once, on the main "Player" screen. Registering the same key a second time
+        // leaves two independent SwitchPreference objects that do not update each other, so the other
+        // screen keeps showing a stale (often still checked) state until the settings activity is
+        // recreated.
+        PreferenceScreen.PLAYER.addPreferences(
+            SwitchPreference(SETTING_KEY, summary = true),
+        )
+    },
 ) {
     dependsOn(VersionCheck)
 
-    hideEndScreenSetting = BooleanSetting(SETTING_KEY, false)
-
-    // Registered only once, in the "New features → Player" chapter. Registering the same key a
-    // second time (previously also on the main "Player" screen) leaves two independent
-    // SwitchPreference objects that do not update each other, so the other screen keeps showing
-    // a stale (often still checked) state until the settings activity is recreated.
-    addNewFeaturesPlayerPreferences(
-        SwitchPreference(SETTING_KEY, summary = true),
-    )
+    if (!::hideEndScreenSetting.isInitialized) {
+        hideEndScreenSetting = BooleanSetting(SETTING_KEY, false)
+    }
 
     // NOTE: the previous revision also registered a Litho filter for the identifier
     // "teaser_carousel_with_controller". That identifier is not exclusive to the end screen:

@@ -35,6 +35,15 @@
 -keepclassmembers class app.morphe.extension.shared.settings.SharedYouTubeSettings {
     public static final app.morphe.extension.shared.settings.EnumSetting APP_REFRESH_RATE_TYPE;
 }
+# FemAlloy: rinse and repeat — the settings screen is built at runtime. The module resolves
+# AbstractPreferenceFragment (and hooks its no-arg initialize()) from a static class reference,
+# but R8 used to merge the class into ToolbarPreferenceFragment in release builds: the lookup
+# then failed with ClassNotFoundException and the whole Morphe settings screen was empty.
+# Keep the fragment classes (names + members) so the runtime builder always finds them.
+-keep class app.morphe.extension.shared.settings.preference.AbstractPreferenceFragment { *; }
+-keep class app.morphe.extension.shared.settings.preference.ToolbarPreferenceFragment { *; }
+-keep class app.morphe.extension.youtube.settings.preference.YouTubePreferenceFragment { *; }
+
 -keepclassmembers class **.* {
     public <init>(android.content.Context, android.util.AttributeSet);
 }

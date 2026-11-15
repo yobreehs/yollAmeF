@@ -7,11 +7,12 @@ import io.github.nexalloy.patch
 
 val disablePreciseSeekingGesturePatch = patch(
     description = "Adds an option to disable precise seeking when swiping up on the seekbar.",
+    settings = {
+        PreferenceScreen.SEEKBAR.addPreferences(
+            SwitchPreference("morphe_disable_precise_seeking_gesture", summary = true),
+        )
+    },
 ) {
-    PreferenceScreen.SEEKBAR.addPreferences(
-        SwitchPreference("morphe_disable_precise_seeking_gesture", summary = true),
-    )
-
     AllowSwipingUpGestureFingerprint.hookMethod {
         before {
             if (DisablePreciseSeekingGesturePatch.isGestureDisabled()) it.result = null

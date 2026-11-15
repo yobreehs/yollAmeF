@@ -14,6 +14,13 @@ import io.github.nexalloy.patch
 val videoIdHooks: MutableList<(String) -> Unit> = mutableListOf()
 
 /**
+ * Registers a callback invoked when the current video id changes.
+ */
+fun hookVideoId(hook: (videoId: String) -> Unit) {
+    videoIdHooks.add(hook)
+}
+
+/**
  * Hooks the playlist ID of every video when loaded.
  * Supports all videos and functions in all situations.
  *

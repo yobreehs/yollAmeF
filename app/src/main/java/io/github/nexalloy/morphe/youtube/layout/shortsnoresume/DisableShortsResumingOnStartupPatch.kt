@@ -11,11 +11,12 @@ import io.github.nexalloy.scopedHook
 val DisableShortsResumingOnStartup = patch(
     name = "Disable Shorts resuming on startup",
     description = "Adds an option to disable Shorts from resuming on app startup when Shorts were last being watched.",
+    settings = {
+        PreferenceScreen.SHORTS.addPreferences(
+            SwitchPreference("morphe_disable_shorts_resuming_on_startup"),
+        )
+    },
 ) {
-    PreferenceScreen.SHORTS.addPreferences(
-        SwitchPreference("morphe_disable_shorts_resuming_on_startup"),
-    )
-
     if (is_21_03_or_greater) {
         UserWasInShortsEvaluateFingerprint.hookMethod(
             scopedHook(

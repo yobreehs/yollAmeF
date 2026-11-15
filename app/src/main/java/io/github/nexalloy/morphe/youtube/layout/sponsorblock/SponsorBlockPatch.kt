@@ -54,6 +54,115 @@ public fun categoryPreference(settingKey: String): BasePreference =
 val SponsorBlock = patch(
     name = "SponsorBlock",
     description = "Adds options to enable and configure SponsorBlock, which can skip undesired video segments such as sponsored content.",
+    settings = {
+        PreferenceScreen.SPONSORBLOCK.addPreferences(
+            // SB setting is old code with lots of custom preferences and updating behavior.
+            // Added as a preference group and not a fragment so the preferences are searchable.
+            SwitchPreference("morphe_sb_enabled", summary = true),
+            PreferenceCategory(
+                key = "morphe_sb_appearance_category",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    SwitchPreference("morphe_sb_voting_button", summary = true),
+                    SwitchPreference("morphe_sb_compact_skip_button", summary = true),
+                    SwitchPreference("morphe_sb_auto_hide_skip_button", summary = true),
+                    ListPreference(key = "morphe_sb_auto_hide_skip_button_duration"),
+                    SwitchPreference("morphe_sb_toast_on_skip", summary = true),
+                    ListPreference(key = "morphe_sb_toast_on_skip_duration"),
+                    SwitchPreference("morphe_sb_video_length_without_segments", summary = true),
+                    SwitchPreference("morphe_sb_square_layout", summary = true)
+                )
+            ),
+            PreferenceCategory(
+                key = "morphe_sb_diff_segments",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    categoryPreference("morphe_sb_sponsor_color"),
+                    categoryPreference("morphe_sb_selfpromo_color"),
+                    categoryPreference("morphe_sb_interaction_color"),
+                    categoryPreference("morphe_sb_highlight_color"),
+                    categoryPreference("morphe_sb_intro_color"),
+                    categoryPreference("morphe_sb_outro_color"),
+                    categoryPreference("morphe_sb_preview_color"),
+                    categoryPreference("morphe_sb_hook_color"),
+                    categoryPreference("morphe_sb_filler_color"),
+                    categoryPreference("morphe_sb_music_offtopic_color")
+                )
+            ),
+            PreferenceCategory(
+                key = "morphe_sb_create_segment_category",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    SwitchPreference(
+                        key = "morphe_sb_create_new_segment",
+                        summary = true,
+                        tag = SponsorBlockCreateSegmentSwitchPreference::class.java,
+                    ),
+                    TextPreference(
+                        key = "morphe_sb_create_new_segment_step",
+                        tag = SponsorBlockSegmentStepPreference::class.java,
+                        inputType = InputType.NUMBER
+                    ),
+                    NonInteractivePreference(
+                        key = "morphe_sb_guidelines",
+                        tag = SponsorBlockGuidelinesPreference::class.java,
+                        selectable = true
+                    )
+                )
+            ),
+            PreferenceCategory(
+                key = "morphe_sb_general",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    SwitchPreference("morphe_sb_toast_on_connection_error", summary = true),
+                    SwitchPreference("morphe_sb_track_skip_count", summary = true),
+                    TextPreference(
+                        key = "morphe_sb_min_segment_duration",
+                        inputType = InputType.NUMBER_DECIMAL
+                    ),
+                    TextPreference(
+                        key = "morphe_sb_private_user_id_Do_Not_Share",
+                        tag = SponsorBlockPrivateUserIdPreference::class.java,
+                    ),
+                    NonInteractivePreference(
+                        key = "morphe_sb_api_url",
+                        tag = SponsorBlockApiUrlPreference::class.java,
+                        selectable = true
+                    ),
+                    NonInteractivePreference(
+                        key = "morphe_sb_channel_whitelist",
+                        tag = ChannelWhitelistPreference::class.java,
+                        selectable = true
+                    ),
+                    SwitchPreference("morphe_sb_toast_on_whitelisted_channel", summary = true),
+                    TextPreference(
+                        key = null,
+                        titleKey = "morphe_sb_settings_ie_title",
+                        summaryKey = "morphe_sb_settings_ie_summary",
+                        tag = SponsorBlockImportExportPreference::class.java,
+                    )
+                )
+            ),
+            PreferenceCategory(
+                key = "morphe_sb_stats",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = emptySet(), // Preferences are added by custom class at runtime.
+                tag = SponsorBlockStatsPreferenceCategory::class.java
+            ),
+            PreferenceCategory(
+                key = "morphe_sb_about",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    NonInteractivePreference(
+                        key = "morphe_sb_about_api",
+                        tag = SponsorBlockAboutPreference::class.java,
+                        selectable = true,
+                    )
+                )
+            )
+        )
+
+    },
 ) {
     dependsOn(
         VideoInformationPatch,
@@ -61,113 +170,6 @@ val SponsorBlock = patch(
         PlayerTypeHook,
         LegacyPlayerControls,
         versionCheckPatch
-    )
-
-    PreferenceScreen.SPONSORBLOCK.addPreferences(
-        // SB setting is old code with lots of custom preferences and updating behavior.
-        // Added as a preference group and not a fragment so the preferences are searchable.
-        SwitchPreference("morphe_sb_enabled", summary = true),
-        PreferenceCategory(
-            key = "morphe_sb_appearance_category",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                SwitchPreference("morphe_sb_voting_button", summary = true),
-                SwitchPreference("morphe_sb_compact_skip_button", summary = true),
-                SwitchPreference("morphe_sb_auto_hide_skip_button", summary = true),
-                ListPreference(key = "morphe_sb_auto_hide_skip_button_duration"),
-                SwitchPreference("morphe_sb_toast_on_skip", summary = true),
-                ListPreference(key = "morphe_sb_toast_on_skip_duration"),
-                SwitchPreference("morphe_sb_video_length_without_segments", summary = true),
-                SwitchPreference("morphe_sb_square_layout", summary = true)
-            )
-        ),
-        PreferenceCategory(
-            key = "morphe_sb_diff_segments",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                categoryPreference("morphe_sb_sponsor_color"),
-                categoryPreference("morphe_sb_selfpromo_color"),
-                categoryPreference("morphe_sb_interaction_color"),
-                categoryPreference("morphe_sb_highlight_color"),
-                categoryPreference("morphe_sb_intro_color"),
-                categoryPreference("morphe_sb_outro_color"),
-                categoryPreference("morphe_sb_preview_color"),
-                categoryPreference("morphe_sb_hook_color"),
-                categoryPreference("morphe_sb_filler_color"),
-                categoryPreference("morphe_sb_music_offtopic_color")
-            )
-        ),
-        PreferenceCategory(
-            key = "morphe_sb_create_segment_category",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                SwitchPreference(
-                    key = "morphe_sb_create_new_segment",
-                    summary = true,
-                    tag = SponsorBlockCreateSegmentSwitchPreference::class.java,
-                ),
-                TextPreference(
-                    key = "morphe_sb_create_new_segment_step",
-                    tag = SponsorBlockSegmentStepPreference::class.java,
-                    inputType = InputType.NUMBER
-                ),
-                NonInteractivePreference(
-                    key = "morphe_sb_guidelines",
-                    tag = SponsorBlockGuidelinesPreference::class.java,
-                    selectable = true
-                )
-            )
-        ),
-        PreferenceCategory(
-            key = "morphe_sb_general",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                SwitchPreference("morphe_sb_toast_on_connection_error", summary = true),
-                SwitchPreference("morphe_sb_track_skip_count", summary = true),
-                TextPreference(
-                    key = "morphe_sb_min_segment_duration",
-                    inputType = InputType.NUMBER_DECIMAL
-                ),
-                TextPreference(
-                    key = "morphe_sb_private_user_id_Do_Not_Share",
-                    tag = SponsorBlockPrivateUserIdPreference::class.java,
-                ),
-                NonInteractivePreference(
-                    key = "morphe_sb_api_url",
-                    tag = SponsorBlockApiUrlPreference::class.java,
-                    selectable = true
-                ),
-                NonInteractivePreference(
-                    key = "morphe_sb_channel_whitelist",
-                    tag = ChannelWhitelistPreference::class.java,
-                    selectable = true
-                ),
-                SwitchPreference("morphe_sb_toast_on_whitelisted_channel", summary = true),
-                TextPreference(
-                    key = null,
-                    titleKey = "morphe_sb_settings_ie_title",
-                    summaryKey = "morphe_sb_settings_ie_summary",
-                    tag = SponsorBlockImportExportPreference::class.java,
-                )
-            )
-        ),
-        PreferenceCategory(
-            key = "morphe_sb_stats",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = emptySet(), // Preferences are added by custom class at runtime.
-            tag = SponsorBlockStatsPreferenceCategory::class.java
-        ),
-        PreferenceCategory(
-            key = "morphe_sb_about",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                NonInteractivePreference(
-                    key = "morphe_sb_about_api",
-                    tag = SponsorBlockAboutPreference::class.java,
-                    selectable = true,
-                )
-            )
-        )
     )
 
     addTopControl(

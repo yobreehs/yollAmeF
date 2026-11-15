@@ -13,12 +13,14 @@ import io.github.nexalloy.morphe.shared.misc.debugging.experimentalBooleanFeatur
 import io.github.nexalloy.morphe.shared.misc.debugging.experimentalIndexedBooleanFeatureFlagFingerprint
 import io.github.nexalloy.morphe.youtube.ad.HideAds
 import io.github.nexalloy.morphe.youtube.interaction.copyvideolink.CopyVideoLinkButtonPatch
+import io.github.nexalloy.morphe.youtube.interaction.copytext.copyTextPatch
 import io.github.nexalloy.morphe.youtube.interaction.channelsearch.channelSearch
 import io.github.nexalloy.morphe.youtube.interaction.downloads.Downloads
 import io.github.nexalloy.morphe.youtube.interaction.seekbar.seekbarPatch
 import io.github.nexalloy.morphe.youtube.interaction.swipecontrols.SwipeControls
 import io.github.nexalloy.morphe.youtube.layout.buttons.action.HideVideoActionButtons
 import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.NavigationBar
+import io.github.nexalloy.morphe.youtube.layout.buttons.navigation.glass.NavigationBarGlass
 import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.HidePlayerOverlayButtons
 import io.github.nexalloy.morphe.youtube.layout.captions.AutoCaptions
 import io.github.nexalloy.morphe.youtube.layout.captions.PreferredCaptionLanguage
@@ -30,6 +32,7 @@ import io.github.nexalloy.morphe.youtube.layout.hide.player.flyoutmenu.HidePlaye
 import io.github.nexalloy.morphe.youtube.layout.hide.shorts.HideShortsComponents
 import io.github.nexalloy.morphe.youtube.layout.miniplayer.Miniplayer
 import io.github.nexalloy.morphe.youtube.layout.player.pip.PipSeekButtons
+import io.github.nexalloy.morphe.youtube.layout.returnyoutubedislike.returnYouTubeDislikePatch
 import io.github.nexalloy.morphe.youtube.layout.shortsnoresume.DisableShortsResumingOnStartup
 import io.github.nexalloy.morphe.youtube.layout.playlistautoplay.DisablePlaylistAutoplay
 import io.github.nexalloy.morphe.youtube.layout.sponsorblock.SponsorBlock
@@ -37,9 +40,15 @@ import io.github.nexalloy.morphe.youtube.layout.thumbnails.AlternativeThumbnails
 import io.github.nexalloy.morphe.youtube.layout.thumbnails.BypassImageRegionRestrictionsPatch
 import io.github.nexalloy.morphe.youtube.misc.backgroundplayback.BackgroundPlayback
 import io.github.nexalloy.morphe.youtube.misc.debugging.EnableDebugging
+import io.github.nexalloy.morphe.youtube.misc.fix.accessibility.fixAccessibilityPatch
+import io.github.nexalloy.morphe.youtube.misc.fix.guidecache.fixGuideCachePatch
+import io.github.nexalloy.morphe.youtube.misc.fix.padding.fixPagePaddingPatch
 import io.github.nexalloy.morphe.youtube.misc.litho.filter.LithoFilter
 import io.github.nexalloy.morphe.youtube.misc.litho.rendernext.DisableRenderNext
 import io.github.nexalloy.morphe.youtube.misc.newfeatures.NewFeatures
+import io.github.nexalloy.morphe.youtube.interaction.postimages.postImageDownloadPatch
+import io.github.nexalloy.morphe.youtube.misc.feedcards.feedVideoCardsHookPatch
+import io.github.nexalloy.morphe.youtube.shared.startVideoInformerPatch
 import io.github.nexalloy.morphe.youtube.misc.privacy.SanitizeSharingLinks
 import io.github.nexalloy.morphe.youtube.misc.refreshrate.AppRefreshRate
 import io.github.nexalloy.morphe.youtube.misc.settings.SettingsHook
@@ -50,6 +59,7 @@ import io.github.nexalloy.morphe.youtube.video.codecs.VideoCodec
 import io.github.nexalloy.morphe.youtube.video.codecs.VideoCodecButton
 import io.github.nexalloy.morphe.youtube.video.quality.VideoQuality
 import io.github.nexalloy.morphe.youtube.video.speed.PlaybackSpeed
+import io.github.nexalloy.Patch
 import io.github.nexalloy.patch
 import io.github.nexalloy.atLast
 import java.lang.reflect.Member
@@ -97,8 +107,40 @@ val FeatureOverride = patch {
     }
 }
 
-val YouTubePatches = arrayOf(
+/**
+ * Patches that are intentionally off on a fresh install. The basic playback, ad blocking,
+ * layout and navigation patches stay on so the module works out of the box, while new and
+ * experimental features have to be enabled by the user. The debugging screen stays enabled
+ * because it is needed to export logs when something goes wrong.
+ * <p>
+ * The glass navigation bar is not here: its hooks are harmless while the setting is off and
+ * have to be installed for its switch in the Morphe settings to have any effect. Keeping the
+ * patch off meant the hooks were never installed, so the switch did nothing.
+ */
+private val defaultDisabledPatchNames = setOf(
+    "Disable RenderNext",
+    "Channel search",
+    "Copy video link",
+    "Copy text",
+    "Download post images",
+    "Disable Shorts resuming on startup",
+    "Video codec",
+    "Video codec button",
+    "Preferred caption language",
+    "Force original audio",
+    "Disable video codecs",
+    "App refresh rate",
+    "Picture-in-picture seek buttons",
+    "Disable playlist autoplay",
+    "Ambient mode",
+    "DeArrow",
+    "Bypass image region restrictions",
+)
+
+val YouTubePatches = arrayOf<Patch>(
     ExtensionHook,
+    startVideoInformerPatch,
+    feedVideoCardsHookPatch,
     BackgroundPlayback,
     SanitizeSharingLinks,
     HideAds,
@@ -107,10 +149,14 @@ val YouTubePatches = arrayOf(
     channelSearch,
     SponsorBlock,
     CopyVideoLinkButtonPatch,
+    copyTextPatch,
+    postImageDownloadPatch,
+    returnYouTubeDislikePatch,
     Downloads,
     HideShortsComponents,
     DisableShortsResumingOnStartup,
     NavigationBar,
+    NavigationBarGlass,
     SwipeControls,
     VideoQuality,
     VideoCodec,
@@ -136,7 +182,17 @@ val YouTubePatches = arrayOf(
     AlternativeThumbnailsPatch,
     BypassImageRegionRestrictionsPatch,
     CheckRecycleBitmapMediaSession,
+    fixPagePaddingPatch,
+    fixAccessibilityPatch,
+    fixGuideCachePatch,
     // make sure settingsHook at end to build preferences
     SettingsHook,
     FeatureOverride
-)
+).apply {
+    forEach { patch ->
+        // Hidden infrastructure patches (blank or '<...>' names) keep their own default.
+        if (patch.name in defaultDisabledPatchNames) {
+            patch.use = false
+        }
+    }
+}

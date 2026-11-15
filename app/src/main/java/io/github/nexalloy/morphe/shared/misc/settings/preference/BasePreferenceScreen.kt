@@ -7,12 +7,16 @@ abstract class BasePreferenceScreen(
     private val root: MutableSet<Screen> = mutableSetOf(),
 ) : Closeable {
 
+    private var committed = false
+
     override fun close() {
+        if (committed) return
         if (root.isEmpty()) return
 
         root.forEach { preference ->
             commit(preference.transform())
         }
+        committed = true
     }
 
     /**

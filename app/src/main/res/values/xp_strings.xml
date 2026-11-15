@@ -15,4 +15,33 @@
     <string name="disable_auto_check_update_title">Disable auto update check</string>
     <string name="module_not_activated_summary">Activate this module in Module Management!</string>
     <string name="slogan_summary">LSPosed module, powered by Morphe, ReVanced, and beyond.\n\nThis is not an official Morphe or ReVanced project, do not ask their developers for help.</string>
+
+    <!-- Material 3 module settings -->
+    <string name="settings_section_apps">Applications</string>
+    <string name="settings_section_module">Module</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_status_active">Module active</string>
+    <string name="settings_status_inactive">Module not active</string>
+    <string name="settings_status_active_summary">Connected to LSPosed</string>
+    <string name="settings_patches_count">%1$d patches</string>
+    <string name="settings_hide_unscoped_title">Hide apps outside scope</string>
+    <string name="settings_hide_unscoped_summary">Only show installed apps enabled in LSPosed. Apps outside the module scope stay hidden.</string>
+    <string name="settings_no_apps">No installed apps in scope</string>
+    <string name="settings_about_morphe_summary">Version, links and credits</string>
+    <string name="settings_morphe_website">Morphe website</string>
+    <string name="settings_licenses_summary">Third-party components</string>
+    <string name="settings_footer">FemAlloy %1$s (%2$s) · %3$s</string>
+    <string name="settings_version_summary">Version %1$s (%2$s) %3$s\nBuild date: %4$s</string>
+    <string name="settings_connecting">Connecting to LSPosed…</string>
+    <string name="settings_prefs_unavailable">Could not read module preferences. Make sure the module is enabled and scoped for this app.</string>
+    <string name="settings_module_not_available">LSPosed service is not available.\nActivate the module in LSPosed Manager and open this screen again.</string>
+    <string name="settings_patches_title_count">Patches · %1$d of %2$d</string>
+    <string name="settings_search_patches">Search patches</string>
+    <string name="settings_no_patches">No patches match the search</string>
+    <string name="settings_disable_all">Disable all</string>
+    <string name="settings_stop_and_open">Stop &amp; open</string>
+    <string name="settings_app_info">App info</string>
+
+    <!-- Glass navigation bar settings category -->
+    <string name="morphe_navigation_bar_glass_category_title">Glass navigation bar</string>
 </resources>

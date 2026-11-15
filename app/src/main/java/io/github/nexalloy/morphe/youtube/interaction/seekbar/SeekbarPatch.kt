@@ -11,6 +11,13 @@ val seekbarPatch = patch(
     description = "Adds options to disable precise seeking when swiping up on the seekbar, " +
             "tap the seekbar to seek, slide to seek instead of playing at 2x speed, " +
             "and enable seeking on live streams without DVR.",
+    settings = {
+        // Make sure the sub-patch settings are registered even when this patch is disabled.
+        disablePreciseSeekingGesturePatch
+        enableSlideToSeekPatch
+        enableTapToSeekPatch
+        liveStreamDVRPatch
+    },
 ) {
     dependsOn(
         disablePreciseSeekingGesturePatch,

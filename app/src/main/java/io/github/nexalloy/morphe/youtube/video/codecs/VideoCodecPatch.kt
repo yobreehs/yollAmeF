@@ -6,8 +6,7 @@ import app.morphe.extension.shared.Utils
 import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.youtube.interaction.reload.dismissPlayerMethod
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.NewFeatures
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlaybackPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.shared.VideoStreamingDataConstructorFingerprint
 import io.github.nexalloy.patch
 import java.lang.ref.WeakReference
@@ -16,10 +15,10 @@ import java.util.WeakHashMap
 
 private const val CODEC_PREFERENCE_KEY = "morphe_video_codec"
 internal const val CODEC_PREFERENCES_NAME = "morphe_prefs"
-internal const val CODEC_AUTO = "auto"
-internal const val CODEC_AV1 = "av1"
-internal const val CODEC_VP9 = "vp9"
-internal const val CODEC_AVC = "avc"
+internal const val CODEC_AUTO = "DEFAULT"
+internal const val CODEC_AV1 = "AV1"
+internal const val CODEC_VP9 = "VP9"
+internal const val CODEC_AVC = "AVC"
 
 internal fun selectedVideoCodec(): String = runCatching {
     Utils.getContext()
@@ -49,19 +48,18 @@ internal fun setSelectedVideoCodec(codec: String) {
  */
 val VideoCodec = patch(
     name = "Video codec",
-    description = "Adds an option to prefer a video codec (AV1, VP9 or H.264/AVC) and switch it during playback."
-) {
-    dependsOn(NewFeatures)
-
-    addNewFeaturesPlaybackPreferences(
-        ListPreference(
-            key = CODEC_PREFERENCE_KEY,
-            entriesKey = "morphe_video_codec_entries",
-            entryValuesKey = "morphe_video_codec_entry_values",
-            summaryKey = "morphe_video_codec_summary"
+    description = "Adds an option to prefer a video codec (AV1, VP9 or H.264/AVC) and switch it during playback.",
+    settings = {
+        PreferenceScreen.VIDEO.addPreferences(
+            ListPreference(
+                key = CODEC_PREFERENCE_KEY,
+                entriesKey = "morphe_video_codec_entries",
+                entryValuesKey = "morphe_video_codec_entry_values",
+                summaryKey = "morphe_video_codec_summary"
+            )
         )
-    )
-
+    },
+) {
     VideoStreamingDataConstructorFingerprint.hookMethod {
         after { param ->
             try {

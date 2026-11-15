@@ -18,16 +18,17 @@ import io.github.nexalloy.patch
 
 val PlaybackSpeedButton = patch(
     description = "Adds the option to display playback speed dialog button in the video player.",
+    settings = {
+        addPlayerOverlayPreferences(
+            SwitchPreference("morphe_playback_speed_dialog_button", summary = true),
+        )
+    },
 ) {
     dependsOn(
         CustomPlaybackSpeed,
         LegacyPlayerControls,
         playerOverlayButtonsHook,
         VideoInformationPatch,
-    )
-
-    addPlayerOverlayPreferences(
-        SwitchPreference("morphe_playback_speed_dialog_button", summary = true),
     )
 
     addPlayerBottomButton(PlaybackSpeedDialogButton::initializeButton)

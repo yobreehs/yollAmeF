@@ -5,6 +5,7 @@ import io.github.nexalloy.PatchExecutor
 import io.github.nexalloy.hookMethod
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceScreen
+import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
@@ -21,34 +22,36 @@ fun enableDebuggingPatch(
 ) = patch(
     name = "Enable debugging",
     description = "Adds options for debugging and exporting Morphe logs to the clipboard.",
-) {
-    val preferences = mutableSetOf<BasePreference>(
-        SwitchPreference("morphe_debug"),
-    )
+    settings = {
+        val preferences = mutableSetOf<BasePreference>(
+            // v2.2 replaced the boolean "morphe_debug" with the "morphe_debug_level" enum.
+            ListPreference("morphe_debug_level"),
+        )
 
-    preferences.addAll(additionalDebugPreferences)
+        preferences.addAll(additionalDebugPreferences)
 
-    preferences.addAll(
-        listOf(
-            SwitchPreference("morphe_debug_stacktrace", summary = true),
-            SwitchPreference("morphe_debug_toast_on_error"),
-            NonInteractivePreference(
-                "morphe_debug_export_logs",
-                tag = app.morphe.extension.shared.settings.preference.ExportLogToClipboardPreference::class.java,
-                selectable = true
-            ),
-            NonInteractivePreference(
-                "morphe_debug_feature_flags_manager",
-                tag = app.morphe.extension.shared.settings.preference.FeatureFlagsManagerPreference::class.java,
-                selectable = true
+        preferences.addAll(
+            listOf(
+                SwitchPreference("morphe_debug_stacktrace", summary = true),
+                SwitchPreference("morphe_debug_toast_on_error"),
+                NonInteractivePreference(
+                    "morphe_debug_export_logs",
+                    tag = app.morphe.extension.shared.settings.preference.ExportLogToClipboardPreference::class.java,
+                    selectable = true
+                ),
+                NonInteractivePreference(
+                    "morphe_debug_feature_flags_manager",
+                    tag = app.morphe.extension.shared.settings.preference.FeatureFlagsManagerPreference::class.java,
+                    selectable = true
+                )
             )
         )
-    )
 
-    // Register the debug preferences flat into the given screen (for the fork, the
-    // dedicated "Debug" root screen) instead of a nested sub-screen.
-    preferenceScreen.addPreferences(*preferences.toTypedArray())
-
+        // Register the debug preferences flat into the given screen (for the fork, the
+        // dedicated "Debug" root screen) instead of a nested sub-screen.
+        preferenceScreen.addPreferences(*preferences.toTypedArray())
+    },
+) {
     // Hook the methods that look up if a feature flag is active.
     ::experimentalBooleanFeatureFlagFingerprint.hookMethod {
         after {

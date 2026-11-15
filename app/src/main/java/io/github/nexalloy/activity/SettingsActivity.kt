@@ -2,64 +2,99 @@
 
 package io.github.nexalloy.activity
 
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.preference.Preference
-import android.preference.PreferenceCategory
-import android.preference.PreferenceFragment
-import android.text.format.DateUtils
-import android.view.Menu
-import android.view.MenuItem
-import android.window.OnBackInvokedDispatcher
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.addCallback
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.mutableStateOf
 import app.morphe.extension.shared.Utils
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
 import io.github.libxposed.service.XposedService
 import io.github.nexalloy.AppPatchInfo
-import io.github.nexalloy.BuildConfig
 import io.github.nexalloy.R
-import io.github.nexalloy.appPatchConfigurations
 import io.github.nexalloy.common.UpdateChecker
+import io.github.nexalloy.ui.ModuleUiSettings
+import io.github.nexalloy.ui.screens.ModuleSettingsScreen
 import kotlin.system.exitProcess
 
-class SettingsActivity : Activity(), SettingApplication.ServiceStateListener {
+/**
+ * LSPosed entry point for the module settings.
+ *
+ * The screen is built with Jetpack Compose Material 3 and mirrors the visual language of the
+ * Femboy Root Detector settings screen: section headers, rounded cards, inset dividers and
+ * switch rows.
+ */
+class SettingsActivity : ComponentActivity(), SettingApplication.ServiceStateListener {
 
-    private var mService: XposedService? = null
+    private val serviceState = mutableStateOf<XposedService?>(null)
+    private val activatedState = mutableStateOf(false)
+    private val loadingState = mutableStateOf(true)
+    private val hideIconState = mutableStateOf(false)
+    private val disableAutoCheckState = mutableStateOf(false)
+    private val hideUnscopedAppsState = mutableStateOf(true)
+    private val scopedPackagesState = mutableStateOf<Set<String>>(emptySet())
+
+    private lateinit var uiSettings: ModuleUiSettings
     private lateinit var aboutPreference: MorpheAboutPreference
+    private lateinit var updateChecker: UpdateChecker
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(
-                OnBackInvokedDispatcher.PRIORITY_DEFAULT
-            ) {
-                onBackPressed()
-            }
-        }
-        // Android 15+ enforces edge-to-edge and ignores layout fitsSystemWindows.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
-                val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars())
-                view.setPadding(0, bars.top, 0, bars.bottom)
-                insets
-            }
-        }
-        setContentView(R.layout.activity_settings)
-        actionBar?.setDisplayShowHomeEnabled(false)
 
         Utils.setContext(this)
+        uiSettings = ModuleUiSettings(this)
+        hideUnscopedAppsState.value = uiSettings.hideUnscopedApps
+
         aboutPreference = MorpheAboutPreference(this).apply {
             setTitle(R.string.about_title)
         }
+        hideIconState.value = isLauncherIconHidden()
 
-        if (savedInstanceState != null) return
+        updateChecker = UpdateChecker().apply {
+            setActivity(this@SettingsActivity)
+            autoCheckUpdate()
+        }
 
-        fragmentManager.beginTransaction().replace(R.id.settings_container, SettingsFragment())
-            .commit()
+        onBackPressedDispatcher.addCallback(this) {
+            finishAndRemoveTask()
+            exitProcess(0)
+        }
+
+        setContent {
+            ModuleSettingsScreen(
+                loading = loadingState.value,
+                activated = activatedState.value,
+                serviceAvailable = serviceState.value != null,
+                hideIcon = hideIconState.value,
+                disableAutoCheck = disableAutoCheckState.value,
+                hideUnscopedApps = hideUnscopedAppsState.value,
+                scopedPackages = scopedPackagesState.value,
+                onHideIconChange = ::setLauncherIconHidden,
+                onHideUnscopedAppsChange = ::setHideUnscopedApps,
+                onDisableAutoCheckChange = ::setDisableAutoCheck,
+                onOpenApp = ::openAppPatchSettings,
+                onAbout = {
+                    aboutPreference.onPreferenceClickListener
+                        ?.onPreferenceClick(aboutPreference)
+                },
+                onCheckUpdate = {
+                    updateChecker.checkUpdate(silent = false)
+                },
+                onOpenUrl = ::openUrl,
+            )
+        }
     }
 
     override fun onStart() {
@@ -73,201 +108,77 @@ class SettingsActivity : Activity(), SettingApplication.ServiceStateListener {
     }
 
     override fun onServiceStateChanged(service: XposedService?) {
-        mService = service
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.xp_settings_menu, menu)
-        menu.findItem(R.id.menu_disable_auto_check).isVisible = false
-        return true
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val aliasName = ComponentName(this, SettingsActivity::class.java.name + "Alias")
-        menu.findItem(R.id.menu_hide_icon).isChecked =
-            packageManager.getComponentEnabledSetting(aliasName) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-
-        val menuDisableAutoCheck = menu.findItem(R.id.menu_disable_auto_check)
-        try {
-            val prefs = mService!!.getRemotePreferences("prefs")
-            menuDisableAutoCheck.isChecked =
-                prefs.getBoolean("disable_auto_check_update", false)
-            menuDisableAutoCheck.isVisible = true
-        } catch (_: Throwable) {
-            menuDisableAutoCheck.isVisible = false
-        }
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menu_about -> {
-                aboutPreference.onPreferenceClickListener?.onPreferenceClick(aboutPreference)
+        runOnUiThread {
+            loadingState.value = false
+            serviceState.value = service
+            activatedState.value = service != null && runCatching {
+                service!!.getRemotePreferences("prefs")
+                service.apiVersion
                 true
-            }
-
-            R.id.menu_hide_icon -> {
-                val newChecked = !item.isChecked
-                item.isChecked = newChecked
-                val aliasName = ComponentName(this, SettingsActivity::class.java.name + "Alias")
-                val status = if (newChecked) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                packageManager.setComponentEnabledSetting(
-                    aliasName,
-                    status,
-                    PackageManager.DONT_KILL_APP
-                )
-                true
-            }
-
-            R.id.menu_disable_auto_check -> {
-                val newChecked = !item.isChecked
-                item.isChecked = newChecked
-                mService!!.getRemotePreferences("prefs")
-                    .edit().putBoolean("disable_auto_check_update", newChecked).apply()
-                true
-            }
-
-            else -> super.onOptionsItemSelected(item)
+            }.getOrDefault(false)
+            disableAutoCheckState.value = service != null && runCatching {
+                service!!.getRemotePreferences("prefs")
+                    .getBoolean(KEY_DISABLE_AUTO_CHECK, false)
+            }.getOrDefault(false)
+            scopedPackagesState.value = runCatching {
+                service?.scope?.toSet() ?: emptySet()
+            }.getOrDefault(emptySet())
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        finishAndRemoveTask()
-        exitProcess(0)
+    private fun openAppPatchSettings(info: AppPatchInfo) {
+        startActivity(
+            Intent(this, AppPatchSettingsActivity::class.java)
+                .putExtra(AppPatchSettingsActivity.ARGUMENT_APP_NAME, info.appName),
+        )
     }
 
-    @Suppress("OVERRIDE_DEPRECATION")
-    class SettingsFragment : PreferenceFragment(), SettingApplication.ServiceStateListener {
-        private var mService: XposedService? = null
-
-        private var offPreference: Preference? = null
-        private var onCategory: PreferenceCategory? = null
-
-        fun AppPatchInfo.getPreference(): Preference {
-            return Preference(context).apply {
-                title = appName
-                key = appName
-                intent = Intent(context, AppPatchSettingsActivity::class.java).apply {
-                    putExtra(AppPatchSettingsActivity.ARGUMENT_APP_NAME, appName)
-                }
-            }
+    private fun openUrl(url: String) {
+        runCatching {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }.onFailure {
+            Toast.makeText(this, it.message ?: "Unable to open link", Toast.LENGTH_SHORT).show()
         }
+    }
 
-        @Deprecated("Deprecated in Java")
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
+    private fun setHideUnscopedApps(hide: Boolean) {
+        hideUnscopedAppsState.value = hide
+        uiSettings.hideUnscopedApps = hide
+    }
 
-            val rootScreen = preferenceManager.createPreferenceScreen(context)
-            preferenceScreen = rootScreen
-
-            Preference(context).apply {
-                setSummary(R.string.slogan_summary)
-                isEnabled = false
-                rootScreen.addPreference(this)
-            }
-
-            Utils.setContext(context)
-
-            Preference(context).apply {
-                summary =
-                    "This app uses code from Morphe. To learn more, visit https://morphe.software"
-                intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://morphe.software"))
-                rootScreen.addPreference(this)
-            }
-
-            Preference(context).apply {
-                setTitle(R.string.faq_title)
-                intent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/sheerboy/FemAlloy/wiki/Frequently-Asked-Questions")
-                )
-                rootScreen.addPreference(this)
-            }
-
-            addPreferencesFromResource(R.xml.license_prefs)
-
-            Preference(context).apply {
-                setTitle(R.string.check_for_update_title)
-                summary =
-                    """Current version: ${BuildConfig.VERSION_NAME} (${BuildConfig.COMMIT_HASH}) ${BuildConfig.BUILD_TYPE}
-                       |Build Date: ${DateUtils.getRelativeTimeSpanString(BuildConfig.COMMIT_DATE * 1000)}""".trimMargin()
-                setOnPreferenceClickListener {
-                    UpdateChecker().apply {
-                        setActivity(activity)
-                        checkUpdate(silent = false)
-                    }
-                    true
-                }
-                rootScreen.addPreference(this)
-            }
-            UpdateChecker().apply {
-                setActivity(activity)
-                autoCheckUpdate()
-            }
-
-            updateDynamicUI(false)
+    private fun setDisableAutoCheck(disabled: Boolean) {        val service = serviceState.value ?: return
+        runCatching {
+            service.getRemotePreferences("prefs").edit()
+                .putBoolean(KEY_DISABLE_AUTO_CHECK, disabled)
+                .apply()
+            disableAutoCheckState.value = disabled
+        }.onFailure {
+            Toast.makeText(this, it.message ?: "Unable to save preference", Toast.LENGTH_SHORT)
+                .show()
         }
+    }
 
-        fun updateDynamicUI(on: Boolean) {
-            val rootScreen = preferenceScreen ?: return
-            if (onCategory != null) rootScreen.removePreference(onCategory)
-            if (offPreference != null) rootScreen.removePreference(offPreference)
+    private fun launcherAlias(): ComponentName =
+        ComponentName(this, SettingsActivity::class.java.name + "Alias")
 
-            if (!on) {
-                offPreference = Preference(context).apply {
-                    setSummary(R.string.module_not_activated_summary)
-                    isEnabled = false
-                    rootScreen.addPreference(this)
-                }
-            } else {
-                onCategory = PreferenceCategory(context).apply {
-                    setTitle(R.string.patch_selection)
+    private fun isLauncherIconHidden(): Boolean =
+        packageManager.getComponentEnabledSetting(launcherAlias()) ==
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
-                    rootScreen.addPreference(this)
+    private fun setLauncherIconHidden(hidden: Boolean) {
+        packageManager.setComponentEnabledSetting(
+            launcherAlias(),
+            if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            else PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP,
+        )
+        hideIconState.value = hidden
+    }
 
-                    this.addPreference(Preference(context).apply {
-                        setSummary(R.string.force_stop_to_apply_summary)
-                        isEnabled = false
-                    })
-
-                    for (appPatchInfo in appPatchConfigurations) {
-                        this.addPreference(appPatchInfo.getPreference())
-                    }
-                }
-            }
-        }
-
-        override fun onStart() {
-            super.onStart()
-            SettingApplication.addServiceStateListener(this, true)
-        }
-
-        override fun onStop() {
-            SettingApplication.removeServiceStateListener(this)
-            super.onStop()
-        }
-
-        override fun onServiceStateChanged(service: XposedService?) {
-            mService = service
-
-            activity?.runOnUiThread {
-                if (service == null) {
-                    updateDynamicUI(false)
-                    return@runOnUiThread
-                }
-
-                val isModuleActivated: Boolean = try {
-                    service.getRemotePreferences("prefs")
-                    service.apiVersion
-                    true
-                } catch (_: Throwable) {
-                    false
-                }
-
-                updateDynamicUI(isModuleActivated)
-            }
-        }
+    private companion object {
+        const val KEY_DISABLE_AUTO_CHECK = "disable_auto_check_update"
     }
 }

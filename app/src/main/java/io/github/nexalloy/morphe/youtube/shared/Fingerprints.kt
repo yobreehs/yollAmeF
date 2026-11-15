@@ -8,6 +8,7 @@ import io.github.nexalloy.morphe.InstructionLocation.MatchFirst
 import io.github.nexalloy.morphe.Opcode
 import io.github.nexalloy.morphe.fieldAccess
 import io.github.nexalloy.morphe.findClassDirect
+import io.github.nexalloy.morphe.findFieldDirect
 import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
@@ -218,6 +219,11 @@ val VideoQualityClass = findClassDirect {
 val VideoQualityReceiver = findMethodDirect {
     val videoQualityClassName = VideoQualityClass().name
     videoQualityChangedFingerprint().invokes.single { it.paramCount == 1 && it.paramTypeNames[0] == videoQualityClassName }
+}
+
+internal val videoQualityFormatIdsField = findFieldDirect {
+    val constructor = videoQualityChangedFingerprint().invokes.single { it.name == "<init>" }
+    constructor.declaredClass!!.fields.single { it.type == constructor.paramTypes.last() }
 }
 
 internal object WatchNextResponseParserFingerprint : Fingerprint(

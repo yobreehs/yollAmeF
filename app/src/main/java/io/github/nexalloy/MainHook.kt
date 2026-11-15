@@ -49,8 +49,8 @@ class MainHook : XposedModule() {
                 }
             }
 
-            val patches = patchesByPackage[param.packageName] ?: return@inContext
-            PatchExecutor(app, param, this).applyPatches(patches)
+            val info = patchesByPackage[param.packageName] ?: return@inContext
+            PatchExecutor(app, param, this).applyPatches(info.patches)
         }
     }
 

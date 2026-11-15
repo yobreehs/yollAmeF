@@ -19,25 +19,26 @@ val Downloads = patch(
     name = "Downloads",
     description = "Adds support to download videos with an external downloader app " +
             "using the in-app download button or a video player action button.",
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            PreferenceScreenPreference(
+                key = "morphe_external_downloader_screen",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    SwitchPreference("morphe_external_downloader", summary = true),
+                    SwitchPreference("morphe_external_downloader_action_button", summary = true),
+                    TextPreference(
+                        "morphe_external_downloader_name",
+                        tag = ExternalDownloaderPreference::class.java
+                    ),
+                ),
+            ),
+        )
+    },
 ) {
     dependsOn(
         LegacyPlayerControls,
         VideoInformationPatch,
-    )
-
-    PreferenceScreen.PLAYER.addPreferences(
-        PreferenceScreenPreference(
-            key = "morphe_external_downloader_screen",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                SwitchPreference("morphe_external_downloader", summary = true),
-                SwitchPreference("morphe_external_downloader_action_button", summary = true),
-                TextPreference(
-                    "morphe_external_downloader_name",
-                    tag = ExternalDownloaderPreference::class.java
-                ),
-            ),
-        ),
     )
 
     addTopControl(

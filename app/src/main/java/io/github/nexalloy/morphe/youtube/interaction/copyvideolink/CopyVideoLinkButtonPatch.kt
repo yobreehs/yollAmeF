@@ -17,6 +17,14 @@ import io.github.nexalloy.patch
 val CopyVideoLinkButtonPatch = patch(
     name = "Copy video link",
     description = "Adds options to display buttons in the video player to copy video links.",
+    settings = {
+        addPlayerOverlayPreferences(
+            noTitleUnsortedPreferenceCategory(
+                SwitchPreference("morphe_copy_video_link_button", summary = true),
+                SwitchPreference("morphe_copy_video_link_with_timestamp_button", summary = true)
+            )
+        )
+    },
 ) {
     dependsOn(
         LegacyPlayerControls,
@@ -24,12 +32,6 @@ val CopyVideoLinkButtonPatch = patch(
         VideoInformationPatch,
     )
 
-    addPlayerOverlayPreferences(
-        noTitleUnsortedPreferenceCategory(
-            SwitchPreference("morphe_copy_video_link_button", summary = true),
-            SwitchPreference("morphe_copy_video_link_with_timestamp_button", summary = true)
-        )
-    )
     addPlayerBottomButton(CopyVideoLinkButton::initializeButton)
 
     addLegacyBottomControl(R.layout.morphe_copy_video_url_button)

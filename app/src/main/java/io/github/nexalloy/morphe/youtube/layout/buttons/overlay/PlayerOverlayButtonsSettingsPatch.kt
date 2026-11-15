@@ -12,13 +12,16 @@ internal fun addPlayerOverlayPreferences(vararg preference: BasePreference) {
     playerOverlayPreferences!!.addAll(preference)
 }
 
-val PlayerOverlayButtonsSettings = patch {
-    if (playerOverlayPreferences!!.isNotEmpty()) {
-        PreferenceScreen.PLAYER.addPreferences(
-            PreferenceScreenPreference(
-                key = "morphe_overlay_buttons_screen",
-                preferences = playerOverlayPreferences!!
+val PlayerOverlayButtonsSettings = patch(
+    settings = {
+        if (playerOverlayPreferences!!.isNotEmpty()) {
+            PreferenceScreen.PLAYER.addPreferences(
+                PreferenceScreenPreference(
+                    key = "morphe_overlay_buttons_screen",
+                    preferences = playerOverlayPreferences!!
+                )
             )
-        )
-    }
+        }
+    },
+) {
 }

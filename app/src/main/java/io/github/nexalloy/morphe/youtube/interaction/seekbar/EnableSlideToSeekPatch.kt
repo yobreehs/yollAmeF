@@ -9,13 +9,14 @@ import io.github.nexalloy.scopedHook
 
 val enableSlideToSeekPatch = patch(
     description = "Adds an option to enable slide to seek " +
-        "instead of playing at 2x speed when pressing and holding in the video player."
+        "instead of playing at 2x speed when pressing and holding in the video player.",
+    settings = {
+        PreferenceScreen.SEEKBAR.addPreferences(
+            SwitchPreference("morphe_slide_to_seek", summary = true),
+        )
+    },
 ) {
     dependsOn(VersionCheck)
-
-    PreferenceScreen.SEEKBAR.addPreferences(
-        SwitchPreference("morphe_slide_to_seek", summary = true),
-    )
 
     // Restore the behavior to slide to seek.
     val checkMethod = ::slideToSeekCheckMethod.method

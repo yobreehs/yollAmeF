@@ -19,4 +19,6 @@ local.properties
 *.jks
 *.keystore
 signing.properties
-project.md
+
+# Local-only inventory harness (kept out of git on purpose; see project.md).
+/app/src/test/java/io/github/nexalloy/PatchInventoryTest.kt

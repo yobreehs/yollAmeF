@@ -8,6 +8,7 @@ import app.morphe.extension.youtube.settings.preference.ChannelWhitelistPreferen
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import io.github.nexalloy.morphe.shared.ad.HideFullscreenAds
+import io.github.nexalloy.morphe.shared.ad.registerHideFullscreenAdsPreferences
 import io.github.nexalloy.morphe.shared.misc.litho.filter.addLithoFilter
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
 import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
@@ -29,6 +30,27 @@ import io.github.nexalloy.scopedHook
 val HideAds = patch(
     name = "Hide ads",
     description = "Adds options to hide general ads, Premium promotions and video ads.",
+    settings = {
+        registerHideFullscreenAdsPreferences(PreferenceScreen.ADS)
+
+        PreferenceScreen.ADS.addPreferences(
+            SwitchPreference("morphe_hide_creator_store_shelf"),
+//        SwitchPreference("morphe_hide_end_screen_store_banner"),
+            SwitchPreference("morphe_hide_general_ads"),
+            SwitchPreference("morphe_hide_merchandise_banners"),
+            SwitchPreference("morphe_hide_paid_promotion_labels"),
+            SwitchPreference("morphe_hide_player_popup_ads"),
+            SwitchPreference("morphe_hide_self_sponsor_ads"),
+            SwitchPreference("morphe_hide_shopping_links"),
+            SwitchPreference("morphe_hide_video_ads"),
+            NonInteractivePreference(
+                key = "morphe_ads_channel_whitelist",
+                tag = ChannelWhitelistPreference::class.java,
+                selectable = true
+            ),
+            SwitchPreference("morphe_hide_youtube_premium_promotions"),
+        )
+    },
 ) {
     dependsOn(
         LithoFilter,
@@ -37,26 +59,8 @@ val HideAds = patch(
         HideHorizontalShelves,
         elementProtoParserHookPatch,
 
-        HideFullscreenAds(PreferenceScreen.ADS),
+        HideFullscreenAds(),
         VersionCheck,
-    )
-
-    PreferenceScreen.ADS.addPreferences(
-        SwitchPreference("morphe_hide_creator_store_shelf"),
-//        SwitchPreference("morphe_hide_end_screen_store_banner"),
-        SwitchPreference("morphe_hide_general_ads"),
-        SwitchPreference("morphe_hide_merchandise_banners"),
-        SwitchPreference("morphe_hide_paid_promotion_labels"),
-        SwitchPreference("morphe_hide_player_popup_ads"),
-        SwitchPreference("morphe_hide_self_sponsor_ads"),
-        SwitchPreference("morphe_hide_shopping_links"),
-        SwitchPreference("morphe_hide_video_ads"),
-        NonInteractivePreference(
-            key = "morphe_ads_channel_whitelist",
-            tag = ChannelWhitelistPreference::class.java,
-            selectable = true
-        ),
-        SwitchPreference("morphe_hide_youtube_premium_promotions"),
     )
 
     addLithoFilter(AdsFilter())

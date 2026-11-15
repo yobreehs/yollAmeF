@@ -19,24 +19,21 @@ import io.github.nexalloy.patch
 val BackgroundPlayback = patch(
     name = "Remove background playback restrictions",
     description = "Removes restrictions on background playback, including playing kids videos in the background.",
+    settings = {
+        PreferenceScreen.SHORTS.addPreferences(
+            SwitchPreference("morphe_shorts_disable_background_playback")
+        )
+
+        PreferenceScreen.MISC.addPreferences(
+            SwitchPreference("morphe_remove_background_playback_restrictions"),
+            ListPreference("morphe_auto_pause_on_screen_lock")
+        )
+    },
 ) {
 
     dependsOn(VersionCheck)
 
-    PreferenceScreen.SHORTS.addPreferences(
-        SwitchPreference("morphe_shorts_disable_background_playback")
-    )
-
-    PreferenceScreen.MISC.addPreferences(
-        SwitchPreference("morphe_remove_background_playback_restrictions"),
-        ListPreference("morphe_auto_pause_on_screen_lock")
-    )
-
     onCreateHook.add(BackgroundPlaybackPatch::initialize)
-
-    PreferenceScreen.SHORTS.addPreferences(
-        SwitchPreference("morphe_shorts_disable_background_playback"),
-    )
 
     BackgroundPlaybackManagerFingerprint.hookMethod {
         after {

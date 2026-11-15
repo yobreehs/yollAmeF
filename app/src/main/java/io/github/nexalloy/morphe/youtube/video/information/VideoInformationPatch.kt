@@ -17,6 +17,7 @@ import io.github.nexalloy.morphe.shared.misc.textcomponent.textComponentPatch
 import io.github.nexalloy.morphe.youtube.shared.InitializePlaybackSpeedValuesFingerprint
 import io.github.nexalloy.morphe.youtube.shared.SpeedLimiterFingerprint
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityClass
+import io.github.nexalloy.morphe.youtube.shared.videoQualityFormatIdsField
 import io.github.nexalloy.morphe.youtube.video.playerresponse.Hook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.PlayerResponseMethodHook
 import io.github.nexalloy.morphe.youtube.video.playerresponse.addPlayerResponseMethodHook
@@ -262,6 +263,7 @@ val VideoInformationPatch = patch(
 
     val getQualityName = { quality: Any -> qualityNameField.get(quality) as String }
     val getResolution = { quality: Any -> resolutionField.get(quality) as Int }
+    val qualityFormatIdsField = ::videoQualityFormatIdsField.field
 
     // Fix bad data used by YouTube.
     XposedBridge.hookAllConstructors(
@@ -279,6 +281,8 @@ val VideoInformationPatch = patch(
     class VideoQualityProxy(val quality: Any) : VideoInformation.VideoQualityInterface {
         override fun patch_getQualityName(): String = getQualityName(quality)
         override fun patch_getResolution(): Int = getResolution(quality)
+        override fun patch_getFormatIds(): Collection<*> =
+            qualityFormatIdsField.get(quality) as Collection<*>
         override fun toString(): String = quality.toString()
         override fun equals(other: Any?): Boolean =
             other is VideoQualityProxy && quality == other.quality

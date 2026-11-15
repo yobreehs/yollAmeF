@@ -359,23 +359,7 @@ open class Fingerprint internal constructor(
 
     context(dexkit: DexKitBridge)
     fun run(): MethodData {
-        val methodMatcher = buildMethodMatcher()
-
-        var results: List<MethodData> = if (classMatcherBlock != null) {
-            dexkit.findClass {
-                matcher(ClassMatcher().apply(classMatcherBlock!!))
-            }.findMethod {
-                matcher(methodMatcher)
-            }
-        } else if (classFinder != null) {
-            classFinder!!.invoke(dexkit).findMethod {
-                matcher(methodMatcher)
-            }
-        } else {
-            dexkit.findMethod {
-                matcher(methodMatcher)
-            }
-        }
+        var results = runAll()
 
         if (results.size > 1) {
             val isRestrict =
@@ -392,6 +376,32 @@ open class Fingerprint internal constructor(
             System.err.println("$name matched ${results.size} methods:\n  $list")
         }
         return results.single()
+    }
+
+    /**
+     * Every method the fingerprint matches. Some hooks are safe to apply to every match, such
+     * as a padding fix that only checks the window insets, and need not fail when the app has
+     * more than one method with the same shape.
+     */
+    context(dexkit: DexKitBridge)
+    fun runAll(): List<MethodData> {
+        val methodMatcher = buildMethodMatcher()
+
+        return if (classMatcherBlock != null) {
+            dexkit.findClass {
+                matcher(ClassMatcher().apply(classMatcherBlock!!))
+            }.findMethod {
+                matcher(methodMatcher)
+            }
+        } else if (classFinder != null) {
+            classFinder!!.invoke(dexkit).findMethod {
+                matcher(methodMatcher)
+            }
+        } else {
+            dexkit.findMethod {
+                matcher(methodMatcher)
+            }
+        }
     }
 
     context(dexkit: DexKitBridge)

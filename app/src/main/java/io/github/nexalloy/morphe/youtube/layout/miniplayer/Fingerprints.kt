@@ -84,7 +84,7 @@ internal object MiniplayerOffscreenHandlerFingerprint : Fingerprint(
  * Offscreen rect validator used when dragging the miniplayer.
  */
 internal object MiniplayerOffscreenRectValidatorFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    // Private in 21.44+, public before that.
     parameters = listOf("I", "I", "I"),
     filters = listOf(
         opcode(Opcode.IGET_OBJECT),

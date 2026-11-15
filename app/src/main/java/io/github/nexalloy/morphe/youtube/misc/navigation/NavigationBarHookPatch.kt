@@ -33,9 +33,14 @@ val NavigationBarHook = patch(
         after { NavigationBar.setLastAppNavigationEnum(it.result as Enum<*>) }
     })
 
-    // Hook the creation of navigation tab views.
-    // 21.43 merged the drawable tab method into the resource-styled one, so avoid
-    // registering the same hook twice.
+    // Hook the creation of navigation tab views. 21.43 merged the drawable tab method into
+    // the resource-styled one, so the two hooks below would be installed twice.
+    //
+    // The resource-styled method is also used for the 'You' (library) tab, which has no
+    // navigation enum. NavigationBar.navigationImageResourceTabLoaded() falls back to the
+    // library button when no enum was set, so that tab is registered as well. Using
+    // navigationTabLoaded() here left the 'You' tab unmapped, which produced the
+    // "Unknown tab: null" toast and broke the selected-tab tracking of the glass bar.
     val resourceStyledCreateMember = PivotBarButtonsCreateResourceStyledViewFingerprint.member
     val drawableCreateMember = ::pivotBarButtonsCreateDrawableViewFingerprint.member
     if (drawableCreateMember != resourceStyledCreateMember) {
@@ -53,17 +58,7 @@ val NavigationBarHook = patch(
             PivotBarButtonsCreateResourceStyledViewFingerprint.member
         ) {
             after {
-                val isYouTab = runCatching {
-                    Utils.getChildViewByResourceName<View>(
-                        it.result as ViewGroup,
-                        "you_tab_border"
-                    ) ?: throw Exception("You tab border not found")
-                }.isSuccess
-                if (isYouTab) {
-                    NavigationBar.setLastAppNavigationEnumYou()
-                }
-
-                NavigationBar.navigationTabLoaded(it.result as View)
+                NavigationBar.navigationImageResourceTabLoaded(it.result as View)
             }
         })
 

@@ -7,7 +7,7 @@ import app.morphe.extension.youtube.settings.Settings
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
 
@@ -25,18 +25,19 @@ import org.luckypray.dexkit.wrap.DexMethod
 val AmbientMode = patch(
     name = "Ambient mode",
     description = "Adds options to bypass power saving restrictions for Ambient mode and disable it entirely or in fullscreen.",
-) {
-    addNewFeaturesPlayerPreferences(
-        PreferenceScreenPreference(
-            key = "morphe_ambient_mode_screen",
-            preferences = setOf(
-                SwitchPreference("morphe_bypass_ambient_mode_restrictions", summary = true),
-                SwitchPreference("morphe_disable_ambient_mode"),
-                SwitchPreference("morphe_disable_fullscreen_ambient_mode"),
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            PreferenceScreenPreference(
+                key = "morphe_ambient_mode_screen",
+                preferences = setOf(
+                    SwitchPreference("morphe_bypass_ambient_mode_restrictions", summary = true),
+                    SwitchPreference("morphe_disable_ambient_mode"),
+                    SwitchPreference("morphe_disable_fullscreen_ambient_mode"),
+                ),
             ),
-        ),
-    )
-
+        )
+    },
+) {
     // Disable Ambient mode entirely via the experiment flag read through the standard getter.
     insertLiteralOverride(45376186L) { original ->
         ExtensionAmbientModePatch.disableAmbientMode(original)

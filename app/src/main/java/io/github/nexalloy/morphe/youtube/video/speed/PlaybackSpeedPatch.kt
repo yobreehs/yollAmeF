@@ -22,6 +22,21 @@ val PlaybackSpeed = patch(
     name = "Playback speed",
     description = "Adds options to customize available playback speeds, set a default playback speed, " +
             "and show a speed dialog button in the video player.",
+    settings = {
+        PreferenceScreen.VIDEO.addPreferences(
+            PreferenceCategory(
+                key = "morphe_zz_video_key", // Dummy key to force the speed settings last.
+                titleKey = null,
+                sorting = Sorting.UNSORTED,
+                tag = NoTitlePreferenceCategory::class.java,
+                preferences = settingsMenuVideoSpeedGroup
+            )
+        )
+
+        // Construct the sub-patch so its own settings (the player dialog button) are registered
+        // even when this patch is disabled.
+        PlaybackSpeedButton
+    },
 ) {
     dependsOn(
         CustomPlaybackSpeed,
@@ -30,15 +45,5 @@ val PlaybackSpeed = patch(
     )
 
     setExtensionIsPatchIncluded(VideoInformation::class.java)
-
-    PreferenceScreen.VIDEO.addPreferences(
-        PreferenceCategory(
-            key = "morphe_zz_video_key", // Dummy key to force the speed settings last.
-            titleKey = null,
-            sorting = Sorting.UNSORTED,
-            tag = NoTitlePreferenceCategory::class.java,
-            preferences = settingsMenuVideoSpeedGroup
-        )
-    )
 }
 

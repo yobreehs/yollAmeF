@@ -60,16 +60,74 @@ fun patch(
     name: String = "",
     description: String = "",
     use: Boolean = true,
+    /**
+     * Declarative part of the patch: the preferences it contributes to the Morphe settings
+     * screen. Evaluated after the patch phase, before the settings screen is built and
+     * regardless of whether this patch is enabled.
+     *
+     * The patcher version injects `morphe_prefs.xml` into the host and therefore always shows
+     * every patch's settings. This module builds the screen at runtime from the executed patch
+     * bodies instead, so keeping the registration inside [func] meant that disabling a patch
+     * removed its whole section (or single rows) from the settings UI.
+     */
+    settings: () -> Unit = {},
     func: PatchExecutor.() -> Unit
-) =
-    Patch(name, description, use, func)
+): Patch {
+    enqueueSettingsRegistration(name, settings)
+    return Patch(name, description, use, func)
+}
+
+/**
+ * Settings registrations are collected while patch objects are created (including the ones
+ * created lazily by `dependsOn`) and applied once the patch phase is over. Deferring them is
+ * required because some of them depend on state set up by other patches, for example the
+ * YouTube version flags.
+ */
+private val pendingSettingsRegistrations = mutableListOf<Pair<String, () -> Unit>>()
+
+private fun enqueueSettingsRegistration(name: String, settings: () -> Unit) {
+    synchronized(pendingSettingsRegistrations) {
+        pendingSettingsRegistrations += name to settings
+    }
+}
+
+/**
+ * Applies every queued settings registration. Patches created while applying the queue are
+ * picked up as well, so dependency patches and patch factories do not have to be listed twice.
+ */
+fun applySettingsRegistrations() {
+    var rounds = 0
+    while (true) {
+        val pending = synchronized(pendingSettingsRegistrations) {
+            if (pendingSettingsRegistrations.isEmpty()) return
+            pendingSettingsRegistrations.toList().also { pendingSettingsRegistrations.clear() }
+        }
+        pending.forEach { (name, settings) ->
+            runCatching(settings).onFailure { e ->
+                Logger.printException({ "Settings registration failed for patch '$name'" }, e)
+            }
+        }
+        if (++rounds > 100) return // Guard against a patch factory that keeps creating patches.
+    }
+}
 
 class Patch(
     val name: String,
     val description: String,
-    val use: Boolean,
+    /** Default state on a fresh install. Can be changed for a whole app before it is used. */
+    var use: Boolean,
     val run: PatchExecutor.() -> Unit
-)
+) {
+    /**
+     * Name for the user. The internal patches of the module have no name, and the toast used to
+     * show an empty line for them, which looked like a bug of its own.
+     */
+    val displayName: String
+        get() = name.ifEmpty {
+            description.lineSequence().firstOrNull()?.take(80)?.ifEmpty { null }
+                ?: "FemAlloy patch ${System.identityHashCode(this)}"
+        }
+}
 
 abstract class IHook(val xposed: XposedInterface) : XposedInterface by xposed {
     abstract val classLoader: ClassLoader
@@ -209,6 +267,7 @@ class PatchExecutor(
             loadCacheIfValid()
             try {
                 executePatches()
+                applySettingsRegistrations()
                 finalizePatching()
                 logDebugInfo()
             } finally {
@@ -263,7 +322,7 @@ class PatchExecutor(
         val success = failedPatches.isEmpty()
         if (!success) {
             XposedBridge.log("${lpparam.applicationInfo.packageName} version: ${getAppVersion()}")
-            Utils.showToastLong("Error while apply following patches:\n${failedPatches.joinToString { it.name }}")
+            Utils.showToastLong("Error while apply following patches:\n${failedPatches.joinToString("\n") { it.displayName }}")
         }
     }
 
@@ -358,6 +417,12 @@ class PatchExecutor(
 
     val Fingerprint.dexMethod get() = getDexMethod(cacheKey) { this@dexMethod.run() }
 
+    /**
+     * Every method the fingerprint matches, for hooks that are safe to apply to all of them.
+     * When the fingerprint does not match, the list is empty (the failure is logged).
+     */
+    val Fingerprint.dexMethodList get() = getDexMethods(cacheKey) { this@dexMethodList.runAll() }
+
     val Fingerprint.member get() = dexMethod.toMember()
 
     val Fingerprint.memberOrNull get() = runCatching { this.member }.getOrNull()
@@ -402,15 +467,23 @@ class PatchExecutor(
 
     private inline fun getDexClass(
         key: String, crossinline findFunc: DexKitBridge.() -> ClassData
-    ): DexClass = dexkit.getClassDirectOrNull(key, wrapFind(key, findFunc) { it.descriptor })!!
+    ): DexClass = requireFound(key, dexkit.getClassDirectOrNull(key, wrapFind(key, findFunc) { it.descriptor }))
 
     private inline fun getDexMethod(
         key: String, crossinline findFunc: DexKitBridge.() -> MethodData
-    ): DexMethod = dexkit.getMethodDirectOrNull(key, wrapFind(key, findFunc) { it.descriptor })!!
+    ): DexMethod = requireFound(key, dexkit.getMethodDirectOrNull(key, wrapFind(key, findFunc) { it.descriptor }))
 
     private inline fun getDexField(
         key: String, crossinline findFunc: DexKitBridge.() -> FieldData
-    ): DexField = dexkit.getFieldDirectOrNull(key, wrapFind(key, findFunc) { it.descriptor })!!
+    ): DexField = requireFound(key, dexkit.getFieldDirectOrNull(key, wrapFind(key, findFunc) { it.descriptor }))
+
+    /**
+     * The `!!` here used to produce a bare NullPointerException with the obfuscated message
+     * "getClass() on a null reference" after the fingerprint itself was already logged as not
+     * found, which hid which patch failed. The failure is the same, but it names the fingerprint.
+     */
+    private fun <T : Any> requireFound(key: String, value: T?): T =
+        value ?: throw IllegalStateException("Fingerprint '$key' was not found")
 
     private inline fun getDexMethods(
         key: String, crossinline findFunc: DexKitBridge.() -> List<MethodData>

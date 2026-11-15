@@ -10,7 +10,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractiveP
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
 
@@ -30,29 +30,30 @@ private fun resourceId(name: String): Int = runCatching {
 val HidePlayerOverlayButtons = patch(
     name = "Hide player overlay buttons",
     description = "Adds options to hide buttons in the video player overlay.",
-) {
-    addNewFeaturesPlayerPreferences(
-        PreferenceScreenPreference(
-            key = "morphe_overlay_buttons_screen",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                SwitchPreference("morphe_hide_autoplay_button"),
-                SwitchPreference("morphe_hide_captions_button"),
-                SwitchPreference("morphe_hide_cast_button"),
-                SwitchPreference("morphe_hide_collapse_button"),
-                SwitchPreference("morphe_hide_fullscreen_button"),
-                SwitchPreference("morphe_hide_player_control_buttons_background", summary = true),
-                SwitchPreference("morphe_hide_player_previous_next_buttons"),
-                SwitchPreference("morphe_hide_settings_button"),
-                NonInteractivePreference(
-                    key = "morphe_player_control_buttons_background_opacity",
-                    tag = app.morphe.extension.shared.settings.preference.SeekBarPreference::class.java,
-                    selectable = true,
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            PreferenceScreenPreference(
+                key = "morphe_overlay_buttons_screen",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    SwitchPreference("morphe_hide_autoplay_button"),
+                    SwitchPreference("morphe_hide_captions_button"),
+                    SwitchPreference("morphe_hide_cast_button"),
+                    SwitchPreference("morphe_hide_collapse_button"),
+                    SwitchPreference("morphe_hide_fullscreen_button"),
+                    SwitchPreference("morphe_hide_player_control_buttons_background", summary = true),
+                    SwitchPreference("morphe_hide_player_previous_next_buttons"),
+                    SwitchPreference("morphe_hide_settings_button"),
+                    NonInteractivePreference(
+                        key = "morphe_player_control_buttons_background_opacity",
+                        tag = app.morphe.extension.shared.settings.preference.SeekBarPreference::class.java,
+                        selectable = true,
+                    ),
                 ),
             ),
-        ),
-    )
-
+        )
+    },
+) {
     val mediaRouteButtonId = resourceId("media_route_button")
     val previousButtonTouchAreaId = resourceId("player_control_previous_button_touch_area")
     val nextButtonTouchAreaId = resourceId("player_control_next_button_touch_area")

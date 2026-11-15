@@ -23,15 +23,16 @@ internal fun forceOriginalAudioPatch(
 ) = patch(
     name = "Force original audio",
     description = "Adds an option to always use the original audio track.",
+    settings = {
+        preferenceScreen.addPreferences(
+            SwitchPreference(
+                key = "morphe_force_original_audio",
+                tag = ForceOriginalAudioSwitchPreference::class.java
+            )
+        )
+    },
 ) {
     block()
-
-    preferenceScreen.addPreferences(
-        SwitchPreference(
-            key = "morphe_force_original_audio",
-            tag = ForceOriginalAudioSwitchPreference::class.java
-        )
-    )
 
     val getFormatStreamModelGetter = ::getFormatStreamModelGetter.dexMethodList
     val getIsDefaultAudioTrackFingerprint = getFormatStreamModelGetter[0]

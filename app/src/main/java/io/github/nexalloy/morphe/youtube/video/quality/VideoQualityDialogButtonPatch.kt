@@ -14,6 +14,11 @@ import io.github.nexalloy.patch
 
 val VideoQualityDialogButtonPatch = patch(
     description = "Adds the option to display video quality dialog button in the video player.",
+    settings = {
+        addPlayerOverlayPreferences(
+            SwitchPreference("morphe_video_quality_dialog_button", summary = true),
+        )
+    },
 ) {
     dependsOn(
         RememberVideoQuality,
@@ -21,9 +26,6 @@ val VideoQualityDialogButtonPatch = patch(
         playerOverlayButtonsHook
     )
 
-    addPlayerOverlayPreferences(
-        SwitchPreference("morphe_video_quality_dialog_button", summary = true),
-    )
     addPlayerBottomButton(VideoQualityDialogButton::initializeButton)
 
     addLegacyBottomControl(R.layout.morphe_video_quality_dialog_button_container)

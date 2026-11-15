@@ -183,9 +183,9 @@ class UpdateChecker() : CoroutineScope {
     private fun showUpdateDialog() {
         launch(Dispatchers.Main) {
             try {
-                val theme =
-                    if (Utils.isDarkModeEnabled()) R.style.Theme_DeviceDefault_Dialog_Alert
-                    else R.style.Theme_DeviceDefault_Light_Dialog_Alert
+                // The module settings UI is always AMOLED/dark, so keep the update dialog dark
+                // even when the system is in light mode.
+                val theme = R.style.Theme_DeviceDefault_Dialog_Alert
                 val dialog = AlertDialog.Builder(requireActivity(), theme)
                     .setTitle("Found new version of FemAlloy ${latestVersionInfo.versionName}")
                     .setMessage(

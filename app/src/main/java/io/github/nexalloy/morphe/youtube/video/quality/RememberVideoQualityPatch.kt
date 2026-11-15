@@ -10,7 +10,6 @@ import io.github.nexalloy.morphe.youtube.insertLiteralOverride
 import io.github.nexalloy.morphe.youtube.shared.VideoQualityReceiver
 import io.github.nexalloy.morphe.youtube.shared.videoQualityChangedFingerprint
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
-import io.github.nexalloy.morphe.youtube.video.information.onCreateHook
 import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import `j$`.util.Optional
@@ -50,10 +49,6 @@ val RememberVideoQuality = patch {
         )
     )
 
-    onCreateHook.add { controller ->
-        RememberVideoQualityPatch.newVideoStarted(controller)
-    }
-
     // Inject a call to override initial video quality.
     ::PlaybackStartParametersInit.hookMethod {
         val initialResolutionField = ::InitialResolutionField.field
@@ -67,7 +62,7 @@ val RememberVideoQuality = patch {
     // Inject a call to remember the selected quality for Shorts.
     ::videoQualityItemOnClickFingerprint.hookMethod {
         before { param ->
-            RememberVideoQualityPatch.userChangedShortsQuality(param.args[2] as Int)
+            RememberVideoQualityPatch.userChangedShortsQuality(null, param.args[2] as Int)
         }
     }
 

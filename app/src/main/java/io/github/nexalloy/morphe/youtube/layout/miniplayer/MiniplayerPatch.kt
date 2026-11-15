@@ -8,7 +8,7 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScree
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.insertLiteralOverride
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 
 /**
@@ -22,26 +22,27 @@ import io.github.nexalloy.patch
 val Miniplayer = patch(
     name = "Miniplayer",
     description = "Adds options to change the in-app minimized player.",
-) {
-    addNewFeaturesPlayerPreferences(
-        PreferenceScreenPreference(
-            key = "morphe_miniplayer_screen",
-            sorting = Sorting.UNSORTED,
-            preferences = setOf(
-                ListPreference(
-                    "morphe_miniplayer_type",
-                    entriesKey = "morphe_miniplayer_type_21_29_entries",
-                    entryValuesKey = "morphe_miniplayer_type_21_29_entry_values",
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            PreferenceScreenPreference(
+                key = "morphe_miniplayer_screen",
+                sorting = Sorting.UNSORTED,
+                preferences = setOf(
+                    ListPreference(
+                        "morphe_miniplayer_type",
+                        entriesKey = "morphe_miniplayer_type_21_29_entries",
+                        entryValuesKey = "morphe_miniplayer_type_21_29_entry_values",
+                    ),
+                    SwitchPreference("morphe_miniplayer_hide_title", summary = true),
+                    SwitchPreference("morphe_miniplayer_disable_rounded_corners", summary = true),
+                    SwitchPreference("morphe_miniplayer_disable_drag_and_drop", summary = true),
+                    SwitchPreference("morphe_miniplayer_disable_horizontal_drag", summary = true),
+                    SwitchPreference("morphe_miniplayer_disable_horizontal_reposition", summary = true),
                 ),
-                SwitchPreference("morphe_miniplayer_hide_title", summary = true),
-                SwitchPreference("morphe_miniplayer_disable_rounded_corners", summary = true),
-                SwitchPreference("morphe_miniplayer_disable_drag_and_drop", summary = true),
-                SwitchPreference("morphe_miniplayer_disable_horizontal_drag", summary = true),
-                SwitchPreference("morphe_miniplayer_disable_horizontal_reposition", summary = true),
             ),
-        ),
-    )
-
+        )
+    },
+) {
     // << Modern miniplayer feature flag overrides (via the standard flag getter). >>
     insertLiteralOverride(45622882L) { ExtensionMiniplayerPatch.getModernFeatureFlagsActiveOverride(it) }
     insertLiteralOverride(45628823L) { ExtensionMiniplayerPatch.getMiniplayerDoubleTapAction(it) }

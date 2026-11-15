@@ -12,12 +12,15 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.ListPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.noTitleUnsortedPreferenceCategory
 
-fun PatchExecutor.SanitizeSharingLinks(
+/**
+ * Preference part of [SanitizeSharingLinks]. Kept separate, because the preferences have to be
+ * registered even when the patch is disabled.
+ */
+fun registerSanitizeSharingLinksPreferences(
     preferenceScreen: BasePreferenceScreen.Screen,
     replaceMusicLinksWithYouTube: Boolean = false,
     shareLinkFormat: Boolean = false
 ) {
-
     val sanitizePreference = SwitchPreference("morphe_sanitize_sharing_links", summary = true)
 
     preferenceScreen.addPreferences(
@@ -36,6 +39,13 @@ fun PatchExecutor.SanitizeSharingLinks(
             sanitizePreference
         }
     )
+}
+
+fun PatchExecutor.SanitizeSharingLinks(
+    preferenceScreen: BasePreferenceScreen.Screen,
+    replaceMusicLinksWithYouTube: Boolean = false,
+    shareLinkFormat: Boolean = false
+) {
 
     val sanitizeArg1 = object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {

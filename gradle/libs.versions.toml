@@ -1,5 +1,9 @@
 [versions]
 agp = "9.2.1"
+kotlin = "2.2.10"
+composeBom = "2025.06.01"
+activityCompose = "1.10.1"
+coreKtx = "1.16.0"
 dexkit = "2.2.0"
 xposed = "82"
 libxposed = "102.0.0"
@@ -19,6 +23,15 @@ lang3 = "3.20.0"
 
 
 [libraries]
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 dexkit = { group = "org.luckypray", name = "dexkit", version.ref = "dexkit" }
 xposed = { group = "de.robv.android.xposed", name = "api", version.ref = "xposed" }
 libxposed-api = {group = "io.github.libxposed", name = "api", version.ref = "libxposed"}
@@ -39,5 +52,6 @@ lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "lang3" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }

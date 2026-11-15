@@ -28,7 +28,7 @@ internal object VideoCodecReloader {
     }
 
     fun reload() {
-        if (PlayerType.current.isNoneOrHidden()) {
+        if (PlayerType.getCurrent().isNoneOrHidden()) {
             Logger.printDebug { "VideoCodec: not reloading, player is not active" }
             return
         }

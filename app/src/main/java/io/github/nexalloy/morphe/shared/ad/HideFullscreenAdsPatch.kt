@@ -6,14 +6,19 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreferenceS
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.patch
 
-fun HideFullscreenAds(preferenceScreen: BasePreferenceScreen.Screen) = patch(
-    description = "Adds an option to hide fullscreen premium popup ads."
-) {
+/**
+ * Preference part of [HideFullscreenAds]. Kept separate, because the preferences have to be
+ * registered even when the patch is disabled.
+ */
+fun registerHideFullscreenAdsPreferences(preferenceScreen: BasePreferenceScreen.Screen) {
     preferenceScreen.addPreferences(
         SwitchPreference("morphe_hide_fullscreen_ads")
     )
+}
 
-
+fun HideFullscreenAds() = patch(
+    description = "Adds an option to hide fullscreen premium popup ads.",
+) {
     // Hide fullscreen ad
     LithoDialogBuilderFingerprint.hookMethod {
         val dialogField = ::LithoDialogField.field

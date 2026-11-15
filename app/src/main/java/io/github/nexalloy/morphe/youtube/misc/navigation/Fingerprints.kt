@@ -1,5 +1,6 @@
 package io.github.nexalloy.morphe.youtube.misc.navigation
 
+import io.github.nexalloy.SkipTest
 import io.github.nexalloy.morphe.AccessFlags
 import io.github.nexalloy.morphe.Fingerprint
 import io.github.nexalloy.morphe.InstructionLocation.MatchAfterImmediately
@@ -13,6 +14,7 @@ import io.github.nexalloy.morphe.findMethodDirect
 import io.github.nexalloy.morphe.findMethodListDirect
 import io.github.nexalloy.morphe.fingerprint
 import io.github.nexalloy.morphe.literal
+import io.github.nexalloy.morphe.methodCall
 import io.github.nexalloy.morphe.opcode
 import io.github.nexalloy.morphe.resourceLiteral
 import io.github.nexalloy.morphe.resourceMappings
@@ -169,6 +171,85 @@ internal object PredictiveGesturesOnBackCancelledFingerprint : Fingerprint(
 internal object PredictiveGesturesOnBackInvokedFingerprint : Fingerprint(
     classFingerprint = PredictiveGesturesOnBackCancelledFingerprint,
     name = "onBackInvoked"
+)
+
+/**
+ * Static factory that turns a navigation bar item proto into the view model the app uses.
+ *
+ * Ported from Morphe's `PivotBarRendererFingerprint`. The A/B layout with icon-only
+ * navigation buttons builds its items with this method, and those items are ignored by
+ * the rest of the navigation bar patches unless they are converted to labelled items.
+ */
+internal object PivotBarRendererFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
+    parameters = listOf("L"),
+    returnType = "Lj$/util/Optional;",
+    filters = listOf(
+        literal(117501096L),
+        opcode(Opcode.IF_NE),
+        opcode(Opcode.CHECK_CAST),
+        methodCall(
+            opcode = Opcode.INVOKE_DIRECT_RANGE,
+            definingClass = "this",
+            name = "<init>",
+            returnType = "V"
+        ),
+        opcode(Opcode.RETURN_OBJECT)
+    )
+)
+
+/**
+ * Animates the navigation bar when it is shown or hidden. The app passes the target
+ * visibility and whether to animate; some layouts pass "no animation", which makes the
+ * bar (and the glass capsule drawn as its background) jump into place.
+ *
+ * The method starts one of two [android.animation.ValueAnimator]s with a
+ * `PathInterpolator(0.5, 0, 0, 1)`, one for showing and one for hiding.
+ */
+internal object NavigationBarAnimationFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("Z", "Z"),
+    filters = listOf(
+        methodCall(smali = "Lcom/google/android/libraries/youtube/rendering/ui/pivotbar/PivotBar;->getVisibility()I"),
+        methodCall(smali = "Landroid/animation/ValueAnimator;->ofFloat([F)Landroid/animation/ValueAnimator;"),
+        methodCall(smali = "Landroid/animation/ValueAnimator;->ofInt([I)Landroid/animation/ValueAnimator;"),
+        methodCall(smali = "Landroid/view/animation/PathInterpolator;-><init>(FFFF)V")
+    )
+)
+
+/**
+ * Every controller that animates the navigation bar show/hide, including the second
+ * controller which is only called when the nav bar animation experiment is enabled
+ * (every caller checks the experiment flag and calls both controllers in a row).
+ *
+ * The first controller (also matched by [NavigationBarAnimationFingerprint]) animates the
+ * bar layout height. The second controller animates the bar padding and translation
+ * instead, and when the experiment is enabled the first controller returns without doing
+ * anything, so both have to be forced to animate.
+ *
+ * Matches exactly two methods on every supported app version (verified offline on
+ * 21.38.130, 21.39.522, 21.41.525, 21.42.243, 21.43.523, 21.44.534 and 21.45.82: the
+ * `p(ZZ)V` of the first class and the `a(ZZ)V` of the second, nothing else).
+ *
+ * Skipped by the fingerprint harness because it intentionally matches two methods, which
+ * the single-result check of the harness rejects. It is hooked as a list
+ * ([PatchExecutor.dexMethodList]), so a future failure degrades to a logged message and
+ * no animation forcing instead of a failed patch.
+ */
+@SkipTest
+internal object NavigationBarAnimationAllControllersFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("Z", "Z"),
+    filters = listOf(
+        methodCall(smali = "Landroid/animation/ValueAnimator;->ofFloat([F)Landroid/animation/ValueAnimator;"),
+        methodCall(smali = "Landroid/animation/ValueAnimator;->setDuration(J)Landroid/animation/ValueAnimator;"),
+        methodCall(smali = "Landroid/view/animation/PathInterpolator;-><init>(FFFF)V"),
+        methodCall(smali = "Landroid/animation/ValueAnimator;->addUpdateListener(Landroid/animation/ValueAnimator\$AnimatorUpdateListener;)V"),
+        methodCall(smali = "Landroid/animation/ValueAnimator;->addListener(Landroid/animation/Animator\$AnimatorListener;)V"),
+        methodCall(smali = "Landroid/animation/ValueAnimator;->start()V")
+    )
 )
 
 /**

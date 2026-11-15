@@ -10,11 +10,12 @@ import io.github.nexalloy.scopedHook
 
 val enableTapToSeekPatch = patch(
     description = "Adds an option to enable tap to seek on the seekbar of the video player.",
+    settings = {
+        PreferenceScreen.SEEKBAR.addPreferences(
+            SwitchPreference("morphe_tap_to_seek", summary = true),
+        )
+    },
 ) {
-    PreferenceScreen.SEEKBAR.addPreferences(
-        SwitchPreference("morphe_tap_to_seek", summary = true),
-    )
-
     // Find the required methods to tap the seekbar.
     val startSeek = ::tapSeekStartMethod.method
     val updateSeek = ::tapSeekUpdateMethod.method

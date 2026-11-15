@@ -104,16 +104,17 @@ val PreferredCaptionLanguage = patch(
     name = "Preferred caption language",
     description = "Automatically selects captions in the preferred language " +
         "(provider subtitles first, then auto-translated). A language picked in the player menu is remembered.",
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            ListPreference(
+                key = PREFERRED_LANGUAGE_KEY,
+                summaryKey = "${PREFERRED_LANGUAGE_KEY}_summary",
+                tag = SearchableListPreference::class.java,
+            )
+        )
+    },
 ) {
     dependsOn(VersionCheck, VideoInformationPatch)
-
-    PreferenceScreen.PLAYER.addPreferences(
-        ListPreference(
-            key = PREFERRED_LANGUAGE_KEY,
-            summaryKey = "${PREFERRED_LANGUAGE_KEY}_summary",
-            tag = SearchableListPreference::class.java,
-        )
-    )
 
     val languageField = ::captionTrackLanguageField.field
     val vssField = ::captionTrackVssIdField.field

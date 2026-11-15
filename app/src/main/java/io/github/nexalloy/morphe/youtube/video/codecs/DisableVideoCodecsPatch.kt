@@ -10,15 +10,12 @@ import org.luckypray.dexkit.wrap.DexMethod
 val DisableVideoCodecs = patch(
     name = "Disable video codecs",
     description = "Adds options to disable or force HDR, and to disable VP9 codecs.",
-) {
-    PreferenceScreen.VIDEO.addPreferences(
-        SwitchPreference("morphe_disable_hdr_video"),
-        SwitchPreference(
-            key = "morphe_force_avc_codec",
-            tag = app.morphe.extension.youtube.settings.preference.ForceAVCSwitchPreference::class.java
+    settings = {
+        PreferenceScreen.VIDEO.addPreferences(
+            SwitchPreference("morphe_disable_hdr_video")
         )
-    )
-
+    },
+) {
     DexMethod($$"Landroid/view/Display$HdrCapabilities;->getSupportedHdrTypes()[I").hookMethod {
         val guard = ThreadLocal<Boolean>()
         after {
@@ -39,7 +36,7 @@ val DisableVideoCodecs = patch(
     Vp9CapabilityFingerprint.hookMethod {
         before {
             // The codec preference can also force AVC. It takes priority over the old switch.
-            if (!DisableVideoCodecsPatch.allowVP9() || selectedVideoCodec() == CODEC_AVC) {
+            if (!DisableVideoCodecsPatch.allowVP9()) {
                 it.result = false
             }
         }

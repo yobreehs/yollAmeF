@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">FemAlloy</string>
+    <string name="application_name">YouTube</string>
+    <string name="morphe_settings">Morphe</string>
+    <string name="app_description">LSPosed-модуль на базе Morphe, ReVanced и не только.</string>
+    <string name="app_launcher_name">PLACEHOLDER</string>
+    <string name="check_for_update_title">Проверить обновления</string>
+    <string name="patch_selection">Выбор патчей</string>
+    <string name="force_stop_to_apply_summary">Принудительно остановите соответствующее приложение, чтобы применить настройки.</string>
+    <string name="about_title">О программе</string>
+    <string name="open_source_license">Лицензии открытого кода</string>
+    <string name="hide_icon_title">Скрыть иконку из лончера</string>
+    <string name="hide_icon_summary">Также отключите «Force apps to show launcher icons» в LSPosed Manager.</string>
+    <string name="faq_title">Часто задаваемые вопросы</string>
+    <string name="disable_auto_check_update_title">Отключить автопроверку обновлений</string>
+    <string name="module_not_activated_summary">Активируйте модуль в управлении модулями!</string>
+    <string name="slogan_summary">LSPosed-модуль на базе Morphe, ReVanced и не только.\n\nЭто не официальный проект Morphe или ReVanced, не обращайтесь к их разработчикам за помощью.</string>
+
+    <!-- Material 3 module settings -->
+    <string name="settings_section_apps">Приложения</string>
+    <string name="settings_section_module">Модуль</string>
+    <string name="settings_section_about">О программе</string>
+    <string name="settings_status_active">Модуль активен</string>
+    <string name="settings_status_inactive">Модуль не активирован</string>
+    <string name="settings_status_active_summary">Подключено к LSPosed</string>
+    <string name="settings_patches_count">Патчей: %1$d</string>
+    <string name="settings_hide_unscoped_title">Скрывать приложения вне скоупа</string>
+    <string name="settings_hide_unscoped_summary">Показывать только установленные приложения, включённые в LSPosed. Остальные будут скрыты.</string>
+    <string name="settings_no_apps">Нет установленных приложений в скоупе</string>
+    <string name="settings_about_morphe_summary">Версия, ссылки и благодарности</string>
+    <string name="settings_morphe_website">Сайт Morphe</string>
+    <string name="settings_licenses_summary">Сторонние компоненты</string>
+    <string name="settings_footer">FemAlloy %1$s (%2$s) · %3$s</string>
+    <string name="settings_version_summary">Версия %1$s (%2$s) %3$s\nДата сборки: %4$s</string>
+    <string name="settings_connecting">Подключение к LSPosed…</string>
+    <string name="settings_prefs_unavailable">Не удалось прочитать настройки модуля. Убедитесь, что модуль включён и добавлен в скоуп этого приложения.</string>
+    <string name="settings_module_not_available">Служба LSPosed недоступна.\nАктивируйте модуль в LSPosed Manager и откройте этот экран снова.</string>
+    <string name="settings_patches_title_count">Патчи · %1$d из %2$d</string>
+    <string name="settings_search_patches">Поиск патчей</string>
+    <string name="settings_no_patches">Ничего не найдено</string>
+    <string name="settings_disable_all">Отключить все</string>
+    <string name="settings_stop_and_open">Стоп и открыть</string>
+    <string name="settings_app_info">О приложении</string>
+
+    <!-- Glass navigation bar settings category -->
+    <string name="morphe_navigation_bar_glass_category_title">Стеклянная панель навигации</string>
+</resources>

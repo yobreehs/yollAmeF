@@ -1,7 +1,6 @@
 package io.github.nexalloy.morphe.youtube.interaction.channelsearch
 
 import app.morphe.extension.youtube.patches.ChannelSearchPatch as ExtensionChannelSearchPatch
-import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
@@ -15,17 +14,12 @@ internal val channelSearch = patch(
     name = "Channel search",
     description = "Adds an option to search inside the channel that is currently open " +
         "instead of searching all of YouTube.",
+    settings = {
+        PreferenceScreen.GENERAL.addPreferences(
+            SwitchPreference("morphe_channel_search", summary = true),
+        )
+    },
 ) {
-    PreferenceScreen.NEW_PATCHES.addPreferences(
-        PreferenceCategory(
-            key = "morphe_new_patches_chapter_4",
-            titleKey = "morphe_new_patches_chapter_4_title",
-            preferences = setOf(
-                SwitchPreference("morphe_channel_search", summary = true),
-            ),
-        ),
-    )
-
     // Leaving the channel for the search feed shows no browse page, so nothing would otherwise
     // replace the browse id of the channel.
     ChannelSearchResultsFragmentOnCreateViewFingerprint.hookMethod {

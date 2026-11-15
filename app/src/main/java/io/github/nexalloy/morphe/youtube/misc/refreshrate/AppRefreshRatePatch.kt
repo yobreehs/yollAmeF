@@ -34,25 +34,26 @@ import java.lang.ref.WeakReference
 val AppRefreshRate = patch(
     name = "App refresh rate",
     description = "Adds options to force the display refresh rate for the app, optionally only during video playback.",
-) {
-    PreferenceScreen.NEW_PATCHES.addPreferences(
-        PreferenceCategory(
-            key = "morphe_new_patches_chapter_1",
-            titleKey = "morphe_new_patches_chapter_1_title",
-            preferences = setOf(
-                // The extension preference builds its entries from the display modes that were
-                // actually reported by the device, and stores "DEFAULT" when no override is set.
-                NonInteractivePreference(
-                    key = "morphe_app_refresh_rate",
-                    summaryKey = null,
-                    tag = AppRefreshRateListPreference::class.java,
-                    selectable = true,
-                ),
-                ListPreference("morphe_app_refresh_rate_type"),
+    settings = {
+        PreferenceScreen.GENERAL.addPreferences(
+            PreferenceCategory(
+                key = "morphe_app_refresh_rate_category",
+                titleKey = "morphe_app_refresh_rate_category_title",
+                preferences = setOf(
+                    // The extension preference builds its entries from the display modes that were
+                    // actually reported by the device, and stores "DEFAULT" when no override is set.
+                    NonInteractivePreference(
+                        key = "morphe_app_refresh_rate",
+                        summaryKey = null,
+                        tag = AppRefreshRateListPreference::class.java,
+                        selectable = true,
+                    ),
+                    ListPreference("morphe_app_refresh_rate_type"),
+                )
             )
         )
-    )
-
+    },
+) {
     fun applyToActivity(activity: Activity) {
         Logger.printDebug { "AppRefreshRate: applying to ${activity.javaClass.simpleName}" }
         try {
@@ -208,13 +209,13 @@ val AppRefreshRate = patch(
     // Re-apply when playback starts or stops, so "portrait/fullscreen playback" modes work.
     // These observers are registered here instead of calling AppRefreshRatePatch.initialize(),
     // which bails out when the setting is still default at app startup.
-    VideoState.onChange.addObserver { state ->
-        val type = PlayerType.current
+    VideoState.getOnChange().addObserver { state ->
+        val type = PlayerType.getCurrent()
         updatePlayerIsActive(type, state)
     }
 
-    PlayerType.onChange.addObserver { type ->
-        val state = VideoState.current ?: return@addObserver
+    PlayerType.getOnChange().addObserver { type ->
+        val state = VideoState.getCurrent() ?: return@addObserver
         updatePlayerIsActive(type, state)
     }
 }

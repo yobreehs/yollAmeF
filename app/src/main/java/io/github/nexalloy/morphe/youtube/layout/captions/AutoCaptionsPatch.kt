@@ -12,20 +12,21 @@ import io.github.nexalloy.patch
 val AutoCaptions = patch(
     name = "Auto captions",
     description = "Adds an option to disable captions from being automatically enabled.",
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            if (is_20_26_or_greater) {
+                ListPreference("morphe_auto_captions_style")
+            } else {
+                ListPreference(
+                    key = "morphe_auto_captions_style",
+                    entriesKey = "morphe_auto_captions_style_legacy_entries",
+                    entryValuesKey = "morphe_auto_captions_style_legacy_entry_values"
+                )
+            }
+        )
+    },
 ) {
     dependsOn(VersionCheck)
-
-    PreferenceScreen.PLAYER.addPreferences(
-        if (is_20_26_or_greater) {
-            ListPreference("morphe_auto_captions_style")
-        } else {
-            ListPreference(
-                key = "morphe_auto_captions_style",
-                entriesKey = "morphe_auto_captions_style_legacy_entries",
-                entryValuesKey = "morphe_auto_captions_style_legacy_entry_values"
-            )
-        }
-    )
 
     // TODO disableAutoCaptions
 

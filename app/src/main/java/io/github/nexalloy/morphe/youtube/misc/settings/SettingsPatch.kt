@@ -5,14 +5,19 @@ import android.app.Dialog
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
+import android.os.Bundle
+import android.preference.PreferenceFragment
 import android.view.View
 import android.view.WindowInsets
 import app.morphe.extension.shared.Logger
 import app.morphe.extension.shared.ResourceUtils
+import app.morphe.extension.shared.Utils
+import app.morphe.extension.shared.settings.preference.AbstractPreferenceFragment
 import app.morphe.extension.shared.settings.preference.ImportExportPreference
 import app.morphe.extension.shared.settings.preference.about.MorpheAboutPreference
 import app.morphe.extension.youtube.settings.YouTubeActivityHook
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XC_MethodReplacement
 import io.github.nexalloy.R
 import io.github.nexalloy.invokeOriginalMethod
@@ -25,18 +30,166 @@ import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScree
 import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
 import io.github.nexalloy.morphe.shared.settings.preferences
 import io.github.nexalloy.morphe.youtube.layout.buttons.overlay.PlayerOverlayButtonsSettings
+import io.github.nexalloy.morphe.youtube.misc.playservice.VersionCheck
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
 import java.lang.ref.WeakReference
 
 @Suppress("UNREACHABLE_CODE")
 val SettingsHook = patch(
-    name = "<SettingsHook>"
+    name = "<SettingsHook>",
+    settings = {
+        // Add an "About" preference to the top.
+        preferences += NonInteractivePreference(
+            key = "morphe_settings_screen_00_about",
+            icon = "@drawable/morphe_settings_screen_00_about",
+            iconBold = "@drawable/morphe_settings_screen_00_about_bold",
+            layout = "@layout/preference_with_icon",
+            summaryKey = null,
+            tag = MorpheAboutPreference::class.java,
+            selectable = true,
+        )
+
+        PreferenceScreen.MISC.addPreferences(
+            TextPreference(
+                key = null,
+                titleKey = "morphe_pref_import_export_title",
+                summaryKey = "morphe_pref_import_export_summary",
+                inputType = InputType.TEXT_MULTI_LINE,
+                tag = ImportExportPreference::class.java,
+            ),
+//        ListPreference(
+//            key = "morphe_language",
+//            tag = SortedListPreference::class.java
+//        )
+        )
+
+        // Register the player overlay button rows only after every patch has contributed its
+        // own buttons. Constructing the patch here evaluates its settings block in the next
+        // registration round.
+        PlayerOverlayButtonsSettings
+    },
 ) {
-    dependsOn(
-        PlayerOverlayButtonsSettings,
-        initializationPatch()
-    )
+    // These are optional: a failure in one must not leave the whole settings screen empty.
+    runCatching { dependsOn(initializationPatch()) }
+        .onFailure { Logger.printException({ "SettingsHook: initializationPatch failed" }, it) }
+    // Version flags are used by the deferred settings registrations (for example by the
+    // navigation bar screen), so make sure they are initialized even when every other patch
+    // is disabled.
+    runCatching { dependsOn(VersionCheck) }
+        .onFailure { Logger.printException({ "SettingsHook: VersionCheck failed" }, it) }
+
+//    if (!is_21_30_or_greater) {
+//        PreferenceScreen.GENERAL.addPreferences(
+//            SwitchPreference("morphe_restore_old_settings_menus")
+//        )
+//    }
+
+//    PreferenceScreen.GENERAL.addPreferences(
+//        SwitchPreference("morphe_settings_search_history"),
+//        SwitchPreference("morphe_show_menu_icons")
+//    )
+
+    // The patcher normally injects these preferences into morphe_prefs.xml. The Xposed
+    // module does not run the patcher and the host APK has no such resource, so
+    // AbstractPreferenceFragment.initialize() returns early and onCreate() then NPEs on the
+    // null screen. Replace initialize() with a runtime build of the same preference tree.
+    fun buildRuntimePreferenceScreen(fragment: PreferenceFragment) {
+        val activity = fragment.activity ?: return
+        val prefMgr = fragment.preferenceManager ?: return
+
+        // Every screen is registered while the patches are loaded (see `patch(settings=...)`),
+        // so finalize the declarative tree now, right before building the runtime one.
+        PreferenceScreen.close()
+
+        val root = prefMgr.createPreferenceScreen(activity)
+        // Same sorting key as the patcher-generated morphe_prefs.xml root. Without it
+        // sortPreferenceGroups() treats the root as UNSORTED and keeps patch execution
+        // order, which puts "New features" in the middle of the list.
+        root.key = "morphe_settings_root_screen_sort_by_key"
+        preferences.forEach { base ->
+            runCatching {
+                val pref = base.build(activity, prefMgr)
+                base.onAttachedToHierarchy()
+                root.addPreference(pref)
+            }.onFailure {
+                Logger.printException(
+                    { "SettingsHook: failed to build preference ${base.key}" }, it
+                )
+            }
+        }
+        fragment.setPreferenceScreen(root)
+
+        // A preference whose title string is missing from the resources renders as an empty
+        // row. Report those keys, so lost translations are easy to spot in the log.
+        fun logPreferencesWithoutTitle(group: android.preference.PreferenceGroup) {
+            for (i in 0 until group.preferenceCount) {
+                val pref = group.getPreference(i)
+                if (pref is android.preference.PreferenceGroup) {
+                    logPreferencesWithoutTitle(pref)
+                } else if (pref.title == null) {
+                    Logger.printInfo { "SettingsHook: preference has no title: ${pref.key}" }
+                }
+            }
+        }
+        logPreferencesWithoutTitle(root)
+
+        Utils.setPreferenceTitlesToMultiLine(root)
+        Logger.printInfo {
+            "SettingsHook: built ${root.preferenceCount} runtime preferences"
+        }
+    }
+
+    // Use a static reference instead of Class.forName(): R8 is free to rename (or even merge
+    // into a subclass) extension classes that are only looked up by a string name. Release
+    // builds were merging AbstractPreferenceFragment into ToolbarPreferenceFragment, the lookup
+    // threw ClassNotFoundException and the whole settings screen stayed empty.
+    var runtimeBuilderInstalled = false
+    runCatching {
+        val initialize = AbstractPreferenceFragment::class.java.getDeclaredMethod("initialize")
+        XposedBridge.hookMethod(initialize, object : XC_MethodReplacement() {
+            override fun replaceHookedMethod(param: XC_MethodHook.MethodHookParam): Any? {
+                runCatching {
+                    val fragment = param.thisObject as? PreferenceFragment ?: return null
+                    buildRuntimePreferenceScreen(fragment)
+                }.onFailure {
+                    Logger.printException({ "SettingsHook: runtime preference build failed" }, it)
+                }
+                return null
+            }
+        })
+        runtimeBuilderInstalled = true
+    }.onFailure {
+        Logger.printException({ "SettingsHook: cannot hook runtime preference builder" }, it)
+    }
+
+    // Last-resort fallback: if the class/method above was obfuscated anyway, build the screen
+    // right after the platform PreferenceFragment.onCreate() returns. That happens before the
+    // rest of AbstractPreferenceFragment.onCreate() runs, so its initialize() early-return
+    // (no morphe_prefs.xml in the host APK) leaves the tree we just built in place.
+    if (!runtimeBuilderInstalled) {
+        runCatching {
+            val onCreate = PreferenceFragment::class.java
+                .getDeclaredMethod("onCreate", Bundle::class.java)
+            XposedBridge.hookMethod(onCreate, object : XC_MethodHook() {
+                override fun afterHookedMethod(param: XC_MethodHook.MethodHookParam) {
+                    val fragment = param.thisObject as? AbstractPreferenceFragment ?: return
+                    if (fragment.preferenceScreen != null) return
+                    runCatching { buildRuntimePreferenceScreen(fragment) }
+                        .onFailure {
+                            Logger.printException(
+                                { "SettingsHook: runtime preference build failed" }, it
+                            )
+                        }
+                }
+            })
+            Logger.printInfo {
+                "SettingsHook: initialize hook unavailable, installed onCreate fallback"
+            }
+        }.onFailure {
+            Logger.printException({ "SettingsHook: cannot install preference builder fallback" }, it)
+        }
+    }
 
     // The injected settings activity ("Morphe settings"), used to scope the dialog
     // inset fallback below to the settings submenu dialogs only.
@@ -96,43 +249,6 @@ val SettingsHook = patch(
         }
     }
 
-    // Add an "About" preference to the top.
-    preferences += NonInteractivePreference(
-        key = "morphe_settings_screen_00_about",
-        icon = "@drawable/morphe_settings_screen_00_about",
-        iconBold = "@drawable/morphe_settings_screen_00_about_bold",
-        layout = "@layout/preference_with_icon",
-        summaryKey = null,
-        tag = MorpheAboutPreference::class.java,
-        selectable = true,
-    )
-
-//    if (!is_21_30_or_greater) {
-//        PreferenceScreen.GENERAL.addPreferences(
-//            SwitchPreference("morphe_restore_old_settings_menus")
-//        )
-//    }
-
-//    PreferenceScreen.GENERAL.addPreferences(
-//        SwitchPreference("morphe_settings_search_history"),
-//        SwitchPreference("morphe_show_menu_icons")
-//    )
-
-    PreferenceScreen.MISC.addPreferences(
-        TextPreference(
-            key = null,
-            titleKey = "morphe_pref_import_export_title",
-            summaryKey = "morphe_pref_import_export_summary",
-            inputType = InputType.TEXT_MULTI_LINE,
-            tag = ImportExportPreference::class.java,
-        ),
-//        ListPreference(
-//            key = "morphe_language",
-//            tag = SortedListPreference::class.java
-//        )
-    )
-
-    PreferenceScreen.close()
 }
 
 object PreferenceScreen : BasePreferenceScreen() {
@@ -147,10 +263,10 @@ object PreferenceScreen : BasePreferenceScreen() {
         layout = "@layout/preference_with_icon",
     )
     val ALTERNATIVE_THUMBNAILS = Screen(
-        key = "morphe_settings_screen_02_alt_thumbnails",
+        key = "morphe_settings_screen_02_dearrow",
         summaryKey = null,
-        icon = "@drawable/morphe_settings_screen_02_alt_thumbnails",
-        iconBold = "@drawable/morphe_settings_screen_02_alt_thumbnails_bold",
+        icon = "@drawable/morphe_settings_screen_02_dearrow",
+        iconBold = "@drawable/morphe_settings_screen_02_dearrow_bold",
         layout = "@layout/preference_with_icon",
         sorting = Sorting.UNSORTED,
     )
@@ -272,16 +388,51 @@ private fun applySettingsInsets(activity: Activity) {
 
         decorView.post {
             val content = activity.findViewById<View>(android.R.id.content) ?: return@post
+            // YouTube's own activity may already inset the content root (e.g. through
+            // fitsSystemWindows or a theme-level inset). Track that padding so it is never
+            // added twice: the host layout used to carry fitsSystemWindows="true" while this
+            // code also added the full status bar height, producing a huge empty gap between
+            // the status bar and the Morphe toolbar.
+            val contentRoot = (content as? android.view.ViewGroup)?.getChildAt(0)
+
+            // Geometry measured before any padding is applied by us. It never changes, so the
+            // padding is computed once and does not oscillate between layout passes.
+            var initialTop = -1
+            var initialHeight = 0
 
             fun applyFrom(insets: WindowInsets?) {
                 if (insets == null) return
                 val status = insets.getInsets(WindowInsets.Type.statusBars())
                 val nav = insets.getInsets(WindowInsets.Type.navigationBars())
                 val cutout = insets.getInsets(WindowInsets.Type.displayCutout())
-                content.setPadding(cutout.left, status.top, cutout.right, nav.bottom)
+
+                val location = IntArray(2)
+                if (initialTop < 0) {
+                    content.getLocationInWindow(location)
+                    initialTop = location[1]
+                    initialHeight = content.height
+                }
+
+                // The host activity may already offset the content below the status bar
+                // (YouTube 21.44 does), and the content root may already carry inset padding
+                // (fitsSystemWindows). Only the part that is really covered is padded.
+                val hostPaddingTop = contentRoot?.paddingTop ?: 0
+                val top = (status.top - initialTop - hostPaddingTop).coerceAtLeast(0)
+                val left = cutout.left
+                val windowHeight = decorView.height
+                val hostPaddingBottom = contentRoot?.paddingBottom ?: 0
+                val bottom = if (windowHeight > 0 && initialHeight > 0) {
+                    (initialTop + initialHeight + nav.bottom - windowHeight - hostPaddingBottom)
+                        .coerceAtLeast(0)
+                } else {
+                    nav.bottom
+                }
+
+                content.setPadding(left, top, cutout.right, bottom)
                 Logger.printDebug {
                     "Settings insets: status=${status.top} nav=${nav.bottom} " +
-                        "cutout=(${cutout.left},${cutout.right}) padding=${content.paddingTop}"
+                        "cutout=(${cutout.left},${cutout.right}) offset=${location[1]} " +
+                        "hostPadding=$hostPaddingTop padding=${content.paddingTop}"
                 }
             }
 
@@ -336,10 +487,24 @@ private fun applyDialogInsets(dialog: Dialog, settingsActivityRef: WeakReference
             val status = insets.getInsets(WindowInsets.Type.statusBars())
             val nav = insets.getInsets(WindowInsets.Type.navigationBars())
             val cutout = insets.getInsets(WindowInsets.Type.displayCutout())
-            root.setPadding(cutout.left, status.top, cutout.right, nav.bottom)
+
+            // Same guard as the root screen: do not add an inset the window already applied.
+            val location = IntArray(2)
+            root.getLocationInWindow(location)
+            val top = (status.top - location[1]).coerceAtLeast(0)
+            val left = (cutout.left - location[0]).coerceAtLeast(0)
+            val windowHeight = decorView.height
+            val bottom = if (windowHeight > 0) {
+                (location[1] + root.height + nav.bottom - windowHeight).coerceAtLeast(0)
+            } else {
+                nav.bottom
+            }
+
+            root.setPadding(left, top, cutout.right, bottom)
             Logger.printDebug {
                 "Settings dialog insets: status=${status.top} nav=${nav.bottom} " +
-                    "cutout=(${cutout.left},${cutout.right}) padding=${root.paddingTop}"
+                    "cutout=(${cutout.left},${cutout.right}) offset=${location[1]} " +
+                    "padding=${root.paddingTop}"
             }
         }
 

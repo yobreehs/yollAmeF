@@ -22,6 +22,30 @@ import io.github.nexalloy.patch
 
 val SettingsHook = patch(
     description = "Adds settings for Morphe to YouTube Music.",
+    settings = {
+        // Add an "About" preference to the top.
+        preferences += NonInteractivePreference(
+            key = "morphe_settings_music_screen_0_about",
+            summaryKey = null,
+            tag = MorpheAboutPreference::class.java,
+            selectable = true,
+        )
+
+        PreferenceScreen.GENERAL.addPreferences(
+            SwitchPreference("morphe_settings_search_history"),
+//        SwitchPreference("morphe_show_menu_icons")
+        )
+
+        PreferenceScreen.MISC.addPreferences(
+            TextPreference(
+                key = null,
+                titleKey = "morphe_pref_import_export_title",
+                summaryKey = "morphe_pref_import_export_summary",
+                inputType = InputType.TEXT_MULTI_LINE,
+                tag = ImportExportPreference::class.java,
+            )
+        )
+    },
 ) {
     val addPreferencesFromResource = ::PreferenceFragmentCompat_addPreferencesFromResource.method
 
@@ -36,29 +60,6 @@ val SettingsHook = patch(
             it.result = Unit
         }
     }
-
-    // Add an "About" preference to the top.
-    preferences += NonInteractivePreference(
-        key = "morphe_settings_music_screen_0_about",
-        summaryKey = null,
-        tag = MorpheAboutPreference::class.java,
-        selectable = true,
-    )
-
-    PreferenceScreen.GENERAL.addPreferences(
-        SwitchPreference("morphe_settings_search_history"),
-//        SwitchPreference("morphe_show_menu_icons")
-    )
-
-    PreferenceScreen.MISC.addPreferences(
-        TextPreference(
-            key = null,
-            titleKey = "morphe_pref_import_export_title",
-            summaryKey = "morphe_pref_import_export_summary",
-            inputType = InputType.TEXT_MULTI_LINE,
-            tag = ImportExportPreference::class.java,
-        )
-    )
 
     val superOnCreateMethod =
         Activity::class.java.getDeclaredMethod("onCreate", Bundle::class.java)

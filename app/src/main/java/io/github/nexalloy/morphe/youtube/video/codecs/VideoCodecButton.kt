@@ -12,7 +12,7 @@ import io.github.nexalloy.R
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
 import io.github.nexalloy.morphe.youtube.layout.player.buttons.addPlayerBottomButton
 import io.github.nexalloy.morphe.youtube.layout.player.buttons.playerOverlayButtonsHook
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 import java.lang.ref.WeakReference
 
@@ -31,16 +31,18 @@ internal fun isVideoCodecButtonEnabled(): Boolean = runCatching {
  */
 val VideoCodecButton = patch(
     name = "Video codec button",
-    description = "Adds a button to the video player for changing the video codec during playback."
+    description = "Adds a button to the video player for changing the video codec during playback.",
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            SwitchPreference(CODEC_BUTTON_PREFERENCE_KEY, summary = true),
+        )
+    },
 ) {
     dependsOn(
         VideoCodec,
         playerOverlayButtonsHook,
     )
 
-    addNewFeaturesPlayerPreferences(
-        SwitchPreference(CODEC_BUTTON_PREFERENCE_KEY, summary = true),
-    )
     addPlayerBottomButton(VideoCodecButtonUi::initializeButton)
 }
 
@@ -121,8 +123,7 @@ internal object VideoCodecButtonUi {
 }
 
 internal fun codecLabel(codec: String): String = when (codec) {
-    CODEC_AV1 -> "AV1"
     CODEC_VP9 -> "VP9"
     CODEC_AVC -> "AVC"
-    else -> "AUTO"
+    else -> "DEFAULT"
 }

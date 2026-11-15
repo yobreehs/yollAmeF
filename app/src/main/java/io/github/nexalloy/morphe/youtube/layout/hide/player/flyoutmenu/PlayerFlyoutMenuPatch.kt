@@ -7,7 +7,7 @@ import io.github.nexalloy.morphe.shared.misc.litho.node.hookTreeNodeResult
 import io.github.nexalloy.morphe.shared.misc.proto.hookElement
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 
 /**
@@ -18,35 +18,36 @@ import io.github.nexalloy.patch
 val HidePlayerFlyoutMenu = patch(
     name = "Hide player flyout menu components",
     description = "Adds options to hide menu components that appear when pressing the gear icon in the video player.",
-) {
-    addNewFeaturesPlayerPreferences(
-        PreferenceScreenPreference(
-            key = "morphe_hide_player_flyout",
-            sorting = PreferenceScreenPreference.Sorting.UNSORTED,
-            preferences = setOf(
-                SwitchPreference("morphe_hide_player_flyout_additional_settings"),
-                SwitchPreference("morphe_hide_player_flyout_ambient_mode"),
-                SwitchPreference("morphe_hide_player_flyout_audio_track"),
-                SwitchPreference("morphe_hide_player_flyout_audio_track_footer"),
-                SwitchPreference("morphe_hide_player_flyout_captions"),
-                SwitchPreference("morphe_hide_player_flyout_captions_footer"),
-                SwitchPreference("morphe_hide_player_flyout_captions_header"),
-                SwitchPreference("morphe_hide_player_flyout_help"),
-                SwitchPreference("morphe_hide_player_flyout_listen_with_youtube_music"),
-                SwitchPreference("morphe_hide_player_flyout_lock_screen"),
-                SwitchPreference("morphe_hide_player_flyout_loop_video"),
-                SwitchPreference("morphe_hide_player_flyout_on_the_go"),
-                SwitchPreference("morphe_hide_player_flyout_quality"),
-                SwitchPreference("morphe_hide_player_flyout_quality_footer"),
-                SwitchPreference("morphe_hide_player_flyout_quality_header"),
-                SwitchPreference("morphe_hide_player_flyout_sleep_timer"),
-                SwitchPreference("morphe_hide_player_flyout_speed"),
-                SwitchPreference("morphe_hide_player_flyout_stable_volume"),
-                SwitchPreference("morphe_hide_player_flyout_watch_in_vr"),
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            PreferenceScreenPreference(
+                key = "morphe_hide_player_flyout",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    SwitchPreference("morphe_hide_player_flyout_additional_settings"),
+                    SwitchPreference("morphe_hide_player_flyout_ambient_mode"),
+                    SwitchPreference("morphe_hide_player_flyout_audio_track"),
+                    SwitchPreference("morphe_hide_player_flyout_audio_track_footer"),
+                    SwitchPreference("morphe_hide_player_flyout_captions"),
+                    SwitchPreference("morphe_hide_player_flyout_captions_footer"),
+                    SwitchPreference("morphe_hide_player_flyout_captions_header"),
+                    SwitchPreference("morphe_hide_player_flyout_help"),
+                    SwitchPreference("morphe_hide_player_flyout_listen_with_youtube_music"),
+                    SwitchPreference("morphe_hide_player_flyout_lock_screen"),
+                    SwitchPreference("morphe_hide_player_flyout_loop_video"),
+                    SwitchPreference("morphe_hide_player_flyout_on_the_go"),
+                    SwitchPreference("morphe_hide_player_flyout_quality"),
+                    SwitchPreference("morphe_hide_player_flyout_quality_footer"),
+                    SwitchPreference("morphe_hide_player_flyout_quality_header"),
+                    SwitchPreference("morphe_hide_player_flyout_sleep_timer"),
+                    SwitchPreference("morphe_hide_player_flyout_speed"),
+                    SwitchPreference("morphe_hide_player_flyout_stable_volume"),
+                    SwitchPreference("morphe_hide_player_flyout_watch_in_vr"),
+                ),
             ),
-        ),
-    )
-
+        )
+    },
+) {
     addLithoFilter(PlayerFlyoutMenuComponentsFilter())
 
     // Native bottom sheet header (e.g. for quality / captions sheets).

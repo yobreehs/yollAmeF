@@ -19,7 +19,7 @@ import app.morphe.extension.youtube.patches.VideoInformation
 import app.morphe.extension.youtube.settings.Settings
 import io.github.nexalloy.IHookCallback
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
-import io.github.nexalloy.morphe.youtube.misc.newfeatures.addNewFeaturesPlayerPreferences
+import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.morphe.youtube.video.information.VideoInformationPatch
 import io.github.nexalloy.patch
 import org.luckypray.dexkit.wrap.DexMethod
@@ -37,6 +37,18 @@ private const val NEAR_END_THRESHOLD_MS = 30_000L
 private const val RESTORE_NEAR_END_KEY = "morphe_pip_seek_buttons_restore_near_end"
 
 /**
+ * Setting backing the "restore near end" toggle. Created lazily so it also exists when the
+ * patch is disabled but its settings rows are still shown.
+ */
+private val restoreNearEndSetting by lazy {
+    BooleanSetting(
+        RESTORE_NEAR_END_KEY,
+        false,
+        Availability { Settings.PIP_SEEK_BUTTONS.get() },
+    )
+}
+
+/**
  * Adds rewind/forward (±5 seconds) buttons to the Picture-in-picture window.
  *
  * The buttons are injected into the actions of the Picture-in-picture params that YouTube builds.
@@ -47,21 +59,14 @@ private const val RESTORE_NEAR_END_KEY = "morphe_pip_seek_buttons_restore_near_e
 val PipSeekButtons = patch(
     name = "Picture-in-picture seek buttons",
     description = "Adds rewind and forward (±5 seconds) buttons to the Picture-in-picture window.",
+    settings = {
+        PreferenceScreen.PLAYER.addPreferences(
+            SwitchPreference("morphe_pip_seek_buttons", summary = true),
+            SwitchPreference(RESTORE_NEAR_END_KEY, summary = true),
+        )
+    },
 ) {
     dependsOn(VideoInformationPatch)
-
-    // Created eagerly so the settings screen finds the Setting and applies its availability
-    // (the toggle is disabled while "Picture-in-picture seek buttons" is off).
-    val restoreNearEndSetting = BooleanSetting(
-        RESTORE_NEAR_END_KEY,
-        false,
-        Availability { Settings.PIP_SEEK_BUTTONS.get() },
-    )
-
-    addNewFeaturesPlayerPreferences(
-        SwitchPreference("morphe_pip_seek_buttons", summary = true),
-        SwitchPreference(RESTORE_NEAR_END_KEY, summary = true),
-    )
 
     val context = appContext
 

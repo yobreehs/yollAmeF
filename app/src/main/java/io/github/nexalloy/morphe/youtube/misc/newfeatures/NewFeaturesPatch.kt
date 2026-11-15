@@ -1,71 +1,112 @@
 package io.github.nexalloy.morphe.youtube.misc.newfeatures
 
+import app.morphe.extension.shared.settings.preference.AiSListAttributionPreference
+import app.morphe.extension.shared.settings.preference.BulletPointPreference
 import app.morphe.extension.youtube.patches.ForceFullscreenLandscapePatch
+import app.morphe.extension.youtube.settings.preference.AiSListStatsPreferenceCategory
 import app.morphe.extension.youtube.shared.PlayerType
-import io.github.nexalloy.morphe.shared.misc.settings.preference.BasePreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.InputType
+import io.github.nexalloy.morphe.shared.misc.settings.preference.NonInteractivePreference
 import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceCategory
+import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import io.github.nexalloy.morphe.shared.misc.settings.preference.SwitchPreference
+import io.github.nexalloy.morphe.shared.misc.settings.preference.TextPreference
 import io.github.nexalloy.morphe.youtube.misc.settings.PreferenceScreen
 import io.github.nexalloy.patch
 
 /**
- * Player chapter ("chapter 5") of the "New features" screen. Filled by the individual player
- * patches (autoplay preview, playlist autoplay, flyout menu, ambient mode, miniplayer,
- * overlay buttons) so everything new lives in one place.
- */
-internal val newFeaturesPlayerChapterPreferences = mutableSetOf<BasePreference>()
-
-internal fun addNewFeaturesPlayerPreferences(vararg preferences: BasePreference) {
-    newFeaturesPlayerChapterPreferences += preferences
-}
-
-/**
- * Playback chapter ("chapter 2") of the "New features" screen. Fork-specific playback
- * options (such as the video codec) register themselves here.
- */
-internal val newFeaturesPlaybackChapterPreferences = mutableSetOf<BasePreference>(
-    SwitchPreference("morphe_volume_boost", summary = true),
-    SwitchPreference("morphe_force_fullscreen_landscape", summary = true),
-)
-
-internal fun addNewFeaturesPlaybackPreferences(vararg preferences: BasePreference) {
-    newFeaturesPlaybackChapterPreferences += preferences
-}
-
-/**
- * FemAlloy convenience section: settings hoisted into "New features" that upstream v1.45
- * registers only on their own screens. All toggles read the same extension settings, so this
- * patch only registers the UI (plus any fork-specific wiring).
+ * "New features" screen. New patches added by FemAlloy register their preferences here,
+ * grouped by the part of the app they affect.
+ *
+ * The old fork-specific settings that used to live on this screen have been moved to their
+ * natural sections (General, Feed, Player, Video) so this screen only contains genuinely new
+ * functionality.
  */
 val NewFeatures = patch(
     name = "<NewFeatures>",
-) {
-    PreferenceScreen.NEW_PATCHES.addPreferences(
-        PreferenceCategory(
-            key = "morphe_new_patches_chapter_2",
-            titleKey = "morphe_new_patches_chapter_2_title",
-            preferences = newFeaturesPlaybackChapterPreferences,
-        ),
-        PreferenceCategory(
-            key = "morphe_new_patches_chapter_3",
-            titleKey = "morphe_new_patches_chapter_3_title",
-            preferences = setOf(
-                SwitchPreference("morphe_hide_live_streams", summary = true),
-                SwitchPreference("morphe_hide_history_shelf", summary = true),
+    settings = {
+        PreferenceScreen.NEW_PATCHES.addPreferences(
+            PreferenceScreenPreference(
+                key = "morphe_hide_aislist_screen",
+                sorting = Sorting.UNSORTED,
+                preferences = setOf(
+                    PreferenceCategory(
+                        key = "morphe_hide_aislist_blocklist_category",
+                        sorting = Sorting.UNSORTED,
+                        preferences = setOf(
+                            SwitchPreference(
+                                key = "morphe_hide_aislist_blocklist_home",
+                                titleKey = "morphe_hide_aislist_hide_home_title"
+                            ),
+                            SwitchPreference(
+                                key = "morphe_hide_aislist_blocklist_search",
+                                titleKey = "morphe_hide_aislist_hide_search_title"
+                            )
+
+                        )
+                    ),
+                    PreferenceCategory(
+                        key = "morphe_hide_aislist_warnlist_category",
+                        sorting = Sorting.UNSORTED,
+                        preferences = setOf(
+                            SwitchPreference(
+                                key = "morphe_hide_aislist_warnlist_home",
+                                titleKey = "morphe_hide_aislist_hide_home_title"
+                            ),
+                            SwitchPreference(
+                                key = "morphe_hide_aislist_warnlist_search",
+                                titleKey = "morphe_hide_aislist_hide_search_title"
+                            )
+                        )
+                    ),
+                    PreferenceCategory(
+                        key = "morphe_hide_aislist_stats_category",
+                        titleKey = "morphe_hide_stats_category_title",
+                        sorting = Sorting.UNSORTED,
+                        preferences = emptySet(),
+                        tag = AiSListStatsPreferenceCategory::class.java
+                    ),
+                    PreferenceCategory(
+                        key = "morphe_aislist_submit_category",
+                        sorting = Sorting.UNSORTED,
+                        preferences = setOf(
+                            SwitchPreference("morphe_aislist_submit_flyout_menu", summary = true),
+                            TextPreference(
+                                key = "morphe_aislist_submit_username",
+                                inputType = InputType.TEXT
+                            )
+                        )
+                    ),
+                    PreferenceCategory(
+                        key = "morphe_hide_aislist_about_category",
+                        titleKey = "morphe_hide_about_category_title",
+                        sorting = Sorting.UNSORTED,
+                        preferences = setOf(
+                            NonInteractivePreference(
+                                key = "morphe_hide_aislist_about",
+                                titleKey = null,
+                                summaryKey = "morphe_hide_aislist_about_summary",
+                                tag = BulletPointPreference::class.java
+                            ),
+                            NonInteractivePreference(
+                                key = "morphe_hide_aislist_attribution",
+                                titleKey = null,
+                                tag = AiSListAttributionPreference::class.java,
+                                selectable = true
+                            )
+                        )
+                    )
+                )
             ),
-        ),
-        // The shared mutable set keeps the references, so preferences registered later by the
-        // player patches are visible when the settings screen is built (SettingsHook runs last).
-        PreferenceCategory(
-            key = "morphe_new_patches_chapter_5",
-            titleKey = "morphe_new_patches_chapter_5_title",
-            preferences = newFeaturesPlayerChapterPreferences,
-        ),
-    )
+        )
+
+    },
+) {
 
     // Force fullscreen landscape only applies on tablets/large screens (checked inside the
     // extension), so hooking the player type change is harmless on phones.
-    PlayerType.onChange.addObserver { type ->
+    PlayerType.getOnChange().addObserver { type ->
         ForceFullscreenLandscapePatch.onPlayerTypeChanged(type)
     }
 }

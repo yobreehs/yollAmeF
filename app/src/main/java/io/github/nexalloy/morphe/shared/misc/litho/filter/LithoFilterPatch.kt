@@ -14,8 +14,13 @@ import io.github.nexalloy.patch
 import io.github.nexalloy.scopedHook
 import java.nio.ByteBuffer
 
-fun addLithoFilter(filter: Filter){
-    LithoFilterPatch.addFilter(filter)
+fun addLithoFilter(filter: Filter) {
+    runCatching {
+        LithoFilterPatch.addFilter(filter)
+    }.onFailure { ex ->
+        // A single bad filter must not take down the whole patch that registers it.
+        Logger.printException({ "LithoFilter: failed to register ${filter.javaClass.simpleName}" }, ex)
+    }
 }
 
 
@@ -77,20 +82,11 @@ internal fun sharedLithoFilterPatch(
     block()
 
 
-    LithoFilterPatch::class.java.getDeclaredMethod("useLegacyLithoFiltering")
-        .hookMethod(XC_MethodReplacement.returnConstant(useLegacyLithoFiltering()))
-
-    //region Pass the buffer into extension.
-    if (!hookNonNativeBuffer()) {
-        // Non-native buffer.
-        ProtobufBufferReferenceFingerprint.hookMethod {
-            before { param ->
-                LithoFilterPatch.setProtoBuffer(param.args[1] as ByteBuffer)
-            }
-        }
+    // v2.2 removed useLegacyLithoFiltering(); keep the hook optional for older bases.
+    runCatching {
+        LithoFilterPatch::class.java.getDeclaredMethod("useLegacyLithoFiltering")
+            .hookMethod(XC_MethodReplacement.returnConstant(useLegacyLithoFiltering()))
     }
-
-    //endregion
 
     // region Hook the method that parses bytes into a ComponentContext.
 
