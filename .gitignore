@@ -20,5 +20,5 @@ local.properties
 *.keystore
 signing.properties
 
-# Local-only inventory harness (kept out of git on purpose; see project.md).
+# Local-only inventory harness (kept out of git on purpose).
 /app/src/test/java/io/github/nexalloy/PatchInventoryTest.kt
